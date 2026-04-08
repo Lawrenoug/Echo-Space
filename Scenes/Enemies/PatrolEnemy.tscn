@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Gameplay/Enemies/EnemyController.cs" id="1"]
 [ext_resource type="Script" path="res://Scripts/Gameplay/Combat/DamageReceiver.cs" id="2"]
@@ -9,6 +9,9 @@ size = Vector2(24, 28)
 
 [sub_resource type="RectangleShape2D" id="2"]
 size = Vector2(30, 24)
+
+[sub_resource type="RectangleShape2D" id="3"]
+size = Vector2(26, 20)
 
 [node name="PatrolEnemy" type="CharacterBody2D"]
 script = ExtResource("1")
@@ -35,6 +38,15 @@ target_path = NodePath("..")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 shape = SubResource("2")
+
+[node name="AttackBox" type="Area2D" parent="."]
+position = Vector2(22, 0)
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackBox"]
+shape = SubResource("3")
+disabled = true
 
 [node name="DualWorldObject" type="Node" parent="."]
 script = ExtResource("3")

@@ -12,6 +12,7 @@ namespace EchoSpace.Player;
 public partial class PlayerController : CharacterBody2D, IDamageable
 {
     public event Action<int, int>? HealthChanged;
+    public event Action<float, float>? PostureChanged;
 
     [ExportGroup("Movement")]
     [Export] public float MoveSpeed { get; set; } = 220f;
@@ -32,9 +33,17 @@ public partial class PlayerController : CharacterBody2D, IDamageable
     [ExportGroup("Combat")]
     [Export] public int MaxHealth { get; set; } = 5;
     [Export] public int AttackDamage { get; set; } = 1;
+    [Export] public float AttackPostureDamage { get; set; } = 18f;
     [Export] public float DamageInvulnerabilityTime { get; set; } = 0.45f;
+    [Export] public float MaxPosture { get; set; } = 100f;
+    [Export] public float PostureRecoveryPerSecond { get; set; } = 18f;
+    [Export] public float GuardDeflectWindow { get; set; } = 0.18f;
+    [Export] public float DeflectPostureDamage { get; set; } = 36f;
+    [Export] public float BlockPostureMultiplier { get; set; } = 1f;
+    [Export] public float GuardBreakDuration { get; set; } = 0.7f;
     [Export] public NodePath? AttackProbePath { get; set; } = new("AttackProbe");
     [Export] public NodePath? AttackProbeCollisionShapePath { get; set; } = new("AttackProbe/CollisionShape2D");
+    [Export] public NodePath? HurtboxVisualPath { get; set; } = new("GuardEffect");
     [Export] public NodePath? BodyVisualPath { get; set; } = new("Body");
 
     private readonly InputBuffer _inputBuffer = new();
@@ -43,20 +52,27 @@ public partial class PlayerController : CharacterBody2D, IDamageable
     private StateMachine<PlayerController>? _stateMachine;
     private double _lastGroundedAt = double.NegativeInfinity;
     private double _lastDamageTakenAt = double.NegativeInfinity;
+    private double _lastGuardPressedAt = double.NegativeInfinity;
+    private double _guardBreakRemaining;
     private int _remainingAirJumps;
     private int _currentHealth;
+    private float _currentPosture;
     private float _facingDirection = 1f;
     private Area2D? _attackProbe;
     private CollisionShape2D? _attackProbeCollisionShape;
     private CanvasItem? _bodyVisual;
+    private CanvasItem? _guardEffectVisual;
     private Vector2 _attackProbeBasePosition;
     private bool _isAttackActive;
+    private bool _isGuarding;
 
     public int CurrentHealth => _currentHealth;
+    public float CurrentPosture => _currentPosture;
 
     public override void _Ready()
     {
         GameInputActions.EnsureDefaults();
+        AddToGroup("player");
 
         _currentHealth = MaxHealth;
         _remainingAirJumps = MaxAirJumps;
@@ -66,12 +82,14 @@ public partial class PlayerController : CharacterBody2D, IDamageable
             ? GetNodeOrNull<CollisionShape2D>(AttackProbeCollisionShapePath)
             : null;
         _bodyVisual = BodyVisualPath != null && !BodyVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(BodyVisualPath) : null;
+        _guardEffectVisual = HurtboxVisualPath != null && !HurtboxVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(HurtboxVisualPath) : null;
 
         _stateMachine.Register(new PlayerIdleState(this, _stateMachine));
         _stateMachine.Register(new PlayerRunState(this, _stateMachine));
         _stateMachine.Register(new PlayerJumpState(this, _stateMachine));
         _stateMachine.Register(new PlayerFallState(this, _stateMachine));
         _stateMachine.Register(new PlayerAttackState(this, _stateMachine));
+        _stateMachine.Register(new PlayerGuardState(this, _stateMachine));
         _stateMachine.ChangeState<PlayerIdleState>();
 
         if (_attackProbe != null)
@@ -85,6 +103,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
         }
 
         HealthChanged?.Invoke(_currentHealth, MaxHealth);
+        PostureChanged?.Invoke(_currentPosture, MaxPosture);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -101,6 +120,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
             _inputBuffer.Buffer(GameInputActions.Attack, now);
         }
 
+        if (@event.IsActionPressed(GameInputActions.Guard))
+        {
+            _lastGuardPressedAt = now;
+        }
+
         if (@event.IsActionPressed(GameInputActions.SwitchWorld))
         {
             _inputBuffer.Buffer(GameInputActions.SwitchWorld, now);
@@ -113,6 +137,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
         _inputBuffer.ExpireOlderThan(now, InputBufferTime);
         UpdateFacingDirection();
         UpdateAttackProbeTransform();
+        UpdatePosture(delta);
+        UpdateGuardBreak(delta);
 
         if (IsOnFloor())
         {
@@ -183,6 +209,37 @@ public partial class PlayerController : CharacterBody2D, IDamageable
         return _remainingAirJumps > 0;
     }
 
+    public bool WantsToGuard()
+    {
+        return Input.IsActionPressed(GameInputActions.Guard) && _guardBreakRemaining <= 0d;
+    }
+
+    public bool CanGuard()
+    {
+        return IsGrounded() && _guardBreakRemaining <= 0d;
+    }
+
+    public void BeginGuard()
+    {
+        _isGuarding = true;
+
+        if (_guardEffectVisual != null)
+        {
+            _guardEffectVisual.Visible = true;
+            _guardEffectVisual.Modulate = new Color(0.7f, 0.9f, 1f, 0.85f);
+        }
+    }
+
+    public void EndGuard()
+    {
+        _isGuarding = false;
+
+        if (_guardEffectVisual != null)
+        {
+            _guardEffectVisual.Visible = false;
+        }
+    }
+
     public void BeginAttack()
     {
         _isAttackActive = true;
@@ -221,14 +278,50 @@ public partial class PlayerController : CharacterBody2D, IDamageable
     public void ApplyDamage(in DamageInfo damageInfo)
     {
         var now = GetGameTime();
-        if (now - _lastDamageTakenAt < DamageInvulnerabilityTime)
+        if (!_isGuarding && now - _lastDamageTakenAt < DamageInvulnerabilityTime)
         {
+            return;
+        }
+
+        var isDeflect = _isGuarding
+            && damageInfo.CanBeGuarded
+            && now - _lastGuardPressedAt <= GuardDeflectWindow;
+
+        if (_isGuarding && damageInfo.CanBeGuarded)
+        {
+            if (isDeflect)
+            {
+                AddPosture(damageInfo.PostureDamage * 0.35f);
+
+                if (damageInfo.Source is IDeflectResponder deflectResponder)
+                {
+                    deflectResponder.OnDeflected(DeflectPostureDamage, this);
+                }
+
+                if (_guardEffectVisual != null)
+                {
+                    _guardEffectVisual.Visible = true;
+                    _guardEffectVisual.Modulate = new Color(0.82f, 1f, 1f, 1f);
+                }
+
+                return;
+            }
+
+            AddPosture(damageInfo.PostureDamage * BlockPostureMultiplier);
+            Velocity += damageInfo.Knockback * 0.3f;
+
+            if (_currentPosture >= MaxPosture)
+            {
+                TriggerGuardBreak();
+            }
+
             return;
         }
 
         _lastDamageTakenAt = now;
         _currentHealth = Mathf.Max(0, _currentHealth - damageInfo.Amount);
         Velocity += damageInfo.Knockback;
+        AddPosture(damageInfo.PostureDamage * 0.25f);
         HealthChanged?.Invoke(_currentHealth, MaxHealth);
 
         if (_bodyVisual != null)
@@ -307,7 +400,12 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
             var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
             var knockback = new Vector2(_facingDirection * 200f, -80f);
-            damageReceiver.ReceiveDamage(new DamageInfo(AttackDamage, currentWorld, this, knockback));
+            damageReceiver.ReceiveDamage(new DamageInfo(
+                AttackDamage,
+                currentWorld,
+                this,
+                knockback,
+                AttackPostureDamage));
         }
 
         if (_bodyVisual != null && _lastDamageTakenAt + DamageInvulnerabilityTime < GetGameTime())
@@ -333,6 +431,57 @@ public partial class PlayerController : CharacterBody2D, IDamageable
         }
 
         _attackProbe.Position = new Vector2(Mathf.Abs(_attackProbeBasePosition.X) * _facingDirection, _attackProbeBasePosition.Y);
+    }
+
+    private void UpdatePosture(double delta)
+    {
+        if (_isGuarding || _currentPosture <= 0f)
+        {
+            return;
+        }
+
+        _currentPosture = Mathf.Max(0f, _currentPosture - PostureRecoveryPerSecond * (float)delta);
+        PostureChanged?.Invoke(_currentPosture, MaxPosture);
+    }
+
+    private void UpdateGuardBreak(double delta)
+    {
+        if (_guardBreakRemaining <= 0d)
+        {
+            return;
+        }
+
+        _guardBreakRemaining -= delta;
+
+        if (_guardBreakRemaining <= 0d && _guardEffectVisual != null && !_isGuarding)
+        {
+            _guardEffectVisual.Visible = false;
+        }
+    }
+
+    private void AddPosture(float amount)
+    {
+        if (amount <= 0f)
+        {
+            return;
+        }
+
+        _currentPosture = Mathf.Clamp(_currentPosture + amount, 0f, MaxPosture);
+        PostureChanged?.Invoke(_currentPosture, MaxPosture);
+    }
+
+    private void TriggerGuardBreak()
+    {
+        _guardBreakRemaining = GuardBreakDuration;
+        _isGuarding = false;
+        _currentPosture = MaxPosture;
+        PostureChanged?.Invoke(_currentPosture, MaxPosture);
+
+        if (_guardEffectVisual != null)
+        {
+            _guardEffectVisual.Visible = true;
+            _guardEffectVisual.Modulate = new Color(1f, 0.72f, 0.62f, 0.95f);
+        }
     }
 
     private static double GetGameTime()

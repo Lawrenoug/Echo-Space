@@ -101,39 +101,57 @@ tint_path = NodePath("../WorldTint")
 player_path = NodePath("../Player")
 health_label_path = NodePath("Panel/HealthLabel")
 health_bar_path = NodePath("Panel/HealthBar")
+posture_label_path = NodePath("Panel/PostureLabel")
+posture_bar_path = NodePath("Panel/PostureBar")
 
 [node name="Panel" type="Panel" parent="UI"]
 offset_left = 14.0
 offset_top = 14.0
-offset_right = 206.0
-offset_bottom = 102.0
+offset_right = 238.0
+offset_bottom = 148.0
 
 [node name="Label" type="Label" parent="UI/Panel"]
 offset_left = 12.0
 offset_top = 10.0
-offset_right = 182.0
+offset_right = 214.0
 offset_bottom = 34.0
 text = "Reality World  [Tab]"
 
 [node name="Hint" type="Label" parent="UI/Panel"]
 offset_left = 12.0
 offset_top = 30.0
-offset_right = 182.0
+offset_right = 214.0
 offset_bottom = 52.0
-text = "Move: A/D  Jump: Space  Attack: J"
+text = "Move: A/D  Jump: Space  Attack: J  Guard: L"
 
 [node name="HealthLabel" type="Label" parent="UI/Panel"]
 offset_left = 12.0
 offset_top = 56.0
-offset_right = 182.0
+offset_right = 214.0
 offset_bottom = 74.0
 text = "HP 5/5"
 
 [node name="HealthBar" type="ProgressBar" parent="UI/Panel"]
 offset_left = 12.0
 offset_top = 76.0
-offset_right = 182.0
+offset_right = 214.0
 offset_bottom = 92.0
 max_value = 5.0
 value = 5.0
+show_percentage = false
+
+[node name="PostureLabel" type="Label" parent="UI/Panel"]
+offset_left = 12.0
+offset_top = 98.0
+offset_right = 214.0
+offset_bottom = 116.0
+text = "Posture 0/100"
+
+[node name="PostureBar" type="ProgressBar" parent="UI/Panel"]
+offset_left = 12.0
+offset_top = 118.0
+offset_right = 214.0
+offset_bottom = 134.0
+max_value = 100.0
+value = 0.0
 show_percentage = false

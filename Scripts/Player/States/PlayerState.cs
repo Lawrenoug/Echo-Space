@@ -11,6 +11,17 @@ public abstract class PlayerState : State<PlayerController>
 
     public virtual float SpeedMultiplier => 1f;
 
+    protected bool TryEnterGuard()
+    {
+        if (!Context.CanGuard() || !Context.WantsToGuard())
+        {
+            return false;
+        }
+
+        StateMachine.ChangeState<PlayerGuardState>();
+        return true;
+    }
+
     protected bool TryEnterAttack()
     {
         if (!Context.HasBufferedAttack())
@@ -37,6 +48,12 @@ public abstract class PlayerState : State<PlayerController>
 
     protected void ReturnToGroundState()
     {
+        if (Context.CanGuard() && Context.WantsToGuard())
+        {
+            StateMachine.ChangeState<PlayerGuardState>();
+            return;
+        }
+
         if (Context.GetMoveInput() == 0f)
         {
             StateMachine.ChangeState<PlayerIdleState>();

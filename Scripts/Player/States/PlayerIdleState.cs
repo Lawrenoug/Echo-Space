@@ -17,7 +17,7 @@ public sealed class PlayerIdleState : PlayerState
             return;
         }
 
-        if (TryEnterAttack() || TryEnterJump())
+        if (TryEnterGuard() || TryEnterAttack() || TryEnterJump())
         {
             return;
         }

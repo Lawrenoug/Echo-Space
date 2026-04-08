@@ -1,183 +1,120 @@
 # Echo Space
 
-Godot 4.6.2 + C# 的 2D 平台动作原型项目，核心围绕“现实世界 / 灵魂世界”双世界切换展开。
+Echo Space is a Godot 4.6.2 + C# 2D action prototype built around real-time world switching:
 
-这个仓库当前的目标不是一次性做完整游戏，而是先搭好可迭代的工程框架，让程序、关卡、美术、音频可以分阶段往里填。
+- Reality world
+- Soul world
 
-## 当前已实现
+The current goal is not content completion. The goal is to build a clean gameplay foundation that can support:
 
-- 玩家基础移动：左右移动、跳跃、空中下落、基础攻击状态
-- 手感底座：输入缓冲、Coyote Time、可调重力曲线
-- 状态机框架：玩家已接入，敌人可复用同一套底层
-- 双世界系统：`WorldManager` + `DualWorldObject`
-- 对象池底座：`PoolManager` + `NodePool`
-- 原型主场景：可直接运行，包含世界切换演示平台
+- platforming
+- dual-world puzzles
+- Sekiro-inspired melee combat
 
-## 目录结构
+## Current Focus
 
-- `Scenes/`: 主场景、玩家场景、后续关卡与敌人场景
-- `Scripts/Core/`: FSM、输入缓冲、对象池、世界管理
-- `Scripts/Player/`: 玩家控制器与玩家状态
-- `Scripts/Gameplay/`: 战斗接口、敌人、机关等玩法脚本
-- `Scripts/UI/`: 世界提示 UI 与后续 HUD
+The combat direction is now shifting from simple touch damage to a posture-driven melee loop inspired by Sekiro:
 
-## 默认按键
+- hold guard to defend
+- press guard at the right timing to deflect
+- attacks build posture
+- posture break is becoming the main combat payoff
+- HP remains as a supporting system instead of the only win condition
 
-- `A` / `Left`: 向左移动
-- `D` / `Right`: 向右移动
-- `Space` / `W` / `Up`: 跳跃
-- `J` / `K`: 攻击
-- `Tab`: 切换世界
+This repository currently contains a playable prototype layer for that direction.
 
-## 运行方式
+## Implemented Systems
+
+- Player movement
+  - run
+  - jump
+  - fall
+  - buffered jump / attack
+  - coyote time
+- Player combat prototype
+  - attack hitbox
+  - guard input
+  - deflect timing window
+  - player HP
+  - player posture bar
+- Enemy combat prototype
+  - patrol movement
+  - wall turnaround
+  - attack windup
+  - active attack hitbox
+  - cooldown
+  - posture gain on hit / deflect
+  - hit flash and death fade
+- Dual-world gameplay foundation
+  - `WorldManager`
+  - `DualWorldObject`
+  - world-exclusive platforms
+  - dual-world breakable wall
+- UI prototype
+  - world indicator
+  - player HP display
+  - player posture display
+- Pooling foundation
+  - `PoolManager`
+  - `NodePool`
+
+## Controls
+
+- `A` / `Left`: move left
+- `D` / `Right`: move right
+- `Space` / `W` / `Up`: jump
+- `J` / `K`: attack
+- `L` / `Shift`: guard / deflect
+- `Tab`: switch world
+
+## Key Files
+
+- Main scene: `Scenes/Main.tscn`
+- Player controller: `Scripts/Player/PlayerController.cs`
+- Player states: `Scripts/Player/States/`
+- Enemy prototype: `Scripts/Gameplay/Enemies/EnemyController.cs`
+- Dual-world core: `Scripts/Core/World/`
+- HUD: `Scripts/UI/WorldOverlay.cs`
+- Breakable wall: `Scripts/Gameplay/Environment/BreakableWall.cs`
+
+## Manual Content Still Needed
+
+These are still expected to be filled in manually later:
+
+- final player animation set
+- enemy art and animation
+- hit FX
+- deflect FX
+- world-switch FX
+- audio and BGM
+- proper level art
+- tutorial prompts
+- final HUD art
+
+## Current Prototype Notes
+
+- The current enemy posture prototype is intentionally simple.
+- For now, if enemy posture fills up, the enemy is defeated directly.
+- This is a placeholder step toward a future posture-break / deathblow flow.
+- The current guard-break behavior is also a prototype and will likely be refined later.
+
+## Recommended Next Steps
+
+1. Add a visible enemy posture bar or lock-on target panel.
+2. Split enemy attack into clearer anticipation / swing / recovery visuals.
+3. Add player guard-break feedback:
+   - stun
+   - sound
+   - stronger visual cue
+4. Add a true posture-break follow-up state instead of immediate enemy death.
+5. Start replacing placeholder geometry with whitebox combat rooms.
+
+## Run
 
 ```powershell
 dotnet build EchoSpace.csproj
 ```
 
-然后使用 Godot 4.6.2 Mono 打开项目，或直接运行主场景 `res://Scenes/Main.tscn`。
+Then open the project with Godot 4.6.2 Mono and run:
 
-## 当前代码框架对应关系
-
-- 玩家控制入口：`Scripts/Player/PlayerController.cs`
-- 玩家状态机：`Scripts/Player/States/`
-- 通用状态机底层：`Scripts/Core/Fsm/`
-- 双世界切换：`Scripts/Core/World/`
-- 对象池：`Scripts/Core/Pooling/`
-- 原型演示场景：`Scenes/Main.tscn`
-
-## 需要人工填充的内容
-
-以下内容默认由你后续手动补充，当前代码只提供接入点或占位框架：
-
-- 角色正式美术资源
-  - 玩家待机、奔跑、跳跃、下落、攻击、受伤、死亡动画
-  - 现实世界 / 灵魂世界下的角色表现差异
-- 场景与关卡美术
-  - TileSet、TileMap 贴图
-  - 背景层、前景遮挡、装饰物
-  - 现实世界与灵魂世界的色彩和材质差异
-- 音频资源
-  - 跳跃、落地、攻击、受击、切世界音效
-  - 场景环境音
-  - BGM 和战斗音乐
-- UI 资源
-  - 世界切换指示器
-  - 血量条、提示框、菜单按钮样式
-- 特效资源
-  - 切世界波纹
-  - 命中特效
-  - 破坏物碎裂效果
-  - 灵魂世界粒子或辉光风格
-- 关卡设计内容
-  - 白盒关卡布局
-  - 教学提示点
-  - 敌人摆放
-  - 解谜路线与奖励位置
-
-## 按阶段需要你补的人工内容
-
-### 阶段一：原型验证
-
-目标：先确认“能跑、能跳、能切世界、能验证双世界物体状态”。
-
-你需要人工补充：
-
-- 玩家临时精灵或色块替代图
-- 一个基础测试关卡白盒
-- 一个双世界差异物体的占位图
-- 世界切换时的临时色调方案
-
-程序侧建议优先完成：
-
-- 玩家攻击命中盒接入
-- 可破坏物原型
-- 切世界基础反馈
-
-### 阶段二：敌人与战斗闭环
-
-目标：出现第一个完整敌人，并形成简单战斗循环。
-
-你需要人工补充：
-
-- 基础敌人外观
-- 敌人受击与死亡表现
-- 玩家攻击动作素材
-- 攻击命中特效和音效
-
-程序侧建议优先完成：
-
-- 巡逻敌人状态机
-- 攻击伤害系统
-- 简单对象池接入命中特效
-
-### 阶段三：手感与表现打磨
-
-目标：让操作反馈开始接近正式作品。
-
-你需要人工补充：
-
-- 角色动作更完整的动画
-- 跳跃、落地、攻击、切世界音效
-- 切世界过渡特效素材
-- HUD 草图或正式 UI 资源
-
-程序侧建议优先完成：
-
-- 动画事件
-- 世界切换短暂停顿和表现
-- UI 信息同步
-
-### 阶段四：内容填充与关卡制作
-
-目标：做出 30 分钟左右可游玩的 demo。
-
-你需要人工补充：
-
-- 3 到 5 个关卡的白盒与正式美术替换
-- 机关外观和交互反馈
-- 至少 2 到 3 类敌人的差异化表现
-- 场景氛围音与 BGM
-
-程序侧建议优先完成：
-
-- 机关类型扩展
-- 敌人行为扩展
-- 关卡流程与存档检查点
-
-### 阶段五：收尾与发布准备
-
-目标：形成可对外测试或展示的完整版本。
-
-你需要人工补充：
-
-- 标题界面与菜单资源
-- 图标、封面、截图
-- 音量、按键等设置界面素材
-- 宣发用关键信息整理
-
-程序侧建议优先完成：
-
-- 设置菜单
-- 暂停与主菜单
-- Bug 修复与参数收束
-
-## 推荐的资源接入原则
-
-- 先用占位资源验证功能，再替换正式资源。
-- 美术命名最好按功能和状态统一，例如 `player_idle`, `player_run`, `world_shift_fx`。
-- 音效先接短音频占位，不要等 BGM 完成后才统一接入。
-- 关卡先白盒验证，再替换贴图，不要反过来做。
-
-## 接下来建议
-
-当前最适合继续推进的程序阶段是：
-
-1. 给 `PlayerAttackState` 接入真正的命中盒与伤害结算。
-2. 把 `DualWorldObject` 落成第一批具体玩法对象，例如可破坏墙和世界专属平台。
-3. 给敌人接入复用 FSM，先完成一个巡逻 / 追击 / 攻击三态近战敌人。
-
-## 备注
-
-- `Jump Corner Correction` 暂时没有实现。
-- 这个功能建议等角色体型、碰撞盒和关卡白盒稳定后再做，否则参数容易反复推翻。
+- `res://Scenes/Main.tscn`

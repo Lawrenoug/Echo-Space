@@ -5,12 +5,20 @@ namespace EchoSpace.Gameplay.Combat;
 
 public readonly struct DamageInfo
 {
-    public DamageInfo(int amount, WorldType sourceWorld, Node? source = null, Vector2? knockback = null)
+    public DamageInfo(
+        int amount,
+        WorldType sourceWorld,
+        Node? source = null,
+        Vector2? knockback = null,
+        float postureDamage = 0f,
+        bool canBeGuarded = false)
     {
         Amount = amount;
         SourceWorld = sourceWorld;
         Source = source;
         Knockback = knockback ?? Vector2.Zero;
+        PostureDamage = postureDamage;
+        CanBeGuarded = canBeGuarded;
     }
 
     public int Amount { get; }
@@ -20,4 +28,8 @@ public readonly struct DamageInfo
     public Node? Source { get; }
 
     public Vector2 Knockback { get; }
+
+    public float PostureDamage { get; }
+
+    public bool CanBeGuarded { get; }
 }
