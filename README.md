@@ -1,131 +1,208 @@
 # Echo Space
 
-Echo Space is a Godot 4.6.2 + C# 2D action prototype built around real-time world switching:
+`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 平台动作原型项目，核心特色是：
 
-- Reality world
-- Soul world
+- 现实世界 / 灵魂世界实时切换
+- 平台动作探索
+- 以《只狼》为参考方向的近战战斗
 
-The current goal is not content completion. The goal is to build a clean gameplay foundation that can support:
+当前目标不是一次性把全部内容做完，而是先把程序底座、原型玩法和可迭代结构搭稳，再逐步补齐关卡、美术、音频和表现。
 
-- platforming
-- dual-world puzzles
-- Sekiro-inspired melee combat
+## 当前战斗方向
 
-## Current Focus
+当前战斗设计方向已经明确为“血量 + 耐力 + 架势 + 处决”的组合：
 
-The combat direction is now shifting from simple touch damage to a posture-driven melee loop inspired by Sekiro:
+- 玩家有血量和耐力
+- 敌人有血量和架势
+- 普通攻击会削减敌人血量，并附带少量架势伤害
+- 防御可以减轻压力
+- 精准弹反会更快累积敌人架势
+- 当敌人架势打满后，会进入可处决窗口
+- 当前原型中，对破绽敌人再次攻击会直接处决
 
-- right mouse to defend
-- right mouse at the right timing to deflect
-- attacks build posture
-- enemy posture break creates an execution window
-- left mouse is the current execution input after a break
+这套数值目前仍然是原型参数，后续可以继续调。
 
-This repository currently contains a playable prototype layer for that direction.
+## 当前已实现内容
 
-## Implemented Systems
+### 玩家
 
-- Player movement
-  - run
-  - jump
-  - fall
-  - buffered jump / attack
-  - coyote time
-- Player combat prototype
-  - attack hitbox
-  - mouse-based attack / guard
-  - deflect timing window
-  - visible player HP bar
-  - visible player stamina bar
-- Enemy combat prototype
-  - patrol movement
-  - wall turnaround
-  - attack windup
-  - active attack phase
-  - cooldown
-  - visible HP bar
-  - visible posture bar
-  - breakable posture state
-  - execution vulnerability after posture break
-  - posture gain on hit / deflect
-  - hit flash and death fade
-- Dual-world gameplay foundation
-  - `WorldManager`
-  - `DualWorldObject`
-  - world-exclusive platforms
-  - dual-world breakable wall
-- UI prototype
-  - world indicator
-  - player HP display
-  - player posture display
-- Pooling foundation
-  - `PoolManager`
-  - `NodePool`
+- 左右移动
+- 跳跃
+- 下落
+- 输入缓冲
+- Coyote Time
+- 左键攻击
+- 右键防御
+- 右键精准弹反窗口
+- 玩家血量 UI
+- 玩家耐力 UI
 
-## Controls
+### 敌人
 
-- `A` / `Left`: move left
-- `D` / `Right`: move right
-- `Space` / `W` / `Up`: jump
-- `Left Mouse`: attack / execute
-- `Right Mouse`: guard / deflect
-- `Tab`: switch world
+- 基础巡逻
+- 到达巡逻边界回头
+- 碰到障碍物回头
+- 攻击前摇
+- 攻击生效帧
+- 攻击冷却
+- 受击闪白
+- 死亡淡出
+- 敌人血量条
+- 敌人架势条
+- 架势打满进入破绽状态
+- 破绽状态下可被处决
 
-## Key Files
+### 双世界玩法
 
-- Main scene: `Scenes/Main.tscn`
-- Player controller: `Scripts/Player/PlayerController.cs`
-- Player states: `Scripts/Player/States/`
-- Enemy prototype: `Scripts/Gameplay/Enemies/EnemyController.cs`
-- Dual-world core: `Scripts/Core/World/`
-- HUD: `Scripts/UI/WorldOverlay.cs`
-- Breakable wall: `Scripts/Gameplay/Environment/BreakableWall.cs`
+- `WorldManager`
+- `DualWorldObject`
+- 世界专属平台
+- 双世界独立破坏墙
 
-## Manual Content Still Needed
+### UI
 
-These are still expected to be filled in manually later:
+- 当前世界指示
+- 玩家血量条
+- 玩家耐力条
+- 敌人头顶血量条
+- 敌人头顶架势条
 
-- final player animation set
-- enemy art and animation
-- hit FX
-- deflect FX
-- world-switch FX
-- audio and BGM
-- proper level art
-- tutorial prompts
-- final HUD art
+### 其他基础系统
 
-## Current Prototype Notes
+- 通用状态机基础
+- 伤害接收接口
+- 对象池基础框架
 
-- The player currently has both HP and stamina UI.
-- Enemy UI currently shows both HP and posture.
-- When enemy posture fills up, the enemy enters a temporary broken state.
-- Left click attacks reduce enemy HP and also chip some posture.
-- Deflecting is meant to build enemy posture faster than normal attacks.
-- Attacking a broken enemy currently executes it immediately.
-- The current guard-break behavior is also a prototype and will likely be refined later.
+## 当前默认按键
 
-## Recommended Next Steps
+- `A` / `Left`：向左移动
+- `D` / `Right`：向右移动
+- `Space` / `W` / `Up`：跳跃
+- `鼠标左键`：攻击 / 处决
+- `鼠标右键`：防御 / 弹反
+- `Tab`：切换世界
 
-1. Split enemy attack into clearer anticipation / swing / recovery visuals.
-2. Add player guard-break feedback:
-   - stun
-   - sound
-   - stronger visual cue
-3. Add enemy attack telegraph VFX and SFX.
-4. Start replacing placeholder geometry with whitebox combat rooms.
-5. Add a reusable enemy base scene that already contains:
-   - hurtbox
-   - attack box
-   - posture bar
-   - break / execute hooks
+## 关键文件位置
 
-## Run
+- 主场景：`Scenes/Main.tscn`
+- 玩家控制器：`Scripts/Player/PlayerController.cs`
+- 玩家状态：`Scripts/Player/States/`
+- 敌人原型：`Scripts/Gameplay/Enemies/EnemyController.cs`
+- 双世界系统：`Scripts/Core/World/`
+- 主 HUD：`Scripts/UI/WorldOverlay.cs`
+- 敌人头顶条：`Scripts/UI/EnemyPostureBar.cs`
+- 可破坏墙：`Scripts/Gameplay/Environment/BreakableWall.cs`
+
+## 人工资源填充清单
+
+以下内容默认需要你后续手工补充。
+
+这部分是长期保留区：
+
+- 后续无论我怎样更新 `README`
+- 都必须保留这块“人工资源填充清单”
+- 如果有新增资源需求，只能在这里追加，不能删掉原有项
+
+### 角色资源
+
+- 玩家待机动画
+- 玩家跑步动画
+- 玩家跳跃动画
+- 玩家下落动画
+- 玩家攻击动画
+- 玩家防御动作
+- 玩家弹反动作或特效表现
+- 玩家受伤动画
+- 玩家死亡动画
+
+### 敌人资源
+
+- 基础敌人待机 / 巡逻动画
+- 基础敌人攻击动画
+- 基础敌人受击动画
+- 基础敌人破绽状态表现
+- 基础敌人死亡动画
+- 后续新敌人整套动作资源
+
+### 战斗特效资源
+
+- 普通攻击命中特效
+- 弹反火花 / 刀光特效
+- 架势打满特效
+- 处决提示特效
+- 处决命中特效
+- 玩家受伤反馈特效
+- 敌人受伤反馈特效
+
+### 双世界相关资源
+
+- 世界切换特效
+- 世界切换音效
+- 现实世界美术风格资源
+- 灵魂世界美术风格资源
+- 双世界差异机关资源
+- 双世界差异平台资源
+- 双世界差异可破坏物资源
+
+### 关卡与场景资源
+
+- TileSet / TileMap 贴图
+- 白盒关卡布局
+- 正式关卡美术
+- 背景层
+- 前景遮挡
+- 装饰物
+- 互动提示图标
+
+### UI 资源
+
+- 正式 HUD 皮肤
+- 血量条美术
+- 耐力条美术
+- 敌人血条美术
+- 敌人架势条美术
+- 世界指示器美术
+- 菜单按钮资源
+- 提示框资源
+
+### 音频资源
+
+- 普通攻击音效
+- 受击音效
+- 防御音效
+- 弹反音效
+- 架势打满音效
+- 处决音效
+- 跳跃音效
+- 落地音效
+- 世界切换音效
+- 场景环境音
+- BGM
+
+## 当前原型说明
+
+- 玩家现在同时拥有血量和耐力
+- 敌人现在同时拥有血量和架势
+- 玩家左键攻击会同时造成血量伤害和少量架势伤害
+- 玩家弹反会对敌人造成更多架势压力
+- 敌人架势打满后会进入暂时破绽状态
+- 当前原型中，攻击破绽敌人会直接处决
+- 这些规则已经可以玩，但还没有做最终数值平衡
+
+## 当前最适合继续推进的方向
+
+1. 给破绽状态补更明确的视觉提示和音效提示
+2. 给处决补专门的动作、停顿和镜头反馈
+3. 给玩家补受伤反馈与防御破防反馈
+4. 把敌人战斗基类继续抽象，方便后续更多敌人复用
+5. 开始搭建更适合验证战斗的白盒房间
+
+## 运行方式
 
 ```powershell
 dotnet build EchoSpace.csproj
 ```
 
-Then open the project with Godot 4.6.2 Mono and run:
+然后使用 `Godot 4.6.2 Mono` 打开项目并运行：
 
 - `res://Scenes/Main.tscn`
