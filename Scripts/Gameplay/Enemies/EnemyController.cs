@@ -14,6 +14,8 @@ public partial class EnemyController : CharacterBody2D, IDamageable
     [Export] public int ContactDamage { get; set; } = 1;
     [Export] public float ContactDamageCooldown { get; set; } = 0.6f;
     [Export] public float DamageFlashDuration { get; set; } = 0.12f;
+    [Export] public float DeathDuration { get; set; } = 0.32f;
+    [Export] public float DeathRiseDistance { get; set; } = 22f;
     [Export] public WorldType AffiliatedWorld { get; set; } = WorldType.Reality;
     [Export] public NodePath? VisualRootPath { get; set; }
 
@@ -23,6 +25,10 @@ public partial class EnemyController : CharacterBody2D, IDamageable
     private int _moveDirection = -1;
     private double _lastContactDamageAt = double.NegativeInfinity;
     private double _damageFlashRemaining;
+    private bool _isDying;
+    private double _deathRemaining;
+    private Vector2 _visualBaseScale = Vector2.One;
+    private Vector2 _visualBasePosition = Vector2.Zero;
 
     public override void _Ready()
     {
@@ -31,10 +37,22 @@ public partial class EnemyController : CharacterBody2D, IDamageable
         _visualRoot = VisualRootPath != null && !VisualRootPath.IsEmpty
             ? GetNodeOrNull<Node2D>(VisualRootPath)
             : null;
+
+        if (_visualRoot != null)
+        {
+            _visualBaseScale = _visualRoot.Scale;
+            _visualBasePosition = _visualRoot.Position;
+        }
     }
 
     public override void _PhysicsProcess(double delta)
     {
+        if (_isDying)
+        {
+            UpdateDeathSequence(delta);
+            return;
+        }
+
         ApplyPatrolMovement();
         ApplyGravity(delta);
         MoveAndSlide();
@@ -44,19 +62,24 @@ public partial class EnemyController : CharacterBody2D, IDamageable
 
     public void ApplyDamage(in DamageInfo damageInfo)
     {
+        if (_isDying)
+        {
+            return;
+        }
+
         if (damageInfo.SourceWorld != AffiliatedWorld)
         {
             return;
         }
 
-        _currentHealth -= damageInfo.Amount;
+        _currentHealth = Mathf.Max(0, _currentHealth - damageInfo.Amount);
         Velocity += damageInfo.Knockback;
         _damageFlashRemaining = DamageFlashDuration;
         UpdateVisualTint();
 
         if (_currentHealth <= 0)
         {
-            QueueFree();
+            BeginDeathSequence();
         }
     }
 
@@ -134,6 +157,11 @@ public partial class EnemyController : CharacterBody2D, IDamageable
 
     private void UpdateDamageFlash(double delta)
     {
+        if (_isDying)
+        {
+            return;
+        }
+
         if (_damageFlashRemaining <= 0d)
         {
             return;
@@ -153,5 +181,54 @@ public partial class EnemyController : CharacterBody2D, IDamageable
         _visualRoot.Modulate = _damageFlashRemaining > 0d
             ? new Color(1f, 0.55f, 0.55f, 1f)
             : Colors.White;
+    }
+
+    private void BeginDeathSequence()
+    {
+        _isDying = true;
+        _deathRemaining = DeathDuration;
+        Velocity = Vector2.Zero;
+        DisableCollisionRecursive(this);
+        UpdateVisualTint();
+    }
+
+    private void UpdateDeathSequence(double delta)
+    {
+        _deathRemaining -= delta;
+        var progress = 1f - Mathf.Clamp((float)(_deathRemaining / DeathDuration), 0f, 1f);
+
+        if (_visualRoot != null)
+        {
+            _visualRoot.Modulate = new Color(1f, 0.78f, 0.78f, 1f - progress);
+            _visualRoot.Position = _visualBasePosition + new Vector2(0f, -DeathRiseDistance * progress);
+            _visualRoot.Scale = _visualBaseScale * (1f - progress * 0.25f);
+        }
+
+        if (_deathRemaining <= 0d)
+        {
+            QueueFree();
+        }
+    }
+
+    private static void DisableCollisionRecursive(Node node)
+    {
+        switch (node)
+        {
+            case CollisionShape2D collisionShape:
+                collisionShape.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+                break;
+            case CollisionPolygon2D collisionPolygon:
+                collisionPolygon.SetDeferred(CollisionPolygon2D.PropertyName.Disabled, true);
+                break;
+            case Area2D area2D:
+                area2D.Monitoring = false;
+                area2D.Monitorable = false;
+                break;
+        }
+
+        foreach (Node child in node.GetChildren())
+        {
+            DisableCollisionRecursive(child);
+        }
     }
 }

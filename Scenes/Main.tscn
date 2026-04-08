@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Main/Main.cs" id="1"]
 [ext_resource type="PackedScene" path="res://Scenes/Player/Player.tscn" id="2"]
 [ext_resource type="Script" path="res://Scripts/UI/WorldOverlay.cs" id="3"]
 [ext_resource type="Script" path="res://Scripts/Core/World/DualWorldObject.cs" id="4"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/PatrolEnemy.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/BreakableWall.tscn" id="6"]
 
 [sub_resource type="RectangleShape2D" id="1"]
 size = Vector2(900, 48)
@@ -90,16 +91,22 @@ soul_position_offset = Vector2(0, 0)
 [node name="PatrolEnemy" parent="." instance=ExtResource("5")]
 position = Vector2(590, 298)
 
+[node name="BreakableWall" parent="." instance=ExtResource("6")]
+position = Vector2(710, 277)
+
 [node name="UI" type="CanvasLayer" parent="."]
 script = ExtResource("3")
 label_path = NodePath("Panel/Label")
 tint_path = NodePath("../WorldTint")
+player_path = NodePath("../Player")
+health_label_path = NodePath("Panel/HealthLabel")
+health_bar_path = NodePath("Panel/HealthBar")
 
 [node name="Panel" type="Panel" parent="UI"]
 offset_left = 14.0
 offset_top = 14.0
 offset_right = 206.0
-offset_bottom = 62.0
+offset_bottom = 102.0
 
 [node name="Label" type="Label" parent="UI/Panel"]
 offset_left = 12.0
@@ -114,3 +121,19 @@ offset_top = 30.0
 offset_right = 182.0
 offset_bottom = 52.0
 text = "Move: A/D  Jump: Space  Attack: J"
+
+[node name="HealthLabel" type="Label" parent="UI/Panel"]
+offset_left = 12.0
+offset_top = 56.0
+offset_right = 182.0
+offset_bottom = 74.0
+text = "HP 5/5"
+
+[node name="HealthBar" type="ProgressBar" parent="UI/Panel"]
+offset_left = 12.0
+offset_top = 76.0
+offset_right = 182.0
+offset_bottom = 92.0
+max_value = 5.0
+value = 5.0
+show_percentage = false

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using EchoSpace.Core.Fsm;
 using EchoSpace.Core.Input;
@@ -10,6 +11,8 @@ namespace EchoSpace.Player;
 
 public partial class PlayerController : CharacterBody2D, IDamageable
 {
+    public event Action<int, int>? HealthChanged;
+
     [ExportGroup("Movement")]
     [Export] public float MoveSpeed { get; set; } = 220f;
     [Export] public float GroundAcceleration { get; set; } = 1700f;
@@ -49,6 +52,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
     private Vector2 _attackProbeBasePosition;
     private bool _isAttackActive;
 
+    public int CurrentHealth => _currentHealth;
+
     public override void _Ready()
     {
         GameInputActions.EnsureDefaults();
@@ -78,6 +83,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
         {
             _attackProbeCollisionShape.Disabled = true;
         }
+
+        HealthChanged?.Invoke(_currentHealth, MaxHealth);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -220,8 +227,9 @@ public partial class PlayerController : CharacterBody2D, IDamageable
         }
 
         _lastDamageTakenAt = now;
-        _currentHealth -= damageInfo.Amount;
+        _currentHealth = Mathf.Max(0, _currentHealth - damageInfo.Amount);
         Velocity += damageInfo.Knockback;
+        HealthChanged?.Invoke(_currentHealth, MaxHealth);
 
         if (_bodyVisual != null)
         {
