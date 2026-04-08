@@ -1,12 +1,14 @@
+using System.Collections.Generic;
 using EchoSpace.Core.Fsm;
 using EchoSpace.Core.Input;
 using EchoSpace.Core.World;
+using EchoSpace.Gameplay.Combat;
 using EchoSpace.Player.States;
 using Godot;
 
 namespace EchoSpace.Player;
 
-public partial class PlayerController : CharacterBody2D
+public partial class PlayerController : CharacterBody2D, IDamageable
 {
     [ExportGroup("Movement")]
     [Export] public float MoveSpeed { get; set; } = 220f;
@@ -24,18 +26,41 @@ public partial class PlayerController : CharacterBody2D
     [Export] public float JumpApexGravityScale { get; set; } = 0.5f;
     [Export] public float FallGravityScale { get; set; } = 1.8f;
 
+    [ExportGroup("Combat")]
+    [Export] public int MaxHealth { get; set; } = 5;
+    [Export] public int AttackDamage { get; set; } = 1;
+    [Export] public float DamageInvulnerabilityTime { get; set; } = 0.45f;
+    [Export] public NodePath? AttackProbePath { get; set; } = new("AttackProbe");
+    [Export] public NodePath? AttackProbeCollisionShapePath { get; set; } = new("AttackProbe/CollisionShape2D");
+    [Export] public NodePath? BodyVisualPath { get; set; } = new("Body");
+
     private readonly InputBuffer _inputBuffer = new();
+    private readonly HashSet<ulong> _damagedTargetsThisAttack = new();
 
     private StateMachine<PlayerController>? _stateMachine;
     private double _lastGroundedAt = double.NegativeInfinity;
+    private double _lastDamageTakenAt = double.NegativeInfinity;
     private int _remainingAirJumps;
+    private int _currentHealth;
+    private float _facingDirection = 1f;
+    private Area2D? _attackProbe;
+    private CollisionShape2D? _attackProbeCollisionShape;
+    private CanvasItem? _bodyVisual;
+    private Vector2 _attackProbeBasePosition;
+    private bool _isAttackActive;
 
     public override void _Ready()
     {
         GameInputActions.EnsureDefaults();
 
+        _currentHealth = MaxHealth;
         _remainingAirJumps = MaxAirJumps;
         _stateMachine = new StateMachine<PlayerController>(this);
+        _attackProbe = AttackProbePath != null && !AttackProbePath.IsEmpty ? GetNodeOrNull<Area2D>(AttackProbePath) : null;
+        _attackProbeCollisionShape = AttackProbeCollisionShapePath != null && !AttackProbeCollisionShapePath.IsEmpty
+            ? GetNodeOrNull<CollisionShape2D>(AttackProbeCollisionShapePath)
+            : null;
+        _bodyVisual = BodyVisualPath != null && !BodyVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(BodyVisualPath) : null;
 
         _stateMachine.Register(new PlayerIdleState(this, _stateMachine));
         _stateMachine.Register(new PlayerRunState(this, _stateMachine));
@@ -43,6 +68,16 @@ public partial class PlayerController : CharacterBody2D
         _stateMachine.Register(new PlayerFallState(this, _stateMachine));
         _stateMachine.Register(new PlayerAttackState(this, _stateMachine));
         _stateMachine.ChangeState<PlayerIdleState>();
+
+        if (_attackProbe != null)
+        {
+            _attackProbeBasePosition = _attackProbe.Position;
+        }
+
+        if (_attackProbeCollisionShape != null)
+        {
+            _attackProbeCollisionShape.Disabled = true;
+        }
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -69,6 +104,8 @@ public partial class PlayerController : CharacterBody2D
     {
         var now = GetGameTime();
         _inputBuffer.ExpireOlderThan(now, InputBufferTime);
+        UpdateFacingDirection();
+        UpdateAttackProbeTransform();
 
         if (IsOnFloor())
         {
@@ -85,6 +122,7 @@ public partial class PlayerController : CharacterBody2D
         ApplyHorizontalMovement(delta);
         ApplyGravity(delta);
         MoveAndSlide();
+        ProcessAttackHits();
 
         if (IsOnFloor())
         {
@@ -138,6 +176,28 @@ public partial class PlayerController : CharacterBody2D
         return _remainingAirJumps > 0;
     }
 
+    public void BeginAttack()
+    {
+        _isAttackActive = true;
+        _damagedTargetsThisAttack.Clear();
+
+        if (_attackProbeCollisionShape != null)
+        {
+            _attackProbeCollisionShape.SetDeferred(CollisionShape2D.PropertyName.Disabled, false);
+        }
+    }
+
+    public void EndAttack()
+    {
+        _isAttackActive = false;
+        _damagedTargetsThisAttack.Clear();
+
+        if (_attackProbeCollisionShape != null)
+        {
+            _attackProbeCollisionShape.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+        }
+    }
+
     public void CommitJump()
     {
         var usedCoyote = !IsOnFloor() && GetGameTime() - _lastGroundedAt <= CoyoteTime;
@@ -149,6 +209,29 @@ public partial class PlayerController : CharacterBody2D
 
         Velocity = new Vector2(Velocity.X, -JumpSpeed);
         _lastGroundedAt = double.NegativeInfinity;
+    }
+
+    public void ApplyDamage(in DamageInfo damageInfo)
+    {
+        var now = GetGameTime();
+        if (now - _lastDamageTakenAt < DamageInvulnerabilityTime)
+        {
+            return;
+        }
+
+        _lastDamageTakenAt = now;
+        _currentHealth -= damageInfo.Amount;
+        Velocity += damageInfo.Knockback;
+
+        if (_bodyVisual != null)
+        {
+            _bodyVisual.Modulate = new Color(1f, 0.55f, 0.55f, 1f);
+        }
+
+        if (_currentHealth <= 0)
+        {
+            QueueFree();
+        }
     }
 
     private void ApplyHorizontalMovement(double delta)
@@ -187,6 +270,61 @@ public partial class PlayerController : CharacterBody2D
         var gravity = (float)ProjectSettings.GetSetting("physics/2d/default_gravity");
         var gravityScale = Velocity.Y < 0f ? JumpApexGravityScale : FallGravityScale;
         Velocity += new Vector2(0f, gravity * gravityScale * (float)delta);
+    }
+
+    private void ProcessAttackHits()
+    {
+        if (!_isAttackActive || _attackProbe == null)
+        {
+            if (_bodyVisual != null && _lastDamageTakenAt + DamageInvulnerabilityTime < GetGameTime())
+            {
+                _bodyVisual.Modulate = Colors.White;
+            }
+
+            return;
+        }
+
+        foreach (var area in _attackProbe.GetOverlappingAreas())
+        {
+            if (area is not DamageReceiver damageReceiver)
+            {
+                continue;
+            }
+
+            var instanceId = damageReceiver.GetInstanceId();
+            if (!_damagedTargetsThisAttack.Add(instanceId))
+            {
+                continue;
+            }
+
+            var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
+            var knockback = new Vector2(_facingDirection * 200f, -80f);
+            damageReceiver.ReceiveDamage(new DamageInfo(AttackDamage, currentWorld, this, knockback));
+        }
+
+        if (_bodyVisual != null && _lastDamageTakenAt + DamageInvulnerabilityTime < GetGameTime())
+        {
+            _bodyVisual.Modulate = Colors.White;
+        }
+    }
+
+    private void UpdateFacingDirection()
+    {
+        var moveInput = GetMoveInput();
+        if (!Mathf.IsZeroApprox(moveInput))
+        {
+            _facingDirection = Mathf.Sign(moveInput);
+        }
+    }
+
+    private void UpdateAttackProbeTransform()
+    {
+        if (_attackProbe == null)
+        {
+            return;
+        }
+
+        _attackProbe.Position = new Vector2(Mathf.Abs(_attackProbeBasePosition.X) * _facingDirection, _attackProbeBasePosition.Y);
     }
 
     private static double GetGameTime()

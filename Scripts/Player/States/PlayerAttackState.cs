@@ -16,6 +16,12 @@ public sealed class PlayerAttackState : PlayerState
     public override void Enter()
     {
         _remainingDuration = Context.AttackDuration;
+        Context.BeginAttack();
+    }
+
+    public override void Exit()
+    {
+        Context.EndAttack();
     }
 
     public override void PhysicsUpdate(double delta)
