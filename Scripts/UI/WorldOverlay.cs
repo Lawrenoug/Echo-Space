@@ -9,26 +9,20 @@ public partial class WorldOverlay : CanvasLayer
     [Export] public NodePath? LabelPath { get; set; }
     [Export] public NodePath? TintPath { get; set; }
     [Export] public NodePath? PlayerPath { get; set; }
-    [Export] public NodePath? HealthLabelPath { get; set; }
-    [Export] public NodePath? HealthBarPath { get; set; }
-    [Export] public NodePath? PostureLabelPath { get; set; }
-    [Export] public NodePath? PostureBarPath { get; set; }
+    [Export] public NodePath? StaminaLabelPath { get; set; }
+    [Export] public NodePath? StaminaBarPath { get; set; }
 
     private Label? _label;
-    private Label? _healthLabel;
-    private Label? _postureLabel;
-    private ProgressBar? _healthBar;
-    private ProgressBar? _postureBar;
+    private Label? _staminaLabel;
+    private ProgressBar? _staminaBar;
     private CanvasModulate? _tint;
     private PlayerController? _player;
 
     public override void _Ready()
     {
         _label = LabelPath != null && !LabelPath.IsEmpty ? GetNodeOrNull<Label>(LabelPath) : null;
-        _healthLabel = HealthLabelPath != null && !HealthLabelPath.IsEmpty ? GetNodeOrNull<Label>(HealthLabelPath) : null;
-        _postureLabel = PostureLabelPath != null && !PostureLabelPath.IsEmpty ? GetNodeOrNull<Label>(PostureLabelPath) : null;
-        _healthBar = HealthBarPath != null && !HealthBarPath.IsEmpty ? GetNodeOrNull<ProgressBar>(HealthBarPath) : null;
-        _postureBar = PostureBarPath != null && !PostureBarPath.IsEmpty ? GetNodeOrNull<ProgressBar>(PostureBarPath) : null;
+        _staminaLabel = StaminaLabelPath != null && !StaminaLabelPath.IsEmpty ? GetNodeOrNull<Label>(StaminaLabelPath) : null;
+        _staminaBar = StaminaBarPath != null && !StaminaBarPath.IsEmpty ? GetNodeOrNull<ProgressBar>(StaminaBarPath) : null;
         _tint = TintPath != null && !TintPath.IsEmpty ? GetNodeOrNull<CanvasModulate>(TintPath) : null;
         _player = PlayerPath != null && !PlayerPath.IsEmpty ? GetNodeOrNull<PlayerController>(PlayerPath) : null;
 
@@ -40,10 +34,8 @@ public partial class WorldOverlay : CanvasLayer
 
         if (_player != null)
         {
-            _player.HealthChanged += OnPlayerHealthChanged;
-            _player.PostureChanged += OnPlayerPostureChanged;
-            OnPlayerHealthChanged(_player.CurrentHealth, _player.MaxHealth);
-            OnPlayerPostureChanged(_player.CurrentPosture, _player.MaxPosture);
+            _player.StaminaChanged += OnPlayerStaminaChanged;
+            OnPlayerStaminaChanged(_player.CurrentStamina, _player.MaxStamina);
         }
     }
 
@@ -56,8 +48,7 @@ public partial class WorldOverlay : CanvasLayer
 
         if (_player != null)
         {
-            _player.HealthChanged -= OnPlayerHealthChanged;
-            _player.PostureChanged -= OnPlayerPostureChanged;
+            _player.StaminaChanged -= OnPlayerStaminaChanged;
         }
     }
 
@@ -78,31 +69,17 @@ public partial class WorldOverlay : CanvasLayer
         }
     }
 
-    private void OnPlayerHealthChanged(int currentHealth, int maxHealth)
+    private void OnPlayerStaminaChanged(float currentStamina, float maxStamina)
     {
-        if (_healthLabel != null)
+        if (_staminaLabel != null)
         {
-            _healthLabel.Text = $"HP {currentHealth}/{maxHealth}";
+            _staminaLabel.Text = $"Stamina {Mathf.RoundToInt(currentStamina)}/{Mathf.RoundToInt(maxStamina)}";
         }
 
-        if (_healthBar != null)
+        if (_staminaBar != null)
         {
-            _healthBar.MaxValue = maxHealth;
-            _healthBar.Value = currentHealth;
-        }
-    }
-
-    private void OnPlayerPostureChanged(float currentPosture, float maxPosture)
-    {
-        if (_postureLabel != null)
-        {
-            _postureLabel.Text = $"Posture {Mathf.RoundToInt(currentPosture)}/{Mathf.RoundToInt(maxPosture)}";
-        }
-
-        if (_postureBar != null)
-        {
-            _postureBar.MaxValue = maxPosture;
-            _postureBar.Value = currentPosture;
+            _staminaBar.MaxValue = maxStamina;
+            _staminaBar.Value = currentStamina;
         }
     }
 }

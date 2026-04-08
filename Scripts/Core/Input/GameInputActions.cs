@@ -16,8 +16,10 @@ public static class GameInputActions
         EnsureAction(MoveLeft, Key.A, Key.Left);
         EnsureAction(MoveRight, Key.D, Key.Right);
         EnsureAction(Jump, Key.Space, Key.W, Key.Up);
-        EnsureAction(Attack, Key.J, Key.K);
-        EnsureAction(Guard, Key.L, Key.Shift);
+        ResetAction(Attack);
+        ResetAction(Guard);
+        EnsureMouseAction(Attack, MouseButton.Left);
+        EnsureMouseAction(Guard, MouseButton.Right);
         EnsureAction(SwitchWorld, Key.Tab);
     }
 
@@ -41,6 +43,35 @@ public static class GameInputActions
             };
 
             InputMap.ActionAddEvent(actionName, inputEvent);
+        }
+    }
+
+    private static void EnsureMouseAction(string actionName, MouseButton button)
+    {
+        if (!InputMap.HasAction(actionName))
+        {
+            InputMap.AddAction(actionName);
+        }
+
+        var inputEvent = new InputEventMouseButton
+        {
+            ButtonIndex = button,
+        };
+
+        InputMap.ActionAddEvent(actionName, inputEvent);
+    }
+
+    private static void ResetAction(string actionName)
+    {
+        if (!InputMap.HasAction(actionName))
+        {
+            InputMap.AddAction(actionName);
+            return;
+        }
+
+        foreach (var existingEvent in InputMap.ActionGetEvents(actionName))
+        {
+            InputMap.ActionEraseEvent(actionName, existingEvent);
         }
     }
 }

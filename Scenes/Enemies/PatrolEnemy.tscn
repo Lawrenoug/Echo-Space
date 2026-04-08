@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Gameplay/Enemies/EnemyController.cs" id="1"]
 [ext_resource type="Script" path="res://Scripts/Gameplay/Combat/DamageReceiver.cs" id="2"]
 [ext_resource type="Script" path="res://Scripts/Core/World/DualWorldObject.cs" id="3"]
+[ext_resource type="Script" path="res://Scripts/UI/EnemyPostureBar.cs" id="4"]
 
 [sub_resource type="RectangleShape2D" id="1"]
 size = Vector2(24, 28)
@@ -47,6 +48,19 @@ collision_mask = 16
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackBox"]
 shape = SubResource("3")
 disabled = true
+
+[node name="PostureBar" type="Node2D" parent="."]
+position = Vector2(0, -28)
+script = ExtResource("4")
+
+[node name="Background" type="Polygon2D" parent="PostureBar"]
+polygon = PackedVector2Array(-20, -3, 20, -3, 20, 3, -20, 3)
+color = Color(0.18, 0.1, 0.1, 0.85)
+
+[node name="Fill" type="Polygon2D" parent="PostureBar"]
+position = Vector2(-20, 0)
+polygon = PackedVector2Array(0, -2, 40, -2, 40, 2, 0, 2)
+color = Color(0.95, 0.45, 0.35, 1)
 
 [node name="DualWorldObject" type="Node" parent="."]
 script = ExtResource("3")

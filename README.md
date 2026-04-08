@@ -15,11 +15,11 @@ The current goal is not content completion. The goal is to build a clean gamepla
 
 The combat direction is now shifting from simple touch damage to a posture-driven melee loop inspired by Sekiro:
 
-- hold guard to defend
-- press guard at the right timing to deflect
+- right mouse to defend
+- right mouse at the right timing to deflect
 - attacks build posture
-- posture break is becoming the main combat payoff
-- HP remains as a supporting system instead of the only win condition
+- enemy posture break creates an execution window
+- left mouse is the current execution input after a break
 
 This repository currently contains a playable prototype layer for that direction.
 
@@ -33,16 +33,19 @@ This repository currently contains a playable prototype layer for that direction
   - coyote time
 - Player combat prototype
   - attack hitbox
-  - guard input
+  - mouse-based attack / guard
   - deflect timing window
-  - player HP
-  - player posture bar
+  - hidden player HP
+  - visible player stamina bar
 - Enemy combat prototype
   - patrol movement
   - wall turnaround
   - attack windup
-  - active attack hitbox
+  - active attack phase
   - cooldown
+  - breakable posture state
+  - execution vulnerability after posture break
+  - world-space posture bar
   - posture gain on hit / deflect
   - hit flash and death fade
 - Dual-world gameplay foundation
@@ -63,8 +66,8 @@ This repository currently contains a playable prototype layer for that direction
 - `A` / `Left`: move left
 - `D` / `Right`: move right
 - `Space` / `W` / `Up`: jump
-- `J` / `K`: attack
-- `L` / `Shift`: guard / deflect
+- `Left Mouse`: attack / execute
+- `Right Mouse`: guard / deflect
 - `Tab`: switch world
 
 ## Key Files
@@ -93,21 +96,26 @@ These are still expected to be filled in manually later:
 
 ## Current Prototype Notes
 
-- The current enemy posture prototype is intentionally simple.
-- For now, if enemy posture fills up, the enemy is defeated directly.
-- This is a placeholder step toward a future posture-break / deathblow flow.
+- The visible player resource bar is now stamina, not HP.
+- Enemy posture now has a visible bar above the enemy.
+- When enemy posture fills up, the enemy enters a temporary broken state.
+- Attacking a broken enemy currently executes it immediately.
 - The current guard-break behavior is also a prototype and will likely be refined later.
 
 ## Recommended Next Steps
 
-1. Add a visible enemy posture bar or lock-on target panel.
-2. Split enemy attack into clearer anticipation / swing / recovery visuals.
-3. Add player guard-break feedback:
+1. Split enemy attack into clearer anticipation / swing / recovery visuals.
+2. Add player guard-break feedback:
    - stun
    - sound
    - stronger visual cue
-4. Add a true posture-break follow-up state instead of immediate enemy death.
-5. Start replacing placeholder geometry with whitebox combat rooms.
+3. Add enemy attack telegraph VFX and SFX.
+4. Start replacing placeholder geometry with whitebox combat rooms.
+5. Add a reusable enemy base scene that already contains:
+   - hurtbox
+   - attack box
+   - posture bar
+   - break / execute hooks
 
 ## Run
 

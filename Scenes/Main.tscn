@@ -1,9 +1,9 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://cis0b74rdlfgo"]
 
-[ext_resource type="Script" path="res://Scripts/Main/Main.cs" id="1"]
+[ext_resource type="Script" uid="uid://cy0sqjnnvln10" path="res://Scripts/Main/Main.cs" id="1"]
 [ext_resource type="PackedScene" path="res://Scenes/Player/Player.tscn" id="2"]
-[ext_resource type="Script" path="res://Scripts/UI/WorldOverlay.cs" id="3"]
-[ext_resource type="Script" path="res://Scripts/Core/World/DualWorldObject.cs" id="4"]
+[ext_resource type="Script" uid="uid://c2w6mudbuc0la" path="res://Scripts/UI/WorldOverlay.cs" id="3"]
+[ext_resource type="Script" uid="uid://cch6onqs7edef" path="res://Scripts/Core/World/DualWorldObject.cs" id="4"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/PatrolEnemy.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/BreakableWall.tscn" id="6"]
 
@@ -16,45 +16,45 @@ size = Vector2(180, 20)
 [sub_resource type="RectangleShape2D" id="3"]
 size = Vector2(100, 20)
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="Node2D" unique_id=195052086]
 script = ExtResource("1")
 
-[node name="WorldTint" type="CanvasModulate" parent="."]
+[node name="WorldTint" type="CanvasModulate" parent="." unique_id=876487759]
 color = Color(1, 0.972549, 0.921569, 1)
 
-[node name="Background" type="CanvasLayer" parent="."]
+[node name="Background" type="CanvasLayer" parent="." unique_id=730755666]
 layer = -10
 
-[node name="ColorRect" type="ColorRect" parent="Background"]
+[node name="ColorRect" type="ColorRect" parent="Background" unique_id=1243766741]
 offset_left = -2000.0
 offset_top = -2000.0
 offset_right = 2000.0
 offset_bottom = 2000.0
 color = Color(0.901961, 0.894118, 0.87451, 1)
 
-[node name="Ground" type="StaticBody2D" parent="."]
+[node name="Ground" type="StaticBody2D" parent="." unique_id=1225502027]
 position = Vector2(350, 340)
 
-[node name="Visual" type="Polygon2D" parent="Ground"]
-polygon = PackedVector2Array(-450, -24, 450, -24, 450, 24, -450, 24)
+[node name="Visual" type="Polygon2D" parent="Ground" unique_id=555160238]
 color = Color(0.286275, 0.309804, 0.313726, 1)
+polygon = PackedVector2Array(-450, -24, 450, -24, 450, 24, -450, 24)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=2093765322]
 shape = SubResource("1")
 
-[node name="RealityPlatform" type="Node2D" parent="."]
+[node name="RealityPlatform" type="Node2D" parent="." unique_id=310109206]
 position = Vector2(420, 240)
 
-[node name="Visual" type="Polygon2D" parent="RealityPlatform"]
-polygon = PackedVector2Array(-90, -10, 90, -10, 90, 10, -90, 10)
+[node name="Visual" type="Polygon2D" parent="RealityPlatform" unique_id=555265308]
 color = Color(0.905882, 0.576471, 0.235294, 1)
+polygon = PackedVector2Array(-90, -10, 90, -10, 90, 10, -90, 10)
 
-[node name="StaticBody2D" type="StaticBody2D" parent="RealityPlatform"]
+[node name="StaticBody2D" type="StaticBody2D" parent="RealityPlatform" unique_id=1828055268]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="RealityPlatform/StaticBody2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RealityPlatform/StaticBody2D" unique_id=242273186]
 shape = SubResource("2")
 
-[node name="DualWorldObject" type="Node" parent="RealityPlatform"]
+[node name="DualWorldObject" type="Node" parent="RealityPlatform" unique_id=274693524]
 script = ExtResource("4")
 target_root_path = NodePath("..")
 visual_root_path = NodePath("../Visual")
@@ -64,19 +64,19 @@ exists_in_soul = false
 reality_position_offset = Vector2(0, 0)
 soul_position_offset = Vector2(0, 24)
 
-[node name="SoulBridge" type="Node2D" parent="."]
+[node name="SoulBridge" type="Node2D" parent="." unique_id=120879509]
 position = Vector2(640, 190)
 
-[node name="Visual" type="Polygon2D" parent="SoulBridge"]
-polygon = PackedVector2Array(-50, -10, 50, -10, 50, 10, -50, 10)
+[node name="Visual" type="Polygon2D" parent="SoulBridge" unique_id=1820838269]
 color = Color(0.466667, 0.760784, 1, 1)
+polygon = PackedVector2Array(-50, -10, 50, -10, 50, 10, -50, 10)
 
-[node name="StaticBody2D" type="StaticBody2D" parent="SoulBridge"]
+[node name="StaticBody2D" type="StaticBody2D" parent="SoulBridge" unique_id=204376893]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SoulBridge/StaticBody2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SoulBridge/StaticBody2D" unique_id=1631455567]
 shape = SubResource("3")
 
-[node name="DualWorldObject" type="Node" parent="SoulBridge"]
+[node name="DualWorldObject" type="Node" parent="SoulBridge" unique_id=243965015]
 script = ExtResource("4")
 target_root_path = NodePath("..")
 visual_root_path = NodePath("../Visual")
@@ -86,72 +86,66 @@ exists_in_soul = true
 reality_position_offset = Vector2(0, 16)
 soul_position_offset = Vector2(0, 0)
 
-[node name="Player" parent="." instance=ExtResource("2")]
+[node name="Player" parent="." unique_id=1704508750 instance=ExtResource("2")]
 
-[node name="PatrolEnemy" parent="." instance=ExtResource("5")]
+[node name="PatrolEnemy" parent="." unique_id=61361803 instance=ExtResource("5")]
 position = Vector2(590, 298)
 
-[node name="BreakableWall" parent="." instance=ExtResource("6")]
+[node name="BreakableWall" parent="." unique_id=960738665 instance=ExtResource("6")]
 position = Vector2(710, 277)
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1840655520]
 script = ExtResource("3")
 label_path = NodePath("Panel/Label")
 tint_path = NodePath("../WorldTint")
 player_path = NodePath("../Player")
-health_label_path = NodePath("Panel/HealthLabel")
-health_bar_path = NodePath("Panel/HealthBar")
-posture_label_path = NodePath("Panel/PostureLabel")
-posture_bar_path = NodePath("Panel/PostureBar")
+stamina_label_path = NodePath("Panel/StaminaLabel")
+stamina_bar_path = NodePath("Panel/StaminaBar")
 
-[node name="Panel" type="Panel" parent="UI"]
+[node name="Panel" type="Panel" parent="UI" unique_id=466358434]
 offset_left = 14.0
 offset_top = 14.0
-offset_right = 238.0
+offset_right = 358.0
 offset_bottom = 148.0
 
-[node name="Label" type="Label" parent="UI/Panel"]
+[node name="Label" type="Label" parent="UI/Panel" unique_id=296311281]
+layout_mode = 0
 offset_left = 12.0
 offset_top = 10.0
 offset_right = 214.0
 offset_bottom = 34.0
 text = "Reality World  [Tab]"
 
-[node name="Hint" type="Label" parent="UI/Panel"]
+[node name="Hint" type="Label" parent="UI/Panel" unique_id=440672505]
+layout_mode = 0
 offset_left = 12.0
 offset_top = 30.0
-offset_right = 214.0
+offset_right = 334.0
 offset_bottom = 52.0
-text = "Move: A/D  Jump: Space  Attack: J  Guard: L"
+text = "Move: A/D  Jump: Space  Attack: Left Mouse  Guard: Right Mouse"
 
-[node name="HealthLabel" type="Label" parent="UI/Panel"]
+[node name="StaminaLabel" type="Label" parent="UI/Panel" unique_id=1778622566]
+layout_mode = 0
 offset_left = 12.0
 offset_top = 56.0
-offset_right = 214.0
+offset_right = 334.0
 offset_bottom = 74.0
-text = "HP 5/5"
+text = "Stamina 100/100"
 
-[node name="HealthBar" type="ProgressBar" parent="UI/Panel"]
+[node name="StaminaBar" type="ProgressBar" parent="UI/Panel" unique_id=2122529244]
+layout_mode = 0
 offset_left = 12.0
 offset_top = 76.0
-offset_right = 214.0
+offset_right = 334.0
 offset_bottom = 92.0
-max_value = 5.0
-value = 5.0
+max_value = 100.0
+value = 100.0
 show_percentage = false
 
-[node name="PostureLabel" type="Label" parent="UI/Panel"]
+[node name="ExecutionHint" type="Label" parent="UI/Panel" unique_id=1067527648]
+layout_mode = 0
 offset_left = 12.0
 offset_top = 98.0
-offset_right = 214.0
+offset_right = 334.0
 offset_bottom = 116.0
-text = "Posture 0/100"
-
-[node name="PostureBar" type="ProgressBar" parent="UI/Panel"]
-offset_left = 12.0
-offset_top = 118.0
-offset_right = 214.0
-offset_bottom = 134.0
-max_value = 100.0
-value = 0.0
-show_percentage = false
+text = "Break enemy posture, then attack to execute"

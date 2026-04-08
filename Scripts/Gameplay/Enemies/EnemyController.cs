@@ -9,12 +9,15 @@ namespace EchoSpace.Gameplay.Enemies;
 
 public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectResponder
 {
+    public event Action<float, float, bool>? PostureChanged;
+
     private enum EnemyPhase
     {
         Patrol,
         Windup,
         Attack,
         Cooldown,
+        Broken,
         Dying,
     }
 
@@ -28,6 +31,7 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
     [Export] public float AttackWindupDuration { get; set; } = 0.42f;
     [Export] public float AttackActiveDuration { get; set; } = 0.14f;
     [Export] public float AttackCooldownDuration { get; set; } = 0.55f;
+    [Export] public float BrokenDuration { get; set; } = 2.2f;
     [Export] public int AttackDamage { get; set; } = 1;
     [Export] public float AttackPostureDamage { get; set; } = 28f;
     [Export] public float DamageFlashDuration { get; set; } = 0.12f;
@@ -77,6 +81,8 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
         {
             _attackCollisionShape.Disabled = true;
         }
+
+        PostureChanged?.Invoke(_currentPosture, MaxPosture, false);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -97,6 +103,9 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
             case EnemyPhase.Cooldown:
                 TickCooldown(delta);
                 break;
+            case EnemyPhase.Broken:
+                TickBroken(delta);
+                break;
             case EnemyPhase.Dying:
                 TickDeath(delta);
                 return;
@@ -116,15 +125,28 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
             return;
         }
 
+        if (_phase == EnemyPhase.Broken)
+        {
+            BeginDeathSequence();
+            return;
+        }
+
         _currentHealth = Mathf.Max(0, _currentHealth - damageInfo.Amount);
         _currentPosture = Mathf.Clamp(_currentPosture + damageInfo.PostureDamage, 0f, MaxPosture);
+        PostureChanged?.Invoke(_currentPosture, MaxPosture, false);
         Velocity += damageInfo.Knockback;
         _damageFlashRemaining = DamageFlashDuration;
         UpdateVisualTint();
 
-        if (_currentHealth <= 0 || _currentPosture >= MaxPosture)
+        if (_currentHealth <= 0)
         {
             BeginDeathSequence();
+            return;
+        }
+
+        if (_currentPosture >= MaxPosture)
+        {
+            EnterBrokenState();
         }
     }
 
@@ -136,11 +158,12 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
         }
 
         _currentPosture = Mathf.Clamp(_currentPosture + postureDamage, 0f, MaxPosture);
+        PostureChanged?.Invoke(_currentPosture, MaxPosture, false);
         Velocity = new Vector2(-_moveDirection * 80f, Velocity.Y);
 
         if (_currentPosture >= MaxPosture)
         {
-            BeginDeathSequence();
+            EnterBrokenState();
             return;
         }
 
@@ -214,6 +237,24 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
         if (_phaseRemaining <= 0d)
         {
             SetPhase(EnemyPhase.Patrol, 0d);
+        }
+    }
+
+    private void TickBroken(double delta)
+    {
+        Velocity = new Vector2(0f, Velocity.Y);
+        _phaseRemaining -= delta;
+
+        if (_visualRoot != null)
+        {
+            _visualRoot.Modulate = new Color(1f, 0.82f, 0.48f, 1f);
+        }
+
+        if (_phaseRemaining <= 0d)
+        {
+            _currentPosture = MaxPosture * 0.35f;
+            PostureChanged?.Invoke(_currentPosture, MaxPosture, false);
+            SetPhase(EnemyPhase.Cooldown, AttackCooldownDuration);
         }
     }
 
@@ -362,36 +403,35 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
         }
 
         _currentPosture = Mathf.Max(0f, _currentPosture - PostureRecoveryPerSecond * (float)delta);
+        PostureChanged?.Invoke(_currentPosture, MaxPosture, _phase == EnemyPhase.Broken);
     }
 
     private void ProcessAttackHits()
     {
-        if (_attackBox == null)
+        if (_player == null || !IsPlayerRelevant())
         {
             return;
         }
 
-        foreach (var area in _attackBox.GetOverlappingAreas())
+        if (MathF.Abs(_player.GlobalPosition.X - GlobalPosition.X) > AttackRange + 12f
+            || MathF.Abs(_player.GlobalPosition.Y - GlobalPosition.Y) > 40f)
         {
-            if (area is not DamageReceiver damageReceiver)
-            {
-                continue;
-            }
-
-            var instanceId = damageReceiver.GetInstanceId();
-            if (!_attackVictims.Add(instanceId))
-            {
-                continue;
-            }
-
-            damageReceiver.ReceiveDamage(new DamageInfo(
-                AttackDamage,
-                AffiliatedWorld,
-                this,
-                new Vector2(_moveDirection * 140f, -60f),
-                AttackPostureDamage,
-                true));
+            return;
         }
+
+        var instanceId = _player.GetInstanceId();
+        if (!_attackVictims.Add(instanceId))
+        {
+            return;
+        }
+
+        _player.ApplyDamage(new DamageInfo(
+            AttackDamage,
+            AffiliatedWorld,
+            this,
+            new Vector2(_moveDirection * 140f, -60f),
+            AttackPostureDamage,
+            true));
     }
 
     private void EnableAttackHitbox()
@@ -424,7 +464,17 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
         DisableAttackHitbox();
         Velocity = Vector2.Zero;
         DisableCollisionRecursive(this);
+        PostureChanged?.Invoke(MaxPosture, MaxPosture, true);
         UpdateVisualTint();
+    }
+
+    private void EnterBrokenState()
+    {
+        _currentPosture = MaxPosture;
+        PostureChanged?.Invoke(_currentPosture, MaxPosture, true);
+        SetPhase(EnemyPhase.Broken, BrokenDuration);
+        DisableAttackHitbox();
+        Velocity = Vector2.Zero;
     }
 
     private void UpdateVisualTint()
@@ -443,6 +493,12 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
         if (_phase == EnemyPhase.Cooldown)
         {
             _visualRoot.Modulate = new Color(0.95f, 0.95f, 1f, 1f);
+            return;
+        }
+
+        if (_phase == EnemyPhase.Broken)
+        {
+            _visualRoot.Modulate = new Color(1f, 0.82f, 0.48f, 1f);
             return;
         }
 
