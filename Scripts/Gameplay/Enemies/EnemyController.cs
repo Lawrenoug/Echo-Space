@@ -9,6 +9,7 @@ namespace EchoSpace.Gameplay.Enemies;
 
 public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectResponder
 {
+    public event Action<int, int>? HealthChanged;
     public event Action<float, float, bool>? PostureChanged;
 
     private enum EnemyPhase
@@ -58,6 +59,8 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
     private Vector2 _visualBaseScale = Vector2.One;
     private Vector2 _visualBasePosition = Vector2.Zero;
 
+    public int CurrentHealth => _currentHealth;
+
     public override void _Ready()
     {
         _currentHealth = MaxHealth;
@@ -82,6 +85,7 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
             _attackCollisionShape.Disabled = true;
         }
 
+        HealthChanged?.Invoke(_currentHealth, MaxHealth);
         PostureChanged?.Invoke(_currentPosture, MaxPosture, false);
     }
 
@@ -132,6 +136,7 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
         }
 
         _currentHealth = Mathf.Max(0, _currentHealth - damageInfo.Amount);
+        HealthChanged?.Invoke(_currentHealth, MaxHealth);
         _currentPosture = Mathf.Clamp(_currentPosture + damageInfo.PostureDamage, 0f, MaxPosture);
         PostureChanged?.Invoke(_currentPosture, MaxPosture, false);
         Velocity += damageInfo.Knockback;

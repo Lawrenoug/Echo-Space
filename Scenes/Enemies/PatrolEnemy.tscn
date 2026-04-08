@@ -53,12 +53,23 @@ disabled = true
 position = Vector2(0, -28)
 script = ExtResource("4")
 
-[node name="Background" type="Polygon2D" parent="PostureBar"]
+[node name="HealthBackground" type="Polygon2D" parent="PostureBar"]
+position = Vector2(0, -5)
+polygon = PackedVector2Array(-20, -3, 20, -3, 20, 3, -20, 3)
+color = Color(0.12, 0.22, 0.12, 0.9)
+
+[node name="HealthFill" type="Polygon2D" parent="PostureBar"]
+position = Vector2(-20, -5)
+polygon = PackedVector2Array(0, -2, 40, -2, 40, 2, 0, 2)
+color = Color(0.48, 0.92, 0.52, 1)
+
+[node name="PostureBackground" type="Polygon2D" parent="PostureBar"]
+position = Vector2(0, 5)
 polygon = PackedVector2Array(-20, -3, 20, -3, 20, 3, -20, 3)
 color = Color(0.18, 0.1, 0.1, 0.85)
 
-[node name="Fill" type="Polygon2D" parent="PostureBar"]
-position = Vector2(-20, 0)
+[node name="PostureFill" type="Polygon2D" parent="PostureBar"]
+position = Vector2(-20, 5)
 polygon = PackedVector2Array(0, -2, 40, -2, 40, 2, 0, 2)
 color = Color(0.95, 0.45, 0.35, 1)
 

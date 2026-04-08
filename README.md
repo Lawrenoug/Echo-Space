@@ -35,7 +35,7 @@ This repository currently contains a playable prototype layer for that direction
   - attack hitbox
   - mouse-based attack / guard
   - deflect timing window
-  - hidden player HP
+  - visible player HP bar
   - visible player stamina bar
 - Enemy combat prototype
   - patrol movement
@@ -43,9 +43,10 @@ This repository currently contains a playable prototype layer for that direction
   - attack windup
   - active attack phase
   - cooldown
+  - visible HP bar
+  - visible posture bar
   - breakable posture state
   - execution vulnerability after posture break
-  - world-space posture bar
   - posture gain on hit / deflect
   - hit flash and death fade
 - Dual-world gameplay foundation
@@ -96,9 +97,11 @@ These are still expected to be filled in manually later:
 
 ## Current Prototype Notes
 
-- The visible player resource bar is now stamina, not HP.
-- Enemy posture now has a visible bar above the enemy.
+- The player currently has both HP and stamina UI.
+- Enemy UI currently shows both HP and posture.
 - When enemy posture fills up, the enemy enters a temporary broken state.
+- Left click attacks reduce enemy HP and also chip some posture.
+- Deflecting is meant to build enemy posture faster than normal attacks.
 - Attacking a broken enemy currently executes it immediately.
 - The current guard-break behavior is also a prototype and will likely be refined later.
 

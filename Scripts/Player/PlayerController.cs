@@ -11,6 +11,7 @@ namespace EchoSpace.Player;
 
 public partial class PlayerController : CharacterBody2D, IDamageable
 {
+    public event Action<int, int>? HealthChanged;
     public event Action<float, float>? StaminaChanged;
 
     [ExportGroup("Movement")]
@@ -105,10 +106,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
             _attackProbeCollisionShape.Disabled = true;
         }
 
+        HealthChanged?.Invoke(_currentHealth, MaxHealth);
         StaminaChanged?.Invoke(_currentStamina, MaxStamina);
     }
 
-    public override void _UnhandledInput(InputEvent @event)
+    public override void _Input(InputEvent @event)
     {
         var now = GetGameTime();
 
@@ -324,6 +326,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
         _lastDamageTakenAt = now;
         _currentHealth = Mathf.Max(0, _currentHealth - damageInfo.Amount);
         Velocity += damageInfo.Knockback;
+        HealthChanged?.Invoke(_currentHealth, MaxHealth);
         ConsumeStamina(Mathf.Max(GuardHitStaminaCost * 0.65f, damageInfo.PostureDamage * 0.5f));
 
         if (_bodyVisual != null)

@@ -29,12 +29,18 @@ window/size/viewport_height=1080
 
 project/assembly_name="EchoSpace"
 
+[input]
+
+attack={
+"deadzone": 0.2,
+"events": []
+}
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
 
 [rendering]
 
-rendering_device/driver.windows="vulkan"
 2d/snap/snap_2d_transforms_to_pixel=true
 2d/snap/snap_2d_vertices_to_pixel=true

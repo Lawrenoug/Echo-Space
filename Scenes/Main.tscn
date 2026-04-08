@@ -56,13 +56,6 @@ shape = SubResource("2")
 
 [node name="DualWorldObject" type="Node" parent="RealityPlatform" unique_id=274693524]
 script = ExtResource("4")
-target_root_path = NodePath("..")
-visual_root_path = NodePath("../Visual")
-collision_root_path = NodePath("../StaticBody2D")
-exists_in_reality = true
-exists_in_soul = false
-reality_position_offset = Vector2(0, 0)
-soul_position_offset = Vector2(0, 24)
 
 [node name="SoulBridge" type="Node2D" parent="." unique_id=120879509]
 position = Vector2(640, 190)
@@ -78,13 +71,6 @@ shape = SubResource("3")
 
 [node name="DualWorldObject" type="Node" parent="SoulBridge" unique_id=243965015]
 script = ExtResource("4")
-target_root_path = NodePath("..")
-visual_root_path = NodePath("../Visual")
-collision_root_path = NodePath("../StaticBody2D")
-exists_in_reality = false
-exists_in_soul = true
-reality_position_offset = Vector2(0, 16)
-soul_position_offset = Vector2(0, 0)
 
 [node name="Player" parent="." unique_id=1704508750 instance=ExtResource("2")]
 
@@ -99,14 +85,16 @@ script = ExtResource("3")
 label_path = NodePath("Panel/Label")
 tint_path = NodePath("../WorldTint")
 player_path = NodePath("../Player")
+health_label_path = NodePath("Panel/HealthLabel")
+health_bar_path = NodePath("Panel/HealthBar")
 stamina_label_path = NodePath("Panel/StaminaLabel")
 stamina_bar_path = NodePath("Panel/StaminaBar")
 
 [node name="Panel" type="Panel" parent="UI" unique_id=466358434]
 offset_left = 14.0
 offset_top = 14.0
-offset_right = 358.0
-offset_bottom = 148.0
+offset_right = 524.0
+offset_bottom = 176.0
 
 [node name="Label" type="Label" parent="UI/Panel" unique_id=296311281]
 layout_mode = 0
@@ -124,28 +112,45 @@ offset_right = 334.0
 offset_bottom = 52.0
 text = "Move: A/D  Jump: Space  Attack: Left Mouse  Guard: Right Mouse"
 
-[node name="StaminaLabel" type="Label" parent="UI/Panel" unique_id=1778622566]
+[node name="HealthLabel" type="Label" parent="UI/Panel"]
 layout_mode = 0
 offset_left = 12.0
 offset_top = 56.0
 offset_right = 334.0
 offset_bottom = 74.0
-text = "Stamina 100/100"
+text = "HP 5/5"
 
-[node name="StaminaBar" type="ProgressBar" parent="UI/Panel" unique_id=2122529244]
+[node name="HealthBar" type="ProgressBar" parent="UI/Panel"]
 layout_mode = 0
 offset_left = 12.0
 offset_top = 76.0
 offset_right = 334.0
 offset_bottom = 92.0
-max_value = 100.0
+max_value = 5.0
+value = 5.0
+show_percentage = false
+
+[node name="StaminaLabel" type="Label" parent="UI/Panel" unique_id=1778622566]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 98.0
+offset_right = 334.0
+offset_bottom = 116.0
+text = "Stamina 100/100"
+
+[node name="StaminaBar" type="ProgressBar" parent="UI/Panel" unique_id=2122529244]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 118.0
+offset_right = 334.0
+offset_bottom = 134.0
 value = 100.0
 show_percentage = false
 
 [node name="ExecutionHint" type="Label" parent="UI/Panel" unique_id=1067527648]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 98.0
+offset_top = 142.0
 offset_right = 334.0
-offset_bottom = 116.0
+offset_bottom = 160.0
 text = "Break enemy posture, then attack to execute"
