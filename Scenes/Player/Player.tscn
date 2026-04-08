@@ -36,5 +36,5 @@ disabled = true
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position_smoothing_enabled = false
-zoom = Vector2(1.2, 1.2)
+zoom = Vector2(1, 1)
 enabled = true

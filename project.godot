@@ -11,18 +11,23 @@ config_version=5
 [application]
 
 config/name="Echo Space"
-config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
 run/main_scene="res://Scenes/Main.tscn"
-
-[dotnet]
-
-project/assembly_name="EchoSpace"
+config/features=PackedStringArray("4.6", "C#", "Forward Plus")
+config/icon="res://icon.svg"
 
 [autoload]
 
 WorldManager="*res://Scripts/Core/World/WorldManager.cs"
 PoolManager="*res://Scripts/Core/Pooling/PoolManager.cs"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+
+[dotnet]
+
+project/assembly_name="EchoSpace"
 
 [physics]
 
@@ -30,6 +35,6 @@ PoolManager="*res://Scripts/Core/Pooling/PoolManager.cs"
 
 [rendering]
 
+rendering_device/driver.windows="vulkan"
 2d/snap/snap_2d_transforms_to_pixel=true
 2d/snap/snap_2d_vertices_to_pixel=true
-rendering_device/driver.windows="d3d12"
