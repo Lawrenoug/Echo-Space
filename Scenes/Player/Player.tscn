@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Player/PlayerController.cs" id="1"]
+
+[sub_resource type="RectangleShape2D" id="1"]
+size = Vector2(22, 34)
+
+[sub_resource type="RectangleShape2D" id="2"]
+size = Vector2(18, 8)
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1")
+position = Vector2(120, 220)
+floor_stop_on_slope = true
+
+[node name="Body" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-11, -17, 11, -17, 11, 17, -11, 17)
+color = Color(0.243137, 0.278431, 0.384314, 1)
+
+[node name="Feet" type="Polygon2D" parent="."]
+position = Vector2(0, 10)
+polygon = PackedVector2Array(-8, 0, 8, 0, 6, 4, -6, 4)
+color = Color(0.972549, 0.721569, 0.317647, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")
+
+[node name="AttackProbe" type="Area2D" parent="."]
+position = Vector2(18, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackProbe"]
+shape = SubResource("2")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+zoom = Vector2(1.2, 1.2)
+enabled = true
