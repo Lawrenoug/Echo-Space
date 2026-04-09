@@ -9,12 +9,16 @@ public partial class EnemyPostureBar : Node2D
     [Export] public NodePath? HealthFillPath { get; set; } = new("HealthFill");
     [Export] public NodePath? PostureBackgroundPath { get; set; } = new("PostureBackground");
     [Export] public NodePath? PostureFillPath { get; set; } = new("PostureFill");
+    [Export] public NodePath? ExecutionMarkerPath { get; set; } = new("ExecutionMarker");
 
     private Polygon2D? _healthBackground;
     private Polygon2D? _healthFill;
     private Polygon2D? _postureBackground;
     private Polygon2D? _postureFill;
+    private Node2D? _executionMarker;
     private EnemyController? _enemy;
+    private Vector2 _executionMarkerBasePosition = Vector2.Zero;
+    private bool _isBroken;
 
     public override void _Ready()
     {
@@ -22,8 +26,15 @@ public partial class EnemyPostureBar : Node2D
         _healthFill = HealthFillPath != null && !HealthFillPath.IsEmpty ? GetNodeOrNull<Polygon2D>(HealthFillPath) : null;
         _postureBackground = PostureBackgroundPath != null && !PostureBackgroundPath.IsEmpty ? GetNodeOrNull<Polygon2D>(PostureBackgroundPath) : null;
         _postureFill = PostureFillPath != null && !PostureFillPath.IsEmpty ? GetNodeOrNull<Polygon2D>(PostureFillPath) : null;
+        _executionMarker = ExecutionMarkerPath != null && !ExecutionMarkerPath.IsEmpty ? GetNodeOrNull<Node2D>(ExecutionMarkerPath) : null;
         _enemy = GetParentOrNull<EnemyController>();
         Visible = false;
+
+        if (_executionMarker != null)
+        {
+            _executionMarkerBasePosition = _executionMarker.Position;
+            _executionMarker.Visible = false;
+        }
 
         if (_enemy != null)
         {
@@ -32,6 +43,28 @@ public partial class EnemyPostureBar : Node2D
             UpdateHealthBar(_enemy.CurrentHealth, _enemy.MaxHealth);
             UpdateBar(0f, _enemy.MaxPosture, false);
         }
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_executionMarker == null)
+        {
+            return;
+        }
+
+        if (!_isBroken)
+        {
+            _executionMarker.Visible = false;
+            _executionMarker.Position = _executionMarkerBasePosition;
+            _executionMarker.Scale = Vector2.One;
+            return;
+        }
+
+        var pulse = 0.5f + 0.5f * Mathf.Sin((float)(Time.GetTicksMsec() / 1000.0 * 8.0));
+        _executionMarker.Visible = true;
+        _executionMarker.Position = _executionMarkerBasePosition + new Vector2(0f, -3f * pulse);
+        _executionMarker.Scale = Vector2.One * (1f + 0.12f * pulse);
+        _executionMarker.Modulate = new Color(1f, 0.9f, 0.58f, 0.72f + 0.28f * pulse);
     }
 
     public override void _ExitTree()
@@ -64,6 +97,7 @@ public partial class EnemyPostureBar : Node2D
             return;
         }
 
+        _isBroken = isBroken;
         var ratio = Mathf.Clamp(currentValue / maxValue, 0f, 1f);
         _postureFill.Scale = new Vector2(ratio, 1f);
         _postureFill.Modulate = isBroken

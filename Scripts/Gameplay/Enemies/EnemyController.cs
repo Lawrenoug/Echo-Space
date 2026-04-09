@@ -60,9 +60,11 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
     private Vector2 _visualBasePosition = Vector2.Zero;
 
     public int CurrentHealth => _currentHealth;
+    public bool IsBroken => _phase == EnemyPhase.Broken;
 
     public override void _Ready()
     {
+        AddToGroup("enemy");
         _currentHealth = MaxHealth;
         _spawnPosition = GlobalPosition;
         _visualRoot = VisualRootPath != null && !VisualRootPath.IsEmpty
@@ -87,6 +89,34 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
 
         HealthChanged?.Invoke(_currentHealth, MaxHealth);
         PostureChanged?.Invoke(_currentPosture, MaxPosture, false);
+    }
+
+    public bool CanBeExecutedBy(PlayerController player, float horizontalRange, float verticalTolerance)
+    {
+        if (_phase != EnemyPhase.Broken || _phase == EnemyPhase.Dying)
+        {
+            return false;
+        }
+
+        var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
+        if (currentWorld != AffiliatedWorld)
+        {
+            return false;
+        }
+
+        var delta = player.GlobalPosition - GlobalPosition;
+        return MathF.Abs(delta.X) <= horizontalRange && MathF.Abs(delta.Y) <= verticalTolerance;
+    }
+
+    public bool TryExecute(PlayerController executor)
+    {
+        if (!CanBeExecutedBy(executor, executor.ExecutionRange + 12f, executor.ExecutionVerticalTolerance + 12f))
+        {
+            return false;
+        }
+
+        BeginDeathSequence();
+        return true;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -252,7 +282,9 @@ public partial class EnemyController : CharacterBody2D, IDamageable, IDeflectRes
 
         if (_visualRoot != null)
         {
+            var pulse = 1f + 0.08f * Mathf.Sin((float)(Time.GetTicksMsec() / 1000.0 * 14.0));
             _visualRoot.Modulate = new Color(1f, 0.82f, 0.48f, 1f);
+            _visualRoot.Scale = new Vector2(Mathf.Abs(_visualBaseScale.X) * _moveDirection * pulse, _visualBaseScale.Y * pulse);
         }
 
         if (_phaseRemaining <= 0d)

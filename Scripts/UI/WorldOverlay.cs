@@ -90,8 +90,6 @@ public partial class WorldOverlay : CanvasLayer
 
     private void OnPlayerStaminaChanged(float currentStamina, float maxStamina)
     {
-        GD.Print($"Stamina changed: {currentStamina}/{maxStamina}");
-
         _lastDisplayedStamina = Mathf.RoundToInt(currentStamina);
         _lastDisplayedMaxStamina = Mathf.RoundToInt(maxStamina);
 
@@ -109,8 +107,6 @@ public partial class WorldOverlay : CanvasLayer
 
     private void OnPlayerHealthChanged(int currentHealth, int maxHealth)
     {
-        GD.Print($"Health changed: {currentHealth}/{maxHealth}");
-
         _lastDisplayedHealth = currentHealth;
         _lastDisplayedMaxHealth = maxHealth;
 
@@ -135,8 +131,6 @@ public partial class WorldOverlay : CanvasLayer
         _staminaBar ??= ResolveNode<ProgressBar>(StaminaBarPath, "Panel/StaminaBar");
         _tint ??= ResolveNode<CanvasModulate>(TintPath, "../WorldTint");
         _player ??= ResolvePlayer();
-
-        GD.Print($"WorldOverlay bindings -> Player: {_player != null}, HealthBar: {_healthBar != null}, StaminaBar: {_staminaBar != null}, HealthLabel: {_healthLabel != null}, StaminaLabel: {_staminaLabel != null}");
     }
 
     private bool TrySubscribeToPlayer()

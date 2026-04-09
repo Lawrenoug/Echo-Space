@@ -24,7 +24,17 @@ public abstract class PlayerState : State<PlayerController>
 
     protected bool TryEnterAttack()
     {
-        if (!Context.HasBufferedAttack() || Context.CurrentStamina < Context.AttackStaminaCost)
+        if (!Context.HasBufferedAttack())
+        {
+            return false;
+        }
+
+        var executionTarget = Context.FindExecutionTarget();
+        var requiredStamina = executionTarget != null
+            ? Context.ExecutionStaminaCost
+            : Context.AttackStaminaCost;
+
+        if (Context.CurrentStamina < requiredStamina)
         {
             return false;
         }
