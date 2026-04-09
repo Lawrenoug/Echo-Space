@@ -4,6 +4,7 @@ using EchoSpace.Core.Input;
 using EchoSpace.Gameplay.Inventory;
 using EchoSpace.Gameplay.Progression;
 using Godot;
+using System.Collections.Generic;
 using System.Text;
 
 namespace EchoSpace.UI;
@@ -35,6 +36,7 @@ public partial class WorldOverlay : CanvasLayer
     private PlayerController? _player;
     private InventoryManager? _inventoryManager;
     private ProgressionManager? _progressionManager;
+    private readonly List<Control> _systemPanelStack = new();
     private bool _isSubscribed;
     private int _lastDisplayedHealth = int.MinValue;
     private int _lastDisplayedMaxHealth = int.MinValue;
@@ -73,8 +75,7 @@ public partial class WorldOverlay : CanvasLayer
 
         RefreshInventoryPanel();
         RefreshProgressionPanel();
-        SetPanelVisible(_inventoryPanel, false);
-        SetPanelVisible(_progressionPanel, false);
+        CloseAllSystemPanels();
     }
 
     public override void _Process(double delta)
@@ -301,9 +302,7 @@ public partial class WorldOverlay : CanvasLayer
     {
         if (@event.IsActionPressed(GameInputActions.ToggleInventory))
         {
-            var shouldOpen = !(_inventoryPanel?.Visible ?? false);
-            SetPanelVisible(_inventoryPanel, shouldOpen);
-            SetPanelVisible(_progressionPanel, false);
+            ToggleSystemPanel(_inventoryPanel);
             RefreshInventoryPanel();
             GetViewport().SetInputAsHandled();
             return;
@@ -311,9 +310,7 @@ public partial class WorldOverlay : CanvasLayer
 
         if (@event.IsActionPressed(GameInputActions.ToggleProgression))
         {
-            var shouldOpen = !(_progressionPanel?.Visible ?? false);
-            SetPanelVisible(_progressionPanel, shouldOpen);
-            SetPanelVisible(_inventoryPanel, false);
+            ToggleSystemPanel(_progressionPanel);
             RefreshProgressionPanel();
             GetViewport().SetInputAsHandled();
             return;
@@ -326,8 +323,7 @@ public partial class WorldOverlay : CanvasLayer
 
         if (keyEvent.Keycode == Key.Escape)
         {
-            SetPanelVisible(_inventoryPanel, false);
-            SetPanelVisible(_progressionPanel, false);
+            CloseTopSystemPanel();
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -484,13 +480,74 @@ public partial class WorldOverlay : CanvasLayer
         RefreshProgressionPanel();
     }
 
-    private static void SetPanelVisible(CanvasItem? panel, bool visible)
+    private void ToggleSystemPanel(Control? panel)
     {
         if (panel == null)
         {
             return;
         }
 
-        panel.Visible = visible;
+        if (_systemPanelStack.Count > 0 && ReferenceEquals(_systemPanelStack[^1], panel))
+        {
+            CloseTopSystemPanel();
+            return;
+        }
+
+        OpenSystemPanel(panel);
+    }
+
+    private void OpenSystemPanel(Control panel)
+    {
+        _systemPanelStack.Remove(panel);
+        _systemPanelStack.Add(panel);
+        UpdateSystemPanelLayering();
+    }
+
+    private void CloseTopSystemPanel()
+    {
+        if (_systemPanelStack.Count == 0)
+        {
+            return;
+        }
+
+        _systemPanelStack.RemoveAt(_systemPanelStack.Count - 1);
+        UpdateSystemPanelLayering();
+    }
+
+    private void CloseAllSystemPanels()
+    {
+        _systemPanelStack.Clear();
+        UpdateSystemPanelLayering();
+    }
+
+    private void UpdateSystemPanelLayering()
+    {
+        ApplyPanelLayer(_inventoryPanel);
+        ApplyPanelLayer(_progressionPanel);
+    }
+
+    private void ApplyPanelLayer(Control? panel)
+    {
+        if (panel == null)
+        {
+            return;
+        }
+
+        var stackIndex = _systemPanelStack.IndexOf(panel);
+        if (stackIndex < 0)
+        {
+            panel.Visible = false;
+            panel.ZIndex = 0;
+            panel.Modulate = Colors.White;
+            return;
+        }
+
+        panel.Visible = true;
+        panel.ZIndex = 10 + stackIndex;
+
+        var isTop = stackIndex == _systemPanelStack.Count - 1;
+        panel.Modulate = isTop
+            ? new Color(1f, 1f, 1f, 1f)
+            : new Color(0.82f, 0.82f, 0.82f, 0.82f);
     }
 }
