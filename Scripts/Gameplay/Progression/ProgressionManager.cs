@@ -6,13 +6,15 @@ namespace EchoSpace.Gameplay.Progression;
 
 public partial class ProgressionManager : Node
 {
+    public static ProgressionManager? Instance { get; private set; }
+
     public event Action<int>? LevelChanged;
     public event Action<int>? UnspentPointsChanged;
     public event Action<PlayerAttributeType, int>? AttributeChanged;
     public event Action? AttributesReset;
 
     [Export] public int StartingLevel { get; set; } = 1;
-    [Export] public int StartingUnspentPoints { get; set; } = 0;
+    [Export] public int StartingUnspentPoints { get; set; } = 5;
     [Export] public int BaseAttributeLevel { get; set; } = 1;
     [Export] public int AttributeHardCap { get; set; } = 20;
     [Export] public int PointsPerLevel { get; set; } = 1;
@@ -26,7 +28,16 @@ public partial class ProgressionManager : Node
 
     public override void _Ready()
     {
+        Instance = this;
         EnsureInitialized();
+    }
+
+    public override void _ExitTree()
+    {
+        if (ReferenceEquals(Instance, this))
+        {
+            Instance = null;
+        }
     }
 
     public int GetAttributeLevel(PlayerAttributeType attributeType)

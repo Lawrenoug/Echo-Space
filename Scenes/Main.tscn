@@ -189,6 +189,10 @@ health_label_path = NodePath("Panel/HealthLabel")
 health_bar_path = NodePath("Panel/HealthBar")
 stamina_label_path = NodePath("Panel/StaminaLabel")
 stamina_bar_path = NodePath("Panel/StaminaBar")
+inventory_panel_path = NodePath("InventoryPanel")
+inventory_text_path = NodePath("InventoryPanel/Body")
+progression_panel_path = NodePath("ProgressionPanel")
+progression_text_path = NodePath("ProgressionPanel/Body")
 
 [node name="Panel" type="Panel" parent="UI" unique_id=466358434]
 offset_left = 14.0
@@ -232,3 +236,41 @@ offset_bottom = 96.0
 modulate = Color(0.45, 0.84, 1, 1)
 value = 100.0
 show_percentage = false
+
+[node name="InventoryPanel" type="Panel" parent="UI" unique_id=677510331]
+visible = false
+offset_left = 32.0
+offset_top = 140.0
+offset_right = 470.0
+offset_bottom = 560.0
+
+[node name="Body" type="RichTextLabel" parent="UI/InventoryPanel" unique_id=990338136]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+bbcode_enabled = false
+scroll_active = true
+fit_content = false
+
+[node name="ProgressionPanel" type="Panel" parent="UI" unique_id=404296118]
+visible = false
+offset_left = 500.0
+offset_top = 140.0
+offset_right = 968.0
+offset_bottom = 560.0
+
+[node name="Body" type="RichTextLabel" parent="UI/ProgressionPanel" unique_id=934611173]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+bbcode_enabled = false
+scroll_active = true
+fit_content = false

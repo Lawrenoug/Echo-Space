@@ -6,12 +6,15 @@ namespace EchoSpace.Gameplay.Inventory;
 
 public partial class InventoryManager : Node
 {
+    public static InventoryManager? Instance { get; private set; }
+
     public event Action? InventoryChanged;
     public event Action<int, InventorySlot>? SlotChanged;
     public event Action<ItemDefinition, int>? ItemAdded;
     public event Action<ItemDefinition, int>? ItemRemoved;
 
     [Export] public int Capacity { get; set; } = 24;
+    [Export] public bool SeedDebugItems { get; set; } = true;
 
     private readonly List<InventorySlot> _slots = new();
     private bool _isInitialized;
@@ -20,7 +23,17 @@ public partial class InventoryManager : Node
 
     public override void _Ready()
     {
+        Instance = this;
         EnsureInitialized();
+        SeedPrototypeItemsIfNeeded();
+    }
+
+    public override void _ExitTree()
+    {
+        if (ReferenceEquals(Instance, this))
+        {
+            Instance = null;
+        }
     }
 
     public bool TryAddItem(ItemDefinition item, int quantity = 1)
@@ -189,5 +202,51 @@ public partial class InventoryManager : Node
         }
 
         _isInitialized = true;
+    }
+
+    private void SeedPrototypeItemsIfNeeded()
+    {
+        if (!SeedDebugItems)
+        {
+            return;
+        }
+
+        var hasItems = false;
+        foreach (var slot in _slots)
+        {
+            if (!slot.IsEmpty)
+            {
+                hasItems = true;
+                break;
+            }
+        }
+
+        if (hasItems)
+        {
+            return;
+        }
+
+        AddItem(CreatePrototypeItem("healing_flask", "治愈药瓶", "恢复用的原型道具。", ItemCategory.Consumable, 9), 3);
+        AddItem(CreatePrototypeItem("spirit_ore", "灵魂矿石", "后续可用于强化或交换。", ItemCategory.Material, 99), 12);
+        AddItem(CreatePrototypeItem("old_key", "旧钥匙", "用于测试背包与关键道具显示。", ItemCategory.KeyItem, 1, true), 1);
+    }
+
+    private static ItemDefinition CreatePrototypeItem(
+        string itemId,
+        string displayName,
+        string description,
+        ItemCategory category,
+        int maxStack,
+        bool isUnique = false)
+    {
+        return new ItemDefinition
+        {
+            ItemId = itemId,
+            DisplayName = displayName,
+            Description = description,
+            Category = category,
+            MaxStack = maxStack,
+            IsUnique = isUnique,
+        };
     }
 }

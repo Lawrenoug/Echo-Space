@@ -10,6 +10,8 @@ public static class GameInputActions
     public const string Attack = "attack";
     public const string Guard = "guard";
     public const string SwitchWorld = "switch_world";
+    public const string ToggleInventory = "toggle_inventory";
+    public const string ToggleProgression = "toggle_progression";
 
     public static void EnsureDefaults()
     {
@@ -21,6 +23,8 @@ public static class GameInputActions
         EnsureMouseAction(Attack, MouseButton.Left);
         EnsureMouseAction(Guard, MouseButton.Right);
         EnsureAction(SwitchWorld, Key.Tab);
+        EnsureAction(ToggleInventory, Key.I);
+        EnsureAction(ToggleProgression, Key.P);
     }
 
     private static void EnsureAction(string actionName, params Key[] keys)
