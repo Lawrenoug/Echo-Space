@@ -8,13 +8,19 @@
 [ext_resource type="PackedScene" path="res://Scenes/Environment/BreakableWall.tscn" id="6"]
 
 [sub_resource type="RectangleShape2D" id="1"]
-size = Vector2(900, 48)
+size = Vector2(4200, 64)
 
 [sub_resource type="RectangleShape2D" id="2"]
-size = Vector2(180, 20)
+size = Vector2(320, 24)
 
 [sub_resource type="RectangleShape2D" id="3"]
-size = Vector2(100, 20)
+size = Vector2(220, 24)
+
+[sub_resource type="RectangleShape2D" id="4"]
+size = Vector2(180, 24)
+
+[sub_resource type="RectangleShape2D" id="5"]
+size = Vector2(140, 24)
 
 [node name="Main" type="Node2D" unique_id=195052086]
 script = ExtResource("1")
@@ -26,63 +32,157 @@ color = Color(1, 0.972549, 0.921569, 1)
 layer = -10
 
 [node name="ColorRect" type="ColorRect" parent="Background" unique_id=1243766741]
-offset_left = -2000.0
-offset_top = -2000.0
-offset_right = 2000.0
-offset_bottom = 2000.0
+offset_left = -3000.0
+offset_top = -2200.0
+offset_right = 6000.0
+offset_bottom = 2200.0
 color = Color(0.901961, 0.894118, 0.87451, 1)
 
 [node name="Ground" type="StaticBody2D" parent="." unique_id=1225502027]
-position = Vector2(350, 340)
+position = Vector2(2100, 612)
 
 [node name="Visual" type="Polygon2D" parent="Ground" unique_id=555160238]
 color = Color(0.286275, 0.309804, 0.313726, 1)
-polygon = PackedVector2Array(-450, -24, 450, -24, 450, 24, -450, 24)
+polygon = PackedVector2Array(-2100, -32, 2100, -32, 2100, 32, -2100, 32)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=2093765322]
 shape = SubResource("1")
 
+[node name="LowerPlatformA" type="StaticBody2D" parent="." unique_id=160417900]
+position = Vector2(560, 500)
+
+[node name="Visual" type="Polygon2D" parent="LowerPlatformA" unique_id=406315688]
+color = Color(0.360784, 0.396078, 0.423529, 1)
+polygon = PackedVector2Array(-110, -12, 110, -12, 110, 12, -110, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LowerPlatformA" unique_id=761332940]
+shape = SubResource("3")
+
+[node name="LowerPlatformB" type="StaticBody2D" parent="." unique_id=1202289117]
+position = Vector2(1180, 470)
+
+[node name="Visual" type="Polygon2D" parent="LowerPlatformB" unique_id=1344034171]
+color = Color(0.360784, 0.396078, 0.423529, 1)
+polygon = PackedVector2Array(-160, -12, 160, -12, 160, 12, -160, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LowerPlatformB" unique_id=188812625]
+shape = SubResource("2")
+
+[node name="MidPlatformA" type="StaticBody2D" parent="." unique_id=268866702]
+position = Vector2(880, 360)
+
+[node name="Visual" type="Polygon2D" parent="MidPlatformA" unique_id=1207207802]
+color = Color(0.403922, 0.439216, 0.470588, 1)
+polygon = PackedVector2Array(-90, -12, 90, -12, 90, 12, -90, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MidPlatformA" unique_id=1396575528]
+shape = SubResource("4")
+
+[node name="MidPlatformB" type="StaticBody2D" parent="." unique_id=2067147743]
+position = Vector2(1560, 338)
+
+[node name="Visual" type="Polygon2D" parent="MidPlatformB" unique_id=1785777657]
+color = Color(0.403922, 0.439216, 0.470588, 1)
+polygon = PackedVector2Array(-110, -12, 110, -12, 110, 12, -110, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MidPlatformB" unique_id=295238717]
+shape = SubResource("3")
+
+[node name="UpperPlatformA" type="StaticBody2D" parent="." unique_id=303947495]
+position = Vector2(1420, 226)
+
+[node name="Visual" type="Polygon2D" parent="UpperPlatformA" unique_id=870443435]
+color = Color(0.454902, 0.494118, 0.529412, 1)
+polygon = PackedVector2Array(-70, -12, 70, -12, 70, 12, -70, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UpperPlatformA" unique_id=2138610796]
+shape = SubResource("5")
+
+[node name="UpperPlatformB" type="StaticBody2D" parent="." unique_id=153868260]
+position = Vector2(2020, 214)
+
+[node name="Visual" type="Polygon2D" parent="UpperPlatformB" unique_id=362714912]
+color = Color(0.454902, 0.494118, 0.529412, 1)
+polygon = PackedVector2Array(-90, -12, 90, -12, 90, 12, -90, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UpperPlatformB" unique_id=1967483008]
+shape = SubResource("4")
+
 [node name="RealityPlatform" type="Node2D" parent="." unique_id=310109206]
-position = Vector2(420, 240)
+position = Vector2(2460, 448)
 
 [node name="Visual" type="Polygon2D" parent="RealityPlatform" unique_id=555265308]
 color = Color(0.905882, 0.576471, 0.235294, 1)
-polygon = PackedVector2Array(-90, -10, 90, -10, 90, 10, -90, 10)
+polygon = PackedVector2Array(-110, -12, 110, -12, 110, 12, -110, 12)
 
 [node name="StaticBody2D" type="StaticBody2D" parent="RealityPlatform" unique_id=1828055268]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="RealityPlatform/StaticBody2D" unique_id=242273186]
-shape = SubResource("2")
+shape = SubResource("3")
 
 [node name="DualWorldObject" type="Node" parent="RealityPlatform" unique_id=274693524]
 script = ExtResource("4")
+target_root_path = NodePath("..")
+visual_root_path = NodePath("../Visual")
+collision_root_path = NodePath("../StaticBody2D")
+exists_in_reality = true
+exists_in_soul = false
+reality_position_offset = Vector2(0, 0)
+soul_position_offset = Vector2(0, 24)
 
 [node name="SoulBridge" type="Node2D" parent="." unique_id=120879509]
-position = Vector2(640, 190)
+position = Vector2(2810, 366)
 
 [node name="Visual" type="Polygon2D" parent="SoulBridge" unique_id=1820838269]
 color = Color(0.466667, 0.760784, 1, 1)
-polygon = PackedVector2Array(-50, -10, 50, -10, 50, 10, -50, 10)
+polygon = PackedVector2Array(-70, -12, 70, -12, 70, 12, -70, 12)
 
 [node name="StaticBody2D" type="StaticBody2D" parent="SoulBridge" unique_id=204376893]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="SoulBridge/StaticBody2D" unique_id=1631455567]
-shape = SubResource("3")
+shape = SubResource("5")
 
 [node name="DualWorldObject" type="Node" parent="SoulBridge" unique_id=243965015]
 script = ExtResource("4")
+target_root_path = NodePath("..")
+visual_root_path = NodePath("../Visual")
+collision_root_path = NodePath("../StaticBody2D")
+exists_in_reality = false
+exists_in_soul = true
+reality_position_offset = Vector2(0, 16)
+soul_position_offset = Vector2(0, 0)
+
+[node name="FarMidPlatform" type="StaticBody2D" parent="." unique_id=162573910]
+position = Vector2(3140, 420)
+
+[node name="Visual" type="Polygon2D" parent="FarMidPlatform" unique_id=1951361180]
+color = Color(0.403922, 0.439216, 0.470588, 1)
+polygon = PackedVector2Array(-90, -12, 90, -12, 90, 12, -90, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FarMidPlatform" unique_id=1084372615]
+shape = SubResource("4")
+
+[node name="FarUpperPlatform" type="StaticBody2D" parent="." unique_id=173088001]
+position = Vector2(3520, 286)
+
+[node name="Visual" type="Polygon2D" parent="FarUpperPlatform" unique_id=1768522420]
+color = Color(0.454902, 0.494118, 0.529412, 1)
+polygon = PackedVector2Array(-70, -12, 70, -12, 70, 12, -70, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FarUpperPlatform" unique_id=292296212]
+shape = SubResource("5")
 
 [node name="Player" parent="." unique_id=1704508750 instance=ExtResource("2")]
+position = Vector2(120, 562)
 
 [node name="PatrolEnemy" parent="." unique_id=61361803 instance=ExtResource("5")]
-position = Vector2(590, 298)
+position = Vector2(1000, 566)
 
 [node name="BreakableWall" parent="." unique_id=960738665 instance=ExtResource("6")]
-position = Vector2(710, 277)
+position = Vector2(2580, 537)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1840655520]
 script = ExtResource("3")
-label_path = NodePath("Panel/Label")
 tint_path = NodePath("../WorldTint")
 player_path = NodePath("../Player")
 health_label_path = NodePath("Panel/HealthLabel")
@@ -93,39 +193,24 @@ stamina_bar_path = NodePath("Panel/StaminaBar")
 [node name="Panel" type="Panel" parent="UI" unique_id=466358434]
 offset_left = 14.0
 offset_top = 14.0
-offset_right = 524.0
-offset_bottom = 176.0
+offset_right = 250.0
+offset_bottom = 112.0
 
-[node name="Label" type="Label" parent="UI/Panel" unique_id=296311281]
+[node name="HealthLabel" type="Label" parent="UI/Panel" unique_id=902007311]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 10.0
+offset_top = 12.0
 offset_right = 214.0
-offset_bottom = 34.0
-text = "Reality World  [Tab]"
-
-[node name="Hint" type="Label" parent="UI/Panel" unique_id=440672505]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 30.0
-offset_right = 334.0
-offset_bottom = 52.0
-text = "Move: A/D  Jump: Space  Attack: Left Mouse  Guard: Right Mouse"
-
-[node name="HealthLabel" type="Label" parent="UI/Panel"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 56.0
-offset_right = 334.0
-offset_bottom = 74.0
+offset_bottom = 30.0
 text = "HP 5/5"
 
-[node name="HealthBar" type="ProgressBar" parent="UI/Panel"]
+[node name="HealthBar" type="ProgressBar" parent="UI/Panel" unique_id=142820090]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 76.0
-offset_right = 334.0
-offset_bottom = 92.0
+offset_top = 34.0
+offset_right = 224.0
+offset_bottom = 50.0
+modulate = Color(1, 0.47, 0.47, 1)
 max_value = 5.0
 value = 5.0
 show_percentage = false
@@ -133,24 +218,17 @@ show_percentage = false
 [node name="StaminaLabel" type="Label" parent="UI/Panel" unique_id=1778622566]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 98.0
-offset_right = 334.0
-offset_bottom = 116.0
+offset_top = 58.0
+offset_right = 214.0
+offset_bottom = 76.0
 text = "Stamina 100/100"
 
 [node name="StaminaBar" type="ProgressBar" parent="UI/Panel" unique_id=2122529244]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 118.0
-offset_right = 334.0
-offset_bottom = 134.0
+offset_top = 80.0
+offset_right = 224.0
+offset_bottom = 96.0
+modulate = Color(0.45, 0.84, 1, 1)
 value = 100.0
 show_percentage = false
-
-[node name="ExecutionHint" type="Label" parent="UI/Panel" unique_id=1067527648]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 142.0
-offset_right = 334.0
-offset_bottom = 160.0
-text = "Break enemy posture, then attack to execute"
