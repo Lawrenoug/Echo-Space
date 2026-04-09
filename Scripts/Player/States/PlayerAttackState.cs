@@ -7,7 +7,7 @@ namespace EchoSpace.Player.States;
 public sealed class PlayerAttackState : PlayerState
 {
     private double _remainingDuration;
-    private EnemyController? _executionTarget;
+    private EnemyCombatant? _executionTarget;
     private bool _isExecutionAttack;
     private bool _executionResolved;
 

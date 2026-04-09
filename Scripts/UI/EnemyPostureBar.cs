@@ -16,7 +16,7 @@ public partial class EnemyPostureBar : Node2D
     private Polygon2D? _postureBackground;
     private Polygon2D? _postureFill;
     private Node2D? _executionMarker;
-    private EnemyController? _enemy;
+    private EnemyCombatant? _enemy;
     private Vector2 _executionMarkerBasePosition = Vector2.Zero;
     private bool _isBroken;
 
@@ -27,7 +27,7 @@ public partial class EnemyPostureBar : Node2D
         _postureBackground = PostureBackgroundPath != null && !PostureBackgroundPath.IsEmpty ? GetNodeOrNull<Polygon2D>(PostureBackgroundPath) : null;
         _postureFill = PostureFillPath != null && !PostureFillPath.IsEmpty ? GetNodeOrNull<Polygon2D>(PostureFillPath) : null;
         _executionMarker = ExecutionMarkerPath != null && !ExecutionMarkerPath.IsEmpty ? GetNodeOrNull<Node2D>(ExecutionMarkerPath) : null;
-        _enemy = GetParentOrNull<EnemyController>();
+        _enemy = GetParentOrNull<EnemyCombatant>();
         Visible = false;
 
         if (_executionMarker != null)

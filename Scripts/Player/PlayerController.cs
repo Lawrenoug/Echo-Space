@@ -32,28 +32,28 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public float FallGravityScale { get; set; } = 1.8f;
 
 	[ExportGroup("Combat")]
-    [Export] public int MaxHealth { get; set; } = 5;
-    [Export] public int AttackDamage { get; set; } = 1;
-    [Export] public float AttackPostureDamage { get; set; } = 18f;
-    [Export] public float DamageInvulnerabilityTime { get; set; } = 0.45f;
-    [Export] public float MaxStamina { get; set; } = 100f;
-    [Export] public float StaminaRecoveryPerSecond { get; set; } = 24f;
-    [Export] public float AttackStaminaCost { get; set; } = 14f;
-    [Export] public float ExecutionStaminaCost { get; set; } = 10f;
-    [Export] public float GuardStaminaDrainPerSecond { get; set; } = 10f;
-    [Export] public float GuardHitStaminaCost { get; set; } = 22f;
-    [Export] public float GuardDeflectWindow { get; set; } = 0.18f;
-    [Export] public float DeflectPostureDamage { get; set; } = 36f;
-    [Export] public float DeflectStaminaCost { get; set; } = 6f;
-    [Export] public float GuardBreakDuration { get; set; } = 0.7f;
-    [Export] public float ExecutionRange { get; set; } = 88f;
-    [Export] public float ExecutionVerticalTolerance { get; set; } = 42f;
-    [Export] public float ExecutionApproachSpeed { get; set; } = 720f;
-    [Export] public float ExecutionStopDistance { get; set; } = 18f;
-    [Export] public float ExecutionAttackDuration { get; set; } = 0.24f;
-    [Export] public NodePath? AttackProbePath { get; set; } = new("AttackProbe");
-    [Export] public NodePath? AttackProbeCollisionShapePath { get; set; } = new("AttackProbe/CollisionShape2D");
-    [Export] public NodePath? HurtboxVisualPath { get; set; } = new("GuardEffect");
+	[Export] public int MaxHealth { get; set; } = 5;
+	[Export] public int AttackDamage { get; set; } = 1;
+	[Export] public float AttackPostureDamage { get; set; } = 18f;
+	[Export] public float DamageInvulnerabilityTime { get; set; } = 0.45f;
+	[Export] public float MaxStamina { get; set; } = 100f;
+	[Export] public float StaminaRecoveryPerSecond { get; set; } = 24f;
+	[Export] public float AttackStaminaCost { get; set; } = 14f;
+	[Export] public float ExecutionStaminaCost { get; set; } = 10f;
+	[Export] public float GuardStaminaDrainPerSecond { get; set; } = 10f;
+	[Export] public float GuardHitStaminaCost { get; set; } = 22f;
+	[Export] public float GuardDeflectWindow { get; set; } = 0.18f;
+	[Export] public float DeflectPostureDamage { get; set; } = 36f;
+	[Export] public float DeflectStaminaCost { get; set; } = 6f;
+	[Export] public float GuardBreakDuration { get; set; } = 0.7f;
+	[Export] public float ExecutionRange { get; set; } = 88f;
+	[Export] public float ExecutionVerticalTolerance { get; set; } = 42f;
+	[Export] public float ExecutionApproachSpeed { get; set; } = 720f;
+	[Export] public float ExecutionStopDistance { get; set; } = 18f;
+	[Export] public float ExecutionAttackDuration { get; set; } = 0.24f;
+	[Export] public NodePath? AttackProbePath { get; set; } = new("AttackProbe");
+	[Export] public NodePath? AttackProbeCollisionShapePath { get; set; } = new("AttackProbe/CollisionShape2D");
+	[Export] public NodePath? HurtboxVisualPath { get; set; } = new("GuardEffect");
 	[Export] public NodePath? BodyVisualPath { get; set; } = new("Body");
 
 	private readonly InputBuffer _inputBuffer = new();
@@ -225,44 +225,44 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		return Input.IsActionPressed(GameInputActions.Guard) && _guardBreakRemaining <= 0d && _currentStamina > 0f;
 	}
 
-    public bool CanGuard()
-    {
-        return IsGrounded() && _guardBreakRemaining <= 0d && _currentStamina > 0f;
-    }
+	public bool CanGuard()
+	{
+		return IsGrounded() && _guardBreakRemaining <= 0d && _currentStamina > 0f;
+	}
 
-    public EnemyController? FindExecutionTarget()
-    {
-        EnemyController? closestTarget = null;
-        var closestDistance = float.MaxValue;
+	public EnemyCombatant? FindExecutionTarget()
+	{
+		EnemyCombatant? closestTarget = null;
+		var closestDistance = float.MaxValue;
 
-        foreach (Node node in GetTree().GetNodesInGroup("enemy"))
-        {
-            if (node is not EnemyController enemy || !IsInstanceValid(enemy))
-            {
-                continue;
-            }
+		foreach (Node node in GetTree().GetNodesInGroup("enemy"))
+		{
+			if (node is not EnemyCombatant enemy || !IsInstanceValid(enemy))
+			{
+				continue;
+			}
 
-            if (!enemy.CanBeExecutedBy(this, ExecutionRange, ExecutionVerticalTolerance))
-            {
-                continue;
-            }
+			if (!enemy.CanBeExecutedBy(this, ExecutionRange, ExecutionVerticalTolerance))
+			{
+				continue;
+			}
 
-            var distance = GlobalPosition.DistanceSquaredTo(enemy.GlobalPosition);
-            if (distance >= closestDistance)
-            {
-                continue;
-            }
+			var distance = GlobalPosition.DistanceSquaredTo(enemy.GlobalPosition);
+			if (distance >= closestDistance)
+			{
+				continue;
+			}
 
-            closestDistance = distance;
-            closestTarget = enemy;
-        }
+			closestDistance = distance;
+			closestTarget = enemy;
+		}
 
-        return closestTarget;
-    }
+		return closestTarget;
+	}
 
-    public void BeginGuard()
-    {
-        _isGuarding = true;
+	public void BeginGuard()
+	{
+		_isGuarding = true;
 
 		if (_guardEffectVisual != null)
 		{
@@ -271,68 +271,68 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 	}
 
-    public void EndGuard()
-    {
-        _isGuarding = false;
+	public void EndGuard()
+	{
+		_isGuarding = false;
 
 		if (_guardEffectVisual != null)
 		{
 			_guardEffectVisual.Visible = false;
-        }
-    }
+		}
+	}
 
-    public void BeginExecutionAttack(EnemyController target)
-    {
-        FaceTowards(target.GlobalPosition.X);
-        ConsumeStamina(ExecutionStaminaCost);
-    }
+	public void BeginExecutionAttack(EnemyCombatant target)
+	{
+		FaceTowards(target.GlobalPosition.X);
+		ConsumeStamina(ExecutionStaminaCost);
+	}
 
-    public void EndExecutionAttack()
-    {
-        if (_bodyVisual != null && _lastDamageTakenAt + DamageInvulnerabilityTime < GetGameTime())
-        {
-            _bodyVisual.Modulate = Colors.White;
-        }
-    }
+	public void EndExecutionAttack()
+	{
+		if (_bodyVisual != null && _lastDamageTakenAt + DamageInvulnerabilityTime < GetGameTime())
+		{
+			_bodyVisual.Modulate = Colors.White;
+		}
+	}
 
-    public bool UpdateExecutionApproach(EnemyController target, double delta)
-    {
-        if (!IsInstanceValid(target))
-        {
-            return true;
-        }
+	public bool UpdateExecutionApproach(EnemyCombatant target, double delta)
+	{
+		if (!IsInstanceValid(target))
+		{
+			return true;
+		}
 
-        FaceTowards(target.GlobalPosition.X);
+		FaceTowards(target.GlobalPosition.X);
 
-        float direction = Mathf.Sign(target.GlobalPosition.X - GlobalPosition.X);
-        if (Mathf.IsZeroApprox(direction))
-        {
-            direction = _facingDirection;
-        }
+		float direction = Mathf.Sign(target.GlobalPosition.X - GlobalPosition.X);
+		if (Mathf.IsZeroApprox(direction))
+		{
+			direction = _facingDirection;
+		}
 
-        var destinationX = target.GlobalPosition.X - direction * ExecutionStopDistance;
-        var currentPosition = GlobalPosition;
-        var nextX = Mathf.MoveToward(currentPosition.X, destinationX, ExecutionApproachSpeed * (float)delta);
-        GlobalPosition = new Vector2(nextX, currentPosition.Y);
-        Velocity = new Vector2(0f, Velocity.Y);
+		var destinationX = target.GlobalPosition.X - direction * ExecutionStopDistance;
+		var currentPosition = GlobalPosition;
+		var nextX = Mathf.MoveToward(currentPosition.X, destinationX, ExecutionApproachSpeed * (float)delta);
+		GlobalPosition = new Vector2(nextX, currentPosition.Y);
+		Velocity = new Vector2(0f, Velocity.Y);
 
-        return Mathf.Abs(destinationX - nextX) <= 2f;
-    }
+		return Mathf.Abs(destinationX - nextX) <= 2f;
+	}
 
-    public bool TryExecuteTarget(EnemyController target)
-    {
-        if (!IsInstanceValid(target))
-        {
-            return false;
-        }
+	public bool TryExecuteTarget(EnemyCombatant target)
+	{
+		if (!IsInstanceValid(target))
+		{
+			return false;
+		}
 
-        FaceTowards(target.GlobalPosition.X);
-        return target.TryExecute(this);
-    }
+		FaceTowards(target.GlobalPosition.X);
+		return target.TryExecute(this);
+	}
 
-    public void BeginAttack()
-    {
-        ConsumeStamina(AttackStaminaCost);
+	public void BeginAttack()
+	{
+		ConsumeStamina(AttackStaminaCost);
 		_isAttackActive = true;
 		_damagedTargetsThisAttack.Clear();
 
@@ -366,9 +366,9 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_lastGroundedAt = double.NegativeInfinity;
 	}
 
-    public void ApplyDamage(in DamageInfo damageInfo)
-    {
-        var now = GetGameTime();
+	public void ApplyDamage(in DamageInfo damageInfo)
+	{
+		var now = GetGameTime();
 		if (!_isGuarding && now - _lastDamageTakenAt < DamageInvulnerabilityTime)
 		{
 			return;
@@ -409,11 +409,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			return;
 		}
 
-        _lastDamageTakenAt = now;
-        _currentHealth = Mathf.Max(0, _currentHealth - damageInfo.Amount);
-        Velocity += damageInfo.Knockback;
-        HealthChanged?.Invoke(_currentHealth, MaxHealth);
-        ConsumeStamina(Mathf.Max(GuardHitStaminaCost * 0.65f, damageInfo.PostureDamage * 0.5f));
+		_lastDamageTakenAt = now;
+		_currentHealth = Mathf.Max(0, _currentHealth - damageInfo.Amount);
+		Velocity += damageInfo.Knockback;
+		HealthChanged?.Invoke(_currentHealth, MaxHealth);
+		ConsumeStamina(Mathf.Max(GuardHitStaminaCost * 0.65f, damageInfo.PostureDamage * 0.5f));
 
 		if (_bodyVisual != null)
 		{
@@ -505,23 +505,23 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 	}
 
-    private void UpdateFacingDirection()
-    {
-        var moveInput = GetMoveInput();
-        if (!Mathf.IsZeroApprox(moveInput))
-        {
-            _facingDirection = Mathf.Sign(moveInput);
-        }
-    }
+	private void UpdateFacingDirection()
+	{
+		var moveInput = GetMoveInput();
+		if (!Mathf.IsZeroApprox(moveInput))
+		{
+			_facingDirection = Mathf.Sign(moveInput);
+		}
+	}
 
-    public void FaceTowards(float worldX)
-    {
-        var direction = Mathf.Sign(worldX - GlobalPosition.X);
-        if (!Mathf.IsZeroApprox(direction))
-        {
-            _facingDirection = direction;
-        }
-    }
+	public void FaceTowards(float worldX)
+	{
+		var direction = Mathf.Sign(worldX - GlobalPosition.X);
+		if (!Mathf.IsZeroApprox(direction))
+		{
+			_facingDirection = direction;
+		}
+	}
 
 	private void UpdateAttackProbeTransform()
 	{
@@ -571,16 +571,16 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 	}
 
-    private void ConsumeStamina(float amount)
-    {
-        if (amount <= 0f)
-        {
-            return;
-        }
+	private void ConsumeStamina(float amount)
+	{
+		if (amount <= 0f)
+		{
+			return;
+		}
 
-        _currentStamina = Mathf.Clamp(_currentStamina - amount, 0f, MaxStamina);
-        StaminaChanged?.Invoke(_currentStamina, MaxStamina);
-    }
+		_currentStamina = Mathf.Clamp(_currentStamina - amount, 0f, MaxStamina);
+		StaminaChanged?.Invoke(_currentStamina, MaxStamina);
+	}
 
 	private void TriggerGuardBreak()
 	{
