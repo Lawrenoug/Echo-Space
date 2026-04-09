@@ -325,6 +325,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
         _lastDamageTakenAt = now;
         _currentHealth = Mathf.Max(0, _currentHealth - damageInfo.Amount);
+        GD.Print($"Player ApplyDamage -> HP: {_currentHealth}/{MaxHealth}, Damage: {damageInfo.Amount}, PostureDamage: {damageInfo.PostureDamage}");
         Velocity += damageInfo.Knockback;
         HealthChanged?.Invoke(_currentHealth, MaxHealth);
         ConsumeStamina(Mathf.Max(GuardHitStaminaCost * 0.65f, damageInfo.PostureDamage * 0.5f));
@@ -484,6 +485,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
         }
 
         _currentStamina = Mathf.Clamp(_currentStamina - amount, 0f, MaxStamina);
+        GD.Print($"Player ConsumeStamina -> Stamina: {_currentStamina}/{MaxStamina}, Cost: {amount}");
         StaminaChanged?.Invoke(_currentStamina, MaxStamina);
     }
 

@@ -21,16 +21,15 @@ public partial class WorldOverlay : CanvasLayer
     private ProgressBar? _staminaBar;
     private CanvasModulate? _tint;
     private PlayerController? _player;
+    private bool _isSubscribed;
+    private int _lastDisplayedHealth = int.MinValue;
+    private int _lastDisplayedMaxHealth = int.MinValue;
+    private int _lastDisplayedStamina = int.MinValue;
+    private int _lastDisplayedMaxStamina = int.MinValue;
 
     public override void _Ready()
     {
-        _label = LabelPath != null && !LabelPath.IsEmpty ? GetNodeOrNull<Label>(LabelPath) : null;
-        _healthLabel = HealthLabelPath != null && !HealthLabelPath.IsEmpty ? GetNodeOrNull<Label>(HealthLabelPath) : null;
-        _staminaLabel = StaminaLabelPath != null && !StaminaLabelPath.IsEmpty ? GetNodeOrNull<Label>(StaminaLabelPath) : null;
-        _healthBar = HealthBarPath != null && !HealthBarPath.IsEmpty ? GetNodeOrNull<ProgressBar>(HealthBarPath) : null;
-        _staminaBar = StaminaBarPath != null && !StaminaBarPath.IsEmpty ? GetNodeOrNull<ProgressBar>(StaminaBarPath) : null;
-        _tint = TintPath != null && !TintPath.IsEmpty ? GetNodeOrNull<CanvasModulate>(TintPath) : null;
-        _player = PlayerPath != null && !PlayerPath.IsEmpty ? GetNodeOrNull<PlayerController>(PlayerPath) : null;
+        ResolveBindings();
 
         if (WorldManager.Instance != null)
         {
@@ -38,13 +37,24 @@ public partial class WorldOverlay : CanvasLayer
             OnWorldChanged(WorldManager.Instance.CurrentWorld);
         }
 
-        if (_player != null)
+        if (!TrySubscribeToPlayer())
         {
-            _player.HealthChanged += OnPlayerHealthChanged;
-            _player.StaminaChanged += OnPlayerStaminaChanged;
-            OnPlayerHealthChanged(_player.CurrentHealth, _player.MaxHealth);
-            OnPlayerStaminaChanged(_player.CurrentStamina, _player.MaxStamina);
+            GD.PrintErr("Player not found! Check PlayerPath.");
         }
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_player == null || !IsInstanceValid(_player))
+        {
+            _player = null;
+            _isSubscribed = false;
+            ResolveBindings();
+            TrySubscribeToPlayer();
+            return;
+        }
+
+        RefreshPlayerVitals(false);
     }
 
     public override void _ExitTree()
@@ -54,7 +64,7 @@ public partial class WorldOverlay : CanvasLayer
             WorldManager.Instance.WorldChanged -= OnWorldChanged;
         }
 
-        if (_player != null)
+        if (_isSubscribed && _player != null)
         {
             _player.HealthChanged -= OnPlayerHealthChanged;
             _player.StaminaChanged -= OnPlayerStaminaChanged;
@@ -80,6 +90,11 @@ public partial class WorldOverlay : CanvasLayer
 
     private void OnPlayerStaminaChanged(float currentStamina, float maxStamina)
     {
+        GD.Print($"Stamina changed: {currentStamina}/{maxStamina}");
+
+        _lastDisplayedStamina = Mathf.RoundToInt(currentStamina);
+        _lastDisplayedMaxStamina = Mathf.RoundToInt(maxStamina);
+
         if (_staminaLabel != null)
         {
             _staminaLabel.Text = $"Stamina {Mathf.RoundToInt(currentStamina)}/{Mathf.RoundToInt(maxStamina)}";
@@ -94,6 +109,11 @@ public partial class WorldOverlay : CanvasLayer
 
     private void OnPlayerHealthChanged(int currentHealth, int maxHealth)
     {
+        GD.Print($"Health changed: {currentHealth}/{maxHealth}");
+
+        _lastDisplayedHealth = currentHealth;
+        _lastDisplayedMaxHealth = maxHealth;
+
         if (_healthLabel != null)
         {
             _healthLabel.Text = $"HP {currentHealth}/{maxHealth}";
@@ -104,5 +124,131 @@ public partial class WorldOverlay : CanvasLayer
             _healthBar.MaxValue = maxHealth;
             _healthBar.Value = currentHealth;
         }
+    }
+
+    private void ResolveBindings()
+    {
+        _label ??= ResolveNode<Label>(LabelPath, "Panel/Label");
+        _healthLabel ??= ResolveNode<Label>(HealthLabelPath, "Panel/HealthLabel");
+        _staminaLabel ??= ResolveNode<Label>(StaminaLabelPath, "Panel/StaminaLabel");
+        _healthBar ??= ResolveNode<ProgressBar>(HealthBarPath, "Panel/HealthBar");
+        _staminaBar ??= ResolveNode<ProgressBar>(StaminaBarPath, "Panel/StaminaBar");
+        _tint ??= ResolveNode<CanvasModulate>(TintPath, "../WorldTint");
+        _player ??= ResolvePlayer();
+
+        GD.Print($"WorldOverlay bindings -> Player: {_player != null}, HealthBar: {_healthBar != null}, StaminaBar: {_staminaBar != null}, HealthLabel: {_healthLabel != null}, StaminaLabel: {_staminaLabel != null}");
+    }
+
+    private bool TrySubscribeToPlayer()
+    {
+        if (_isSubscribed || _player == null)
+        {
+            return _isSubscribed;
+        }
+
+        _player.HealthChanged += OnPlayerHealthChanged;
+        _player.StaminaChanged += OnPlayerStaminaChanged;
+        _isSubscribed = true;
+        RefreshPlayerVitals(true);
+        return true;
+    }
+
+    private void RefreshPlayerVitals(bool logChanges)
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        if (_player.CurrentHealth != _lastDisplayedHealth || _player.MaxHealth != _lastDisplayedMaxHealth)
+        {
+            if (logChanges)
+            {
+                OnPlayerHealthChanged(_player.CurrentHealth, _player.MaxHealth);
+            }
+            else
+            {
+                UpdateHealthVisuals(_player.CurrentHealth, _player.MaxHealth);
+            }
+        }
+
+        var currentStamina = Mathf.RoundToInt(_player.CurrentStamina);
+        var maxStamina = Mathf.RoundToInt(_player.MaxStamina);
+        if (currentStamina != _lastDisplayedStamina || maxStamina != _lastDisplayedMaxStamina)
+        {
+            if (logChanges)
+            {
+                OnPlayerStaminaChanged(_player.CurrentStamina, _player.MaxStamina);
+            }
+            else
+            {
+                UpdateStaminaVisuals(_player.CurrentStamina, _player.MaxStamina);
+            }
+        }
+    }
+
+    private void UpdateHealthVisuals(int currentHealth, int maxHealth)
+    {
+        _lastDisplayedHealth = currentHealth;
+        _lastDisplayedMaxHealth = maxHealth;
+
+        if (_healthLabel != null)
+        {
+            _healthLabel.Text = $"HP {currentHealth}/{maxHealth}";
+        }
+
+        if (_healthBar != null)
+        {
+            _healthBar.MaxValue = maxHealth;
+            _healthBar.Value = currentHealth;
+        }
+    }
+
+    private void UpdateStaminaVisuals(float currentStamina, float maxStamina)
+    {
+        var roundedCurrent = Mathf.RoundToInt(currentStamina);
+        var roundedMax = Mathf.RoundToInt(maxStamina);
+        _lastDisplayedStamina = roundedCurrent;
+        _lastDisplayedMaxStamina = roundedMax;
+
+        if (_staminaLabel != null)
+        {
+            _staminaLabel.Text = $"Stamina {roundedCurrent}/{roundedMax}";
+        }
+
+        if (_staminaBar != null)
+        {
+            _staminaBar.MaxValue = maxStamina;
+            _staminaBar.Value = currentStamina;
+        }
+    }
+
+    private T? ResolveNode<T>(NodePath? primaryPath, string fallbackPath) where T : class
+    {
+        if (primaryPath != null && !primaryPath.IsEmpty)
+        {
+            var fromPrimary = GetNodeOrNull<T>(primaryPath);
+            if (fromPrimary != null)
+            {
+                return fromPrimary;
+            }
+        }
+
+        return GetNodeOrNull<T>(fallbackPath);
+    }
+
+    private PlayerController? ResolvePlayer()
+    {
+        if (PlayerPath != null && !PlayerPath.IsEmpty)
+        {
+            var fromPath = GetNodeOrNull<PlayerController>(PlayerPath);
+            if (fromPath != null)
+            {
+                return fromPath;
+            }
+        }
+
+        return GetNodeOrNull<PlayerController>("../Player")
+            ?? GetTree().GetFirstNodeInGroup("player") as PlayerController;
     }
 }
