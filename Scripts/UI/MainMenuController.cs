@@ -1,6 +1,7 @@
-using System;
 using EchoSpace.Core.Input;
-using EchoSpace.Save;
+using EchoSpace.Core.World;
+using EchoSpace.Gameplay.Inventory;
+using EchoSpace.Gameplay.Progression;
 using Godot;
 
 namespace EchoSpace.UI;
@@ -50,7 +51,7 @@ public partial class MainMenuController : Control
         RefreshContinueAvailability();
         RefreshSettingsSummary();
         SetSettingsVisible(false);
-        UpdateStatus("菜单入口已经就位。开始游戏会进入当前白盒关卡。");
+        UpdateStatus("主菜单入口已经就位。开始游戏会进入当前白盒关卡。");
         _newGameButton?.GrabFocus();
     }
 
@@ -134,37 +135,16 @@ public partial class MainMenuController : Control
     private void OnNewGamePressed()
     {
         EmitSignal(SignalName.NewGameRequested);
+        ResetPrototypeGlobalState();
         UpdateStatus("正在进入原型关卡...");
-
-        if (SaveManager.Instance != null)
-        {
-            SaveManager.Instance.StartNewGame(GameScenePath);
-            return;
-        }
-
         CallDeferred(nameof(ChangeToGameScene));
     }
 
     private void OnContinuePressed()
     {
         EmitSignal(SignalName.ContinueRequested);
-
-        if (!CanContinue())
-        {
-            UpdateStatus("当前还没有可用存档。");
-            RefreshContinueAvailability();
-            return;
-        }
-
-        UpdateStatus("正在读取最近一次存档...");
-
-        if (SaveManager.Instance != null)
-        {
-            SaveManager.Instance.ContinueFromLatestSave(GameScenePath);
-            return;
-        }
-
-        CallDeferred(nameof(ChangeToGameScene));
+        UpdateStatus("存档功能已暂时移除，后续视项目状态再决定是否接回。");
+        RefreshContinueAvailability();
     }
 
     private void OnSettingsPressed()
@@ -210,11 +190,8 @@ public partial class MainMenuController : Control
             return;
         }
 
-        var canContinue = CanContinue();
-        _continueButton.Disabled = !canContinue;
-        _continueButton.TooltipText = canContinue
-            ? "读取最近一次存档"
-            : "当前没有可继续的存档";
+        _continueButton.Disabled = true;
+        _continueButton.TooltipText = "存档系统暂时停用";
     }
 
     private void RefreshSettingsSummary()
@@ -239,9 +216,11 @@ public partial class MainMenuController : Control
         UpdateStatus($"{featureName}接口已预留，后续接入正式设置系统。");
     }
 
-    private bool CanContinue()
+    private void ResetPrototypeGlobalState()
     {
-        return SaveManager.Instance?.HasSave() ?? false;
+        WorldManager.Instance?.SetWorld(WorldType.Reality);
+        InventoryManager.Instance?.ResetToDefaults();
+        ProgressionManager.Instance?.ResetToDefaults();
     }
 
     private void SetSettingsVisible(bool visible)

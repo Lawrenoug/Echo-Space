@@ -1,12 +1,10 @@
 using System.Collections.Generic;
-using EchoSpace.Save;
 using Godot;
 
 namespace EchoSpace.Core.World;
 
 public partial class DualWorldObject : Node
 {
-    [Export] public string SaveId { get; set; } = string.Empty;
     [Export] public NodePath? TargetRootPath { get; set; }
     [Export] public NodePath? VisualRootPath { get; set; }
     [Export] public NodePath? CollisionRootPath { get; set; }
@@ -30,8 +28,6 @@ public partial class DualWorldObject : Node
     private Node? _collisionRoot;
     private Vector2 _basePosition;
 
-    public bool HasSaveId => !string.IsNullOrWhiteSpace(SaveId);
-
     public override void _Ready()
     {
         _targetRoot = ResolveTargetRoot();
@@ -48,11 +44,6 @@ public partial class DualWorldObject : Node
         _runtimeStates[WorldType.Reality] = new RuntimeState(ExistsInReality, RealityStartsBroken, RealityStartsActive, RealityPositionOffset);
         _runtimeStates[WorldType.Soul] = new RuntimeState(ExistsInSoul, SoulStartsBroken, SoulStartsActive, SoulPositionOffset);
 
-        if (HasSaveId)
-        {
-            AddToGroup("saveable_dual_world");
-        }
-
         WorldManager.Instance?.Register(this);
         ApplyWorld(WorldManager.Instance?.CurrentWorld ?? WorldType.Reality);
     }
@@ -60,11 +51,6 @@ public partial class DualWorldObject : Node
     public override void _ExitTree()
     {
         WorldManager.Instance?.Unregister(this);
-
-        if (HasSaveId)
-        {
-            RemoveFromGroup("saveable_dual_world");
-        }
     }
 
     public void ApplyWorld(WorldType worldType)
@@ -121,28 +107,6 @@ public partial class DualWorldObject : Node
     {
         var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
         SetBroken(currentWorld, true);
-    }
-
-    public DualWorldObjectSaveData BuildSaveData()
-    {
-        return new DualWorldObjectSaveData
-        {
-            SaveId = SaveId,
-            Reality = BuildStateData(WorldType.Reality),
-            Soul = BuildStateData(WorldType.Soul),
-        };
-    }
-
-    public void ApplySaveState(DualWorldObjectSaveData? saveData)
-    {
-        if (saveData == null)
-        {
-            return;
-        }
-
-        ApplyStateData(WorldType.Reality, saveData.Reality);
-        ApplyStateData(WorldType.Soul, saveData.Soul);
-        ApplyWorld(WorldManager.Instance?.CurrentWorld ?? WorldType.Reality);
     }
 
     private void RefreshIfCurrentWorld(WorldType worldType)
@@ -202,33 +166,6 @@ public partial class DualWorldObject : Node
         {
             SetCollisionEnabled(child, enabled);
         }
-    }
-
-    private DualWorldStateData BuildStateData(WorldType worldType)
-    {
-        if (!_runtimeStates.TryGetValue(worldType, out var state))
-        {
-            return new DualWorldStateData();
-        }
-
-        return new DualWorldStateData
-        {
-            Exists = state.Exists,
-            IsBroken = state.IsBroken,
-            IsActive = state.IsActive,
-        };
-    }
-
-    private void ApplyStateData(WorldType worldType, DualWorldStateData? stateData)
-    {
-        if (stateData == null || !_runtimeStates.TryGetValue(worldType, out var state))
-        {
-            return;
-        }
-
-        state.Exists = stateData.Exists;
-        state.IsBroken = stateData.IsBroken;
-        state.IsActive = stateData.IsActive;
     }
 
     private sealed class RuntimeState

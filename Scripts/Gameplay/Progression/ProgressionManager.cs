@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using EchoSpace.Save;
 using Godot;
 
 namespace EchoSpace.Gameplay.Progression;
@@ -135,55 +134,6 @@ public partial class ProgressionManager : Node
     {
         EnsureInitialized();
         ApplyDefaults();
-        EmitFullStateRefresh();
-    }
-
-    public ProgressionSaveData BuildSaveData()
-    {
-        EnsureInitialized();
-
-        var saveData = new ProgressionSaveData
-        {
-            CurrentLevel = CurrentLevel,
-            UnspentPoints = UnspentPoints,
-        };
-
-        foreach (var pair in _attributes)
-        {
-            saveData.Attributes.Add(new ProgressionAttributeSaveData
-            {
-                AttributeType = pair.Key,
-                CurrentLevel = pair.Value.CurrentLevel,
-            });
-        }
-
-        return saveData;
-    }
-
-    public void ApplySaveData(ProgressionSaveData? saveData)
-    {
-        EnsureInitialized();
-
-        if (saveData == null)
-        {
-            ResetToDefaults();
-            return;
-        }
-
-        ApplyDefaults();
-        CurrentLevel = Mathf.Max(1, saveData.CurrentLevel);
-        UnspentPoints = Mathf.Max(0, saveData.UnspentPoints);
-
-        foreach (var entry in saveData.Attributes)
-        {
-            if (!_attributes.TryGetValue(entry.AttributeType, out var attributeState))
-            {
-                continue;
-            }
-
-            attributeState.SetLevel(entry.CurrentLevel);
-        }
-
         EmitFullStateRefresh();
     }
 
