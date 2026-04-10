@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EchoSpace.Save;
 using Godot;
 
 namespace EchoSpace.Gameplay.Inventory;
@@ -188,6 +189,69 @@ public partial class InventoryManager : Node
         return snapshot;
     }
 
+    public List<InventoryItemSaveData> BuildSaveData()
+    {
+        EnsureInitialized();
+
+        var aggregated = new Dictionary<string, InventoryItemSaveData>(StringComparer.Ordinal);
+
+        foreach (var slot in _slots)
+        {
+            if (slot.IsEmpty || slot.Item == null)
+            {
+                continue;
+            }
+
+            var key = ResolveItemSaveKey(slot.Item);
+            if (!aggregated.TryGetValue(key, out var entry))
+            {
+                entry = new InventoryItemSaveData
+                {
+                    ItemId = slot.Item.ItemId,
+                    DisplayName = slot.Item.DisplayName,
+                    Description = slot.Item.Description,
+                    Category = slot.Item.Category,
+                    MaxStack = slot.Item.SafeMaxStack,
+                    IsUnique = slot.Item.IsUnique,
+                    Quantity = 0,
+                };
+                aggregated[key] = entry;
+            }
+
+            entry.Quantity += slot.Quantity;
+        }
+
+        return new List<InventoryItemSaveData>(aggregated.Values);
+    }
+
+    public void ApplySaveData(IReadOnlyList<InventoryItemSaveData>? items)
+    {
+        EnsureInitialized();
+        ClearInventory();
+
+        if (items == null)
+        {
+            return;
+        }
+
+        foreach (var entry in items)
+        {
+            if (entry == null || entry.Quantity <= 0)
+            {
+                continue;
+            }
+
+            AddItem(CreateItemDefinition(entry), entry.Quantity);
+        }
+    }
+
+    public void ResetToDefaults()
+    {
+        EnsureInitialized();
+        ClearInventory();
+        SeedPrototypeItemsIfNeeded();
+    }
+
     private void EnsureInitialized()
     {
         if (_isInitialized)
@@ -226,7 +290,7 @@ public partial class InventoryManager : Node
             return;
         }
 
-        AddItem(CreatePrototypeItem("healing_flask", "治愈药瓶", "恢复用的原型道具。", ItemCategory.Consumable, 9), 3);
+        AddItem(CreatePrototypeItem("healing_flask", "治疗药瓶", "恢复用的原型道具。", ItemCategory.Consumable, 9), 3);
         AddItem(CreatePrototypeItem("spirit_ore", "灵魂矿石", "后续可用于强化或交换。", ItemCategory.Material, 99), 12);
         AddItem(CreatePrototypeItem("old_key", "旧钥匙", "用于测试背包与关键道具显示。", ItemCategory.KeyItem, 1, true), 1);
     }
@@ -247,6 +311,34 @@ public partial class InventoryManager : Node
             Category = category,
             MaxStack = maxStack,
             IsUnique = isUnique,
+        };
+    }
+
+    private static string ResolveItemSaveKey(ItemDefinition item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.ItemId))
+        {
+            return item.ItemId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.DisplayName))
+        {
+            return item.DisplayName;
+        }
+
+        return item.ResourcePath;
+    }
+
+    private static ItemDefinition CreateItemDefinition(InventoryItemSaveData saveData)
+    {
+        return new ItemDefinition
+        {
+            ItemId = saveData.ItemId,
+            DisplayName = saveData.DisplayName,
+            Description = saveData.Description,
+            Category = saveData.Category,
+            MaxStack = Mathf.Max(1, saveData.MaxStack),
+            IsUnique = saveData.IsUnique,
         };
     }
 }

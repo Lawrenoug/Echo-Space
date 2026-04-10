@@ -12,6 +12,8 @@ public static class GameInputActions
     public const string SwitchWorld = "switch_world";
     public const string ToggleInventory = "toggle_inventory";
     public const string ToggleProgression = "toggle_progression";
+    public const string QuickSave = "quick_save";
+    public const string QuickLoad = "quick_load";
 
     public static void EnsureDefaults()
     {
@@ -25,6 +27,8 @@ public static class GameInputActions
         EnsureAction(SwitchWorld, Key.Tab);
         EnsureAction(ToggleInventory, Key.I);
         EnsureAction(ToggleProgression, Key.P);
+        EnsureAction(QuickSave, Key.F5);
+        EnsureAction(QuickLoad, Key.F9);
     }
 
     private static void EnsureAction(string actionName, params Key[] keys)

@@ -21,6 +21,7 @@ WorldManager="*res://Scripts/Core/World/WorldManager.cs"
 PoolManager="*res://Scripts/Core/Pooling/PoolManager.cs"
 InventoryManager="*res://Scripts/Gameplay/Inventory/InventoryManager.cs"
 ProgressionManager="*res://Scripts/Gameplay/Progression/ProgressionManager.cs"
+SaveManager="*res://Scripts/Save/SaveManager.cs"
 
 [display]
 

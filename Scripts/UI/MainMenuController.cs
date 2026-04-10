@@ -1,5 +1,6 @@
 using System;
 using EchoSpace.Core.Input;
+using EchoSpace.Save;
 using Godot;
 
 namespace EchoSpace.UI;
@@ -13,7 +14,6 @@ public partial class MainMenuController : Control
     [Signal] public delegate void QuitRequestedEventHandler();
 
     [Export(PropertyHint.File, "*.tscn")] public string GameScenePath { get; set; } = "res://Scenes/Main.tscn";
-    [Export] public string SaveFilePath { get; set; } = "user://savegame.save";
     [Export] public NodePath? StatusLabelPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/Status");
     [Export] public NodePath? NewGameButtonPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/NewGameButton");
     [Export] public NodePath? ContinueButtonPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/ContinueButton");
@@ -50,7 +50,7 @@ public partial class MainMenuController : Control
         RefreshContinueAvailability();
         RefreshSettingsSummary();
         SetSettingsVisible(false);
-        UpdateStatus("菜单接口已就位。开始游戏会进入当前原型关卡。");
+        UpdateStatus("菜单入口已经就位。开始游戏会进入当前白盒关卡。");
         _newGameButton?.GrabFocus();
     }
 
@@ -135,6 +135,13 @@ public partial class MainMenuController : Control
     {
         EmitSignal(SignalName.NewGameRequested);
         UpdateStatus("正在进入原型关卡...");
+
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.StartNewGame(GameScenePath);
+            return;
+        }
+
         CallDeferred(nameof(ChangeToGameScene));
     }
 
@@ -144,12 +151,19 @@ public partial class MainMenuController : Control
 
         if (!CanContinue())
         {
-            UpdateStatus("当前还没有可用存档。继续游戏接口已预留，待存档系统接入。");
+            UpdateStatus("当前还没有可用存档。");
             RefreshContinueAvailability();
             return;
         }
 
-        UpdateStatus("正在读取存档并进入游戏...");
+        UpdateStatus("正在读取最近一次存档...");
+
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.ContinueFromLatestSave(GameScenePath);
+            return;
+        }
+
         CallDeferred(nameof(ChangeToGameScene));
     }
 
@@ -157,7 +171,7 @@ public partial class MainMenuController : Control
     {
         EmitSignal(SignalName.SettingsOpened);
         SetSettingsVisible(true);
-        UpdateStatus("设置菜单已打开。分类按钮接口已预留。");
+        UpdateStatus("设置菜单已打开。各分类按钮已经留好接口。");
         _displayButton?.GrabFocus();
     }
 
@@ -200,7 +214,7 @@ public partial class MainMenuController : Control
         _continueButton.Disabled = !canContinue;
         _continueButton.TooltipText = canContinue
             ? "读取最近一次存档"
-            : "存档系统接入后启用";
+            : "当前没有可继续的存档";
     }
 
     private void RefreshSettingsSummary()
@@ -222,12 +236,12 @@ public partial class MainMenuController : Control
 
     private void ShowPlaceholder(string featureName)
     {
-        UpdateStatus($"{featureName}接口已预留，后续接入设置系统。");
+        UpdateStatus($"{featureName}接口已预留，后续接入正式设置系统。");
     }
 
     private bool CanContinue()
     {
-        return FileAccess.FileExists(SaveFilePath);
+        return SaveManager.Instance?.HasSave() ?? false;
     }
 
     private void SetSettingsVisible(bool visible)

@@ -5,6 +5,7 @@ using EchoSpace.Core.Input;
 using EchoSpace.Core.World;
 using EchoSpace.Gameplay.Combat;
 using EchoSpace.Gameplay.Enemies;
+using EchoSpace.Save;
 using EchoSpace.Player.States;
 using Godot;
 
@@ -424,6 +425,52 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		{
 			QueueFree();
 		}
+	}
+
+	public PlayerSaveData BuildSaveData()
+	{
+		return new PlayerSaveData
+		{
+			PositionX = GlobalPosition.X,
+			PositionY = GlobalPosition.Y,
+			Health = _currentHealth,
+			Stamina = _currentStamina,
+		};
+	}
+
+	public void ApplySaveData(PlayerSaveData? saveData)
+	{
+		if (saveData == null)
+		{
+			return;
+		}
+
+		GlobalPosition = new Vector2(saveData.PositionX, saveData.PositionY);
+		Velocity = Vector2.Zero;
+		_currentHealth = Mathf.Clamp(saveData.Health, 1, MaxHealth);
+		_currentStamina = Mathf.Clamp(saveData.Stamina, 0f, MaxStamina);
+		_lastDamageTakenAt = double.NegativeInfinity;
+		_guardBreakRemaining = 0d;
+		_isAttackActive = false;
+		_isGuarding = false;
+
+		if (_attackProbeCollisionShape != null)
+		{
+			_attackProbeCollisionShape.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+		}
+
+		if (_guardEffectVisual != null)
+		{
+			_guardEffectVisual.Visible = false;
+		}
+
+		if (_bodyVisual != null)
+		{
+			_bodyVisual.Modulate = Colors.White;
+		}
+
+		HealthChanged?.Invoke(_currentHealth, MaxHealth);
+		StaminaChanged?.Invoke(_currentStamina, MaxStamina);
 	}
 
 	private void ApplyHorizontalMovement(double delta)

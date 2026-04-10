@@ -1,3 +1,5 @@
+using System;
+
 namespace EchoSpace.Gameplay.Progression;
 
 public sealed class PlayerAttributeState
@@ -43,5 +45,10 @@ public sealed class PlayerAttributeState
         var refunded = AllocatedPoints;
         CurrentLevel = BaseLevel;
         return refunded;
+    }
+
+    public void SetLevel(int level)
+    {
+        CurrentLevel = Math.Clamp(level, BaseLevel, HardCap);
     }
 }

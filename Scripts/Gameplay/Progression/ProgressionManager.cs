@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EchoSpace.Save;
 using Godot;
 
 namespace EchoSpace.Gameplay.Progression;
@@ -130,6 +131,62 @@ public partial class ProgressionManager : Node
         AttributesReset?.Invoke();
     }
 
+    public void ResetToDefaults()
+    {
+        EnsureInitialized();
+        ApplyDefaults();
+        EmitFullStateRefresh();
+    }
+
+    public ProgressionSaveData BuildSaveData()
+    {
+        EnsureInitialized();
+
+        var saveData = new ProgressionSaveData
+        {
+            CurrentLevel = CurrentLevel,
+            UnspentPoints = UnspentPoints,
+        };
+
+        foreach (var pair in _attributes)
+        {
+            saveData.Attributes.Add(new ProgressionAttributeSaveData
+            {
+                AttributeType = pair.Key,
+                CurrentLevel = pair.Value.CurrentLevel,
+            });
+        }
+
+        return saveData;
+    }
+
+    public void ApplySaveData(ProgressionSaveData? saveData)
+    {
+        EnsureInitialized();
+
+        if (saveData == null)
+        {
+            ResetToDefaults();
+            return;
+        }
+
+        ApplyDefaults();
+        CurrentLevel = Mathf.Max(1, saveData.CurrentLevel);
+        UnspentPoints = Mathf.Max(0, saveData.UnspentPoints);
+
+        foreach (var entry in saveData.Attributes)
+        {
+            if (!_attributes.TryGetValue(entry.AttributeType, out var attributeState))
+            {
+                continue;
+            }
+
+            attributeState.SetLevel(entry.CurrentLevel);
+        }
+
+        EmitFullStateRefresh();
+    }
+
     public PlayerCombatModifierSnapshot BuildCombatModifiers()
     {
         EnsureInitialized();
@@ -162,8 +219,6 @@ public partial class ProgressionManager : Node
             return;
         }
 
-        CurrentLevel = Mathf.Max(1, StartingLevel);
-        UnspentPoints = Mathf.Max(0, StartingUnspentPoints);
         _attributes.Clear();
 
         foreach (PlayerAttributeType attributeType in Enum.GetValues(typeof(PlayerAttributeType)))
@@ -174,6 +229,31 @@ public partial class ProgressionManager : Node
                 Mathf.Max(BaseAttributeLevel, AttributeHardCap));
         }
 
+        ApplyDefaults();
         _isInitialized = true;
+    }
+
+    private void ApplyDefaults()
+    {
+        CurrentLevel = Mathf.Max(1, StartingLevel);
+        UnspentPoints = Mathf.Max(0, StartingUnspentPoints);
+
+        foreach (var pair in _attributes)
+        {
+            pair.Value.SetLevel(pair.Value.BaseLevel);
+        }
+    }
+
+    private void EmitFullStateRefresh()
+    {
+        LevelChanged?.Invoke(CurrentLevel);
+        UnspentPointsChanged?.Invoke(UnspentPoints);
+
+        foreach (var pair in _attributes)
+        {
+            AttributeChanged?.Invoke(pair.Key, pair.Value.CurrentLevel);
+        }
+
+        AttributesReset?.Invoke();
     }
 }

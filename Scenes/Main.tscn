@@ -122,6 +122,7 @@ shape = SubResource("3")
 
 [node name="DualWorldObject" type="Node" parent="RealityPlatform" unique_id=274693524]
 script = ExtResource("4")
+save_id = "main/reality_platform"
 target_root_path = NodePath("..")
 visual_root_path = NodePath("../Visual")
 collision_root_path = NodePath("../StaticBody2D")
@@ -144,6 +145,7 @@ shape = SubResource("5")
 
 [node name="DualWorldObject" type="Node" parent="SoulBridge" unique_id=243965015]
 script = ExtResource("4")
+save_id = "main/soul_bridge"
 target_root_path = NodePath("..")
 visual_root_path = NodePath("../Visual")
 collision_root_path = NodePath("../StaticBody2D")
