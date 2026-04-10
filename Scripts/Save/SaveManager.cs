@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using EchoSpace.Core.Input;
 using EchoSpace.Core.World;
+using EchoSpace.Gameplay.Enemies;
 using EchoSpace.Gameplay.Inventory;
 using EchoSpace.Gameplay.Progression;
 using EchoSpace.Player;
@@ -18,6 +19,7 @@ public partial class SaveManager : Node
     [Export(PropertyHint.File, "*.tscn")] public string FallbackGameScenePath { get; set; } = "res://Scenes/Main.tscn";
 
     private SaveGameData? _pendingSaveData;
+    private bool _isLoadTransitionInProgress;
 
     public override void _EnterTree()
     {
@@ -43,7 +45,7 @@ public partial class SaveManager : Node
 
         if (@event.IsActionPressed(GameInputActions.QuickLoad))
         {
-            ContinueFromLatestSave();
+            RequestQuickLoad();
             GetViewport().SetInputAsHandled();
         }
     }
@@ -65,6 +67,7 @@ public partial class SaveManager : Node
         if (!TryLoadSaveFile(out var saveData))
         {
             GD.PushWarning("Continue requested, but no save file could be loaded.");
+            _isLoadTransitionInProgress = false;
             return;
         }
 
@@ -72,10 +75,14 @@ public partial class SaveManager : Node
         var targetScene = string.IsNullOrWhiteSpace(saveData.ScenePath)
             ? fallbackScenePath ?? FallbackGameScenePath
             : saveData.ScenePath;
+
         if (ChangeScene(targetScene))
         {
             ApplyPendingSaveDeferred();
+            return;
         }
+
+        _isLoadTransitionInProgress = false;
     }
 
     public Error SaveCurrentGame()
@@ -100,6 +107,7 @@ public partial class SaveManager : Node
             CurrentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality,
             SavedAtUnixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Player = BuildPlayerSaveData(),
+            Enemies = BuildEnemySaveData(),
             InventoryItems = InventoryManager.Instance?.BuildSaveData() ?? new List<InventoryItemSaveData>(),
             Progression = ProgressionManager.Instance?.BuildSaveData() ?? new ProgressionSaveData(),
             DualWorldObjects = BuildDualWorldSaveData(),
@@ -122,7 +130,10 @@ public partial class SaveManager : Node
     private bool ChangeScene(string? scenePath)
     {
         var targetScene = string.IsNullOrWhiteSpace(scenePath) ? FallbackGameScenePath : scenePath;
-        var result = GetTree().ChangeSceneToFile(targetScene);
+        var currentScenePath = GetTree().CurrentScene?.SceneFilePath ?? string.Empty;
+        var result = string.Equals(currentScenePath, targetScene, StringComparison.Ordinal)
+            ? GetTree().ReloadCurrentScene()
+            : GetTree().ChangeSceneToFile(targetScene);
         if (result != Error.Ok)
         {
             GD.PushError($"Failed to change scene to '{targetScene}': {result}");
@@ -143,6 +154,7 @@ public partial class SaveManager : Node
     {
         if (_pendingSaveData == null)
         {
+            _isLoadTransitionInProgress = false;
             return;
         }
 
@@ -153,6 +165,28 @@ public partial class SaveManager : Node
         if (GetTree().GetFirstNodeInGroup("player") is PlayerController player)
         {
             player.ApplySaveData(_pendingSaveData.Player);
+        }
+
+        var enemyStateLookup = new Dictionary<string, EnemySaveData>(StringComparer.Ordinal);
+        foreach (var enemyEntry in _pendingSaveData.Enemies)
+        {
+            if (!string.IsNullOrWhiteSpace(enemyEntry.SaveId))
+            {
+                enemyStateLookup[enemyEntry.SaveId] = enemyEntry;
+            }
+        }
+
+        foreach (Node node in GetTree().GetNodesInGroup("saveable_enemy"))
+        {
+            if (node is not EnemyCombatant enemy || !enemy.HasSaveId)
+            {
+                continue;
+            }
+
+            if (enemyStateLookup.TryGetValue(enemy.SaveId, out var enemySave))
+            {
+                enemy.ApplySaveData(enemySave);
+            }
         }
 
         var stateLookup = new Dictionary<string, DualWorldObjectSaveData>(StringComparer.Ordinal);
@@ -178,6 +212,8 @@ public partial class SaveManager : Node
         }
 
         _pendingSaveData = null;
+        _isLoadTransitionInProgress = false;
+        Input.FlushBufferedEvents();
     }
 
     private void ResetGlobalStateToDefaults()
@@ -226,6 +262,23 @@ public partial class SaveManager : Node
         return player.BuildSaveData();
     }
 
+    private List<EnemySaveData> BuildEnemySaveData()
+    {
+        var entries = new List<EnemySaveData>();
+
+        foreach (Node node in GetTree().GetNodesInGroup("saveable_enemy"))
+        {
+            if (node is not EnemyCombatant enemy || !enemy.HasSaveId)
+            {
+                continue;
+            }
+
+            entries.Add(enemy.BuildSaveData());
+        }
+
+        return entries;
+    }
+
     private List<DualWorldObjectSaveData> BuildDualWorldSaveData()
     {
         var entries = new List<DualWorldObjectSaveData>();
@@ -241,5 +294,21 @@ public partial class SaveManager : Node
         }
 
         return entries;
+    }
+
+    private void RequestQuickLoad()
+    {
+        if (_isLoadTransitionInProgress)
+        {
+            return;
+        }
+
+        _isLoadTransitionInProgress = true;
+        CallDeferred(nameof(PerformQuickLoad));
+    }
+
+    private void PerformQuickLoad()
+    {
+        ContinueFromLatestSave();
     }
 }

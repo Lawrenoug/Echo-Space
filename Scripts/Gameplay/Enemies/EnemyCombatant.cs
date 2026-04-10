@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using EchoSpace.Core.World;
 using EchoSpace.Gameplay.Combat;
 using EchoSpace.Player;
+using EchoSpace.Save;
 using Godot;
 
 namespace EchoSpace.Gameplay.Enemies;
@@ -40,6 +41,7 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
     [Export] public float DeathDuration { get; set; } = 0.32f;
     [Export] public float DeathRiseDistance { get; set; } = 22f;
     [Export] public WorldType AffiliatedWorld { get; set; } = WorldType.Reality;
+    [Export] public string SaveId { get; set; } = string.Empty;
 
     [ExportGroup("Nodes")]
     [Export] public NodePath? VisualRootPath { get; set; }
@@ -64,7 +66,9 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
     private Vector2 _attackBoxBasePosition = Vector2.Zero;
 
     public int CurrentHealth => _currentHealth;
+    public float CurrentPosture => _currentPosture;
     public bool IsBroken => _phase == CombatPhase.Broken;
+    public bool HasSaveId => !string.IsNullOrWhiteSpace(SaveId);
     protected CombatPhase CurrentPhase => _phase;
     protected Vector2 SpawnPosition => _spawnPosition;
     protected PlayerController? Player => _player;
@@ -89,6 +93,11 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
     public override void _Ready()
     {
         AddToGroup("enemy");
+
+        if (HasSaveId)
+        {
+            AddToGroup("saveable_enemy");
+        }
 
         _currentHealth = MaxHealth;
         _spawnPosition = GlobalPosition;
@@ -120,8 +129,15 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
         }
 
         OnCombatantReady();
-        HealthChanged?.Invoke(_currentHealth, MaxHealth);
-        PostureChanged?.Invoke(_currentPosture, MaxPosture, false);
+        EmitCombatStateChanged();
+    }
+
+    public override void _ExitTree()
+    {
+        if (HasSaveId)
+        {
+            RemoveFromGroup("saveable_enemy");
+        }
     }
 
     public override void _PhysicsProcess(double delta)
@@ -221,6 +237,64 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
         {
             EnterBrokenState();
         }
+    }
+
+    public EnemySaveData BuildSaveData()
+    {
+        return new EnemySaveData
+        {
+            SaveId = SaveId,
+            PositionX = GlobalPosition.X,
+            PositionY = GlobalPosition.Y,
+            Health = _currentHealth,
+            Posture = _currentPosture,
+            IsBroken = _phase == CombatPhase.Broken,
+            IsDead = _phase == CombatPhase.Dying || !IsInsideTree() || _currentHealth <= 0,
+        };
+    }
+
+    public void ApplySaveData(EnemySaveData? saveData)
+    {
+        if (saveData == null)
+        {
+            return;
+        }
+
+        if (saveData.IsDead)
+        {
+            Visible = false;
+            DisableCollisionRecursive(this);
+            CallDeferred(MethodName.QueueFree);
+            return;
+        }
+
+        Visible = true;
+        GlobalPosition = new Vector2(saveData.PositionX, saveData.PositionY);
+        Velocity = Vector2.Zero;
+        _currentHealth = Mathf.Clamp(saveData.Health, 1, MaxHealth);
+        _currentPosture = Mathf.Clamp(saveData.Posture, 0f, MaxPosture);
+        _damageFlashRemaining = 0d;
+        _phaseRemaining = 0d;
+
+        if (_visualRoot != null)
+        {
+            _visualRoot.Position = _visualBasePosition;
+            _visualRoot.Scale = new Vector2(Mathf.Abs(_visualBaseScale.X) * _moveDirection, _visualBaseScale.Y);
+            _visualRoot.Modulate = Colors.White;
+        }
+
+        DisableAttackHitbox();
+
+        if (saveData.IsBroken)
+        {
+            SetPhase(CombatPhase.Broken, BrokenDuration);
+        }
+        else
+        {
+            SetPhase(CombatPhase.Neutral, 0d);
+        }
+
+        EmitCombatStateChanged();
     }
 
     public virtual void OnDeflected(float postureDamage, Node deflector)
@@ -583,6 +657,13 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
         {
             _visualRoot.Modulate = Colors.White;
         }
+    }
+
+    private void EmitCombatStateChanged()
+    {
+        HealthChanged?.Invoke(_currentHealth, MaxHealth);
+        PostureChanged?.Invoke(_currentPosture, MaxPosture, _phase == CombatPhase.Broken);
+        UpdateVisualTint();
     }
 
     private static void DisableCollisionRecursive(Node node)

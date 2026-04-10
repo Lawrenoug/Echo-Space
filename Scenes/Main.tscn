@@ -179,6 +179,7 @@ position = Vector2(120, 562)
 
 [node name="PatrolEnemy" parent="." unique_id=61361803 instance=ExtResource("5")]
 position = Vector2(1000, 566)
+save_id = "main/patrol_enemy_01"
 
 [node name="BreakableWall" parent="." unique_id=960738665 instance=ExtResource("6")]
 position = Vector2(2580, 537)

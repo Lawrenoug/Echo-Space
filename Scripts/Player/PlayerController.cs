@@ -447,6 +447,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
 		GlobalPosition = new Vector2(saveData.PositionX, saveData.PositionY);
 		Velocity = Vector2.Zero;
+		_inputBuffer.Clear();
 		_currentHealth = Mathf.Clamp(saveData.Health, 1, MaxHealth);
 		_currentStamina = Mathf.Clamp(saveData.Stamina, 0f, MaxStamina);
 		_lastDamageTakenAt = double.NegativeInfinity;
@@ -469,6 +470,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			_bodyVisual.Modulate = Colors.White;
 		}
 
+		_stateMachine?.ChangeState<PlayerIdleState>();
 		HealthChanged?.Invoke(_currentHealth, MaxHealth);
 		StaminaChanged?.Invoke(_currentStamina, MaxStamina);
 	}

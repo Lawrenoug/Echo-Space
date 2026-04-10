@@ -45,4 +45,9 @@ public sealed class InputBuffer
             _bufferedActions.Remove(actionName);
         }
     }
+
+    public void Clear()
+    {
+        _bufferedActions.Clear();
+    }
 }
