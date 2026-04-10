@@ -1,0 +1,271 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/MainMenuController.cs" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="1"]
+bg_color = Color(0.0705882, 0.101961, 0.137255, 0.94902)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.905882, 0.631373, 0.329412, 0.95)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0, 0, 0, 0.25)
+shadow_size = 20
+
+[sub_resource type="StyleBoxFlat" id="2"]
+bg_color = Color(0.0941176, 0.129412, 0.172549, 0.980392)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.482353, 0.756863, 0.984314, 0.95)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 16
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="BackgroundBase" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0313726, 0.0470588, 0.0666667, 1)
+
+[node name="WarmGlow" type="ColorRect" parent="."]
+layout_mode = 1
+offset_left = -120.0
+offset_top = -60.0
+offset_right = 560.0
+offset_bottom = 520.0
+rotation = 0.18
+color = Color(0.901961, 0.560784, 0.25098, 0.16)
+
+[node name="CoolGlow" type="ColorRect" parent="."]
+layout_mode = 1
+offset_left = 1260.0
+offset_top = 180.0
+offset_right = 1980.0
+offset_bottom = 980.0
+rotation = -0.24
+color = Color(0.352941, 0.733333, 0.960784, 0.16)
+
+[node name="Overlay" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Center" type="CenterContainer" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Frame" type="Panel" parent="Overlay/Center"]
+custom_minimum_size = Vector2(1140, 640)
+layout_mode = 2
+theme_override_styles/panel = SubResource("1")
+
+[node name="Margin" type="MarginContainer" parent="Overlay/Center/Frame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 38.0
+offset_top = 38.0
+offset_right = -38.0
+offset_bottom = -38.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Content" type="HBoxContainer" parent="Overlay/Center/Frame/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 54
+
+[node name="InfoColumn" type="VBoxContainer" parent="Overlay/Center/Frame/Margin/Content"]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="Eyebrow" type="Label" parent="Overlay/Center/Frame/Margin/Content/InfoColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.929412, 0.760784, 0.564706, 1)
+theme_override_font_sizes/font_size = 18
+text = "ECHO SPACE / DOUBLE REALM PROTOTYPE"
+
+[node name="Title" type="Label" parent="Overlay/Center/Frame/Margin/Content/InfoColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.972549, 0.952941, 0.913725, 1)
+theme_override_font_sizes/font_size = 68
+text = "双界回响"
+
+[node name="Subtitle" type="Label" parent="Overlay/Center/Frame/Margin/Content/InfoColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.490196, 0.784314, 0.980392, 1)
+theme_override_font_sizes/font_size = 26
+text = "Reality and Soul in one long-breath journey"
+
+[node name="Description" type="RichTextLabel" parent="Overlay/Center/Frame/Margin/Content/InfoColumn"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+bbcode_enabled = false
+scroll_active = false
+fit_content = true
+text = "在现实与灵魂之间切换场景结构，利用弹反与处决撕开敌人的防线。\n\n当前主菜单已经接入启动流程，后续可直接继续补存档、设置与正式界面资源。"
+
+[node name="AccentLine" type="ColorRect" parent="Overlay/Center/Frame/Margin/Content/InfoColumn"]
+custom_minimum_size = Vector2(340, 4)
+layout_mode = 2
+color = Color(0.905882, 0.631373, 0.329412, 0.9)
+
+[node name="Hint" type="Label" parent="Overlay/Center/Frame/Margin/Content/InfoColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.717647, 0.760784, 0.819608, 1)
+theme_override_font_sizes/font_size = 18
+text = "主菜单按钮已经留好接口。开始游戏进入当前白盒关卡，继续游戏与设置页分类接口预留待接。"
+autowrap_mode = 3
+
+[node name="ActionColumn" type="VBoxContainer" parent="Overlay/Center/Frame/Margin/Content"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="NewGameButton" type="Button" parent="Overlay/Center/Frame/Margin/Content/ActionColumn"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "开始游戏"
+
+[node name="ContinueButton" type="Button" parent="Overlay/Center/Frame/Margin/Content/ActionColumn"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "继续游戏"
+
+[node name="SettingsButton" type="Button" parent="Overlay/Center/Frame/Margin/Content/ActionColumn"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "设置"
+
+[node name="QuitButton" type="Button" parent="Overlay/Center/Frame/Margin/Content/ActionColumn"]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "退出游戏"
+
+[node name="Status" type="Label" parent="Overlay/Center/Frame/Margin/Content/ActionColumn"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.854902, 0.882353, 0.921569, 1)
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 3
+text = "状态"
+
+[node name="SettingsBackdrop" type="ColorRect" parent="Overlay"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.00784314, 0.0117647, 0.0196078, 0.55)
+
+[node name="SettingsCard" type="Panel" parent="Overlay"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -250.0
+offset_right = 300.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("2")
+
+[node name="Margin" type="MarginContainer" parent="Overlay/SettingsCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 26.0
+offset_top = 26.0
+offset_right = -26.0
+offset_bottom = -26.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Body" type="VBoxContainer" parent="Overlay/SettingsCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Overlay/SettingsCard/Margin/Body"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.929412, 0.94902, 0.976471, 1)
+theme_override_font_sizes/font_size = 34
+text = "设置"
+
+[node name="Summary" type="RichTextLabel" parent="Overlay/SettingsCard/Margin/Body"]
+custom_minimum_size = Vector2(0, 190)
+layout_mode = 2
+bbcode_enabled = false
+scroll_active = false
+fit_content = true
+text = "设置说明"
+
+[node name="DisplayButton" type="Button" parent="Overlay/SettingsCard/Margin/Body"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "显示设置"
+
+[node name="AudioButton" type="Button" parent="Overlay/SettingsCard/Margin/Body"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "音频设置"
+
+[node name="ControlsButton" type="Button" parent="Overlay/SettingsCard/Margin/Body"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "按键设置"
+
+[node name="GameplayButton" type="Button" parent="Overlay/SettingsCard/Margin/Body"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "玩法设置"
+
+[node name="BackButton" type="Button" parent="Overlay/SettingsCard/Margin/Body"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "返回"
