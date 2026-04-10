@@ -130,10 +130,7 @@ public partial class SaveManager : Node
     private bool ChangeScene(string? scenePath)
     {
         var targetScene = string.IsNullOrWhiteSpace(scenePath) ? FallbackGameScenePath : scenePath;
-        var currentScenePath = GetTree().CurrentScene?.SceneFilePath ?? string.Empty;
-        var result = string.Equals(currentScenePath, targetScene, StringComparison.Ordinal)
-            ? GetTree().ReloadCurrentScene()
-            : GetTree().ChangeSceneToFile(targetScene);
+        var result = GetTree().ChangeSceneToFile(targetScene);
         if (result != Error.Ok)
         {
             GD.PushError($"Failed to change scene to '{targetScene}': {result}");
