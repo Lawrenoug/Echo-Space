@@ -46,6 +46,7 @@
 - 玩家状态：`Scripts/Player/States/`
 - 敌人战斗基类：`Scripts/Gameplay/Enemies/EnemyCombatant.cs`
 - 巡逻敌人：`Scripts/Gameplay/Enemies/EnemyController.cs`
+- 追击敌人：`Scripts/Gameplay/Enemies/ChaserEnemyController.cs`
 - 双世界系统：`Scripts/Core/World/`
 - HUD 与系统面板：`Scripts/UI/WorldOverlay.cs`
 - 背包系统：`Scripts/Gameplay/Inventory/`
@@ -60,6 +61,7 @@
 - 二级系统界面当前采用统一的“面板栈”逻辑，切换界面时下层界面保留，关闭顶层后自动恢复
 - 背包系统当前负责：物品定义、分类、槽位、堆叠、增删查、变化事件
 - 加点系统当前负责：等级、未分配点数、属性分配 / 退点 / 重置、战斗修正值快照
+- 当前已有巡逻敌人与追击敌人两种派生敌人，用于验证敌人战斗基类的复用性
 
 ## 人工资源填充清单
 
@@ -160,5 +162,4 @@
 1. 让设置菜单真正接入显示、音频、按键和玩法配置
 2. 让加点系统真正影响玩家血量、耐力、攻击和弹反等实际战斗数值
 3. 让背包系统支持物品使用、丢弃、关键道具判定与掉落拾取
-4. 设计第二种敌人，验证敌人战斗基类的复用性
-5. 等核心功能基本稳定后，再评估是否重新接入存档系统
+4. 等核心功能基本稳定后，再评估是否重新接入存档系统

@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://cch6onqs7edef" path="res://Scripts/Core/World/DualWorldObject.cs" id="4"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/PatrolEnemy.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/BreakableWall.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/ChaserEnemy.tscn" id="7"]
 
 [sub_resource type="RectangleShape2D" id="1"]
 size = Vector2(4200, 64)
@@ -177,6 +178,9 @@ position = Vector2(120, 562)
 
 [node name="PatrolEnemy" parent="." unique_id=61361803 instance=ExtResource("5")]
 position = Vector2(1000, 566)
+
+[node name="ChaserEnemy" parent="." instance=ExtResource("7")]
+position = Vector2(1780, 566)
 
 [node name="BreakableWall" parent="." unique_id=960738665 instance=ExtResource("6")]
 position = Vector2(2580, 537)
