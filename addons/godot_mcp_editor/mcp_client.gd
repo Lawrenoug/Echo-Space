@@ -6,7 +6,7 @@ signal connected
 signal disconnected
 signal tool_requested(request_id: String, tool_name: String, args: Dictionary)
 
-const DEFAULT_URL := "ws://127.0.0.1:6505/godot"
+const DEFAULT_URL := "ws://127.0.0.1:6506/godot"
 const RECONNECT_DELAY := 3.0
 const MAX_RECONNECT_DELAY := 30.0
 
