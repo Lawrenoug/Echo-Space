@@ -1,4 +1,5 @@
 using EchoSpace.Core.Input;
+using EchoSpace.Core.Settings;
 using EchoSpace.Core.World;
 using EchoSpace.Gameplay.Inventory;
 using EchoSpace.Gameplay.Progression;
@@ -43,6 +44,7 @@ public partial class MainMenuController : Control
     public override void _Ready()
     {
         GameInputActions.EnsureDefaults();
+        GameSettingsManager.Instance?.ApplyAll();
         ResolveBindings();
         BindButtons();
         RefreshSettingsSummary();
@@ -98,22 +100,22 @@ public partial class MainMenuController : Control
 
         if (_displayButton != null)
         {
-            _displayButton.Pressed += () => ShowPlaceholder("显示设置");
+            _displayButton.Pressed += OnDisplaySettingsPressed;
         }
 
         if (_audioButton != null)
         {
-            _audioButton.Pressed += () => ShowPlaceholder("音频设置");
+            _audioButton.Pressed += OnAudioSettingsPressed;
         }
 
         if (_controlsButton != null)
         {
-            _controlsButton.Pressed += () => ShowPlaceholder("按键设置");
+            _controlsButton.Pressed += OnControlsSettingsPressed;
         }
 
         if (_gameplayButton != null)
         {
-            _gameplayButton.Pressed += () => ShowPlaceholder("玩法设置");
+            _gameplayButton.Pressed += OnGameplaySettingsPressed;
         }
 
         if (_backButton != null)
@@ -134,8 +136,61 @@ public partial class MainMenuController : Control
     {
         EmitSignal(SignalName.SettingsOpened);
         SetSettingsVisible(true);
-        UpdateStatus("设置菜单已打开。各分类按钮已经留好接口。");
+        RefreshSettingsSummary();
+        UpdateStatus("设置菜单已打开。点击分类按钮会循环切换并保存对应预设。");
         _displayButton?.GrabFocus();
+    }
+
+    private void OnDisplaySettingsPressed()
+    {
+        if (GameSettingsManager.Instance == null)
+        {
+            UpdateStatus("设置管理器未找到。");
+            return;
+        }
+
+        GameSettingsManager.Instance.CycleDisplayPreset();
+        RefreshSettingsSummary();
+        UpdateStatus($"显示设置已切换：{GameSettingsManager.Instance.DisplayLabel}");
+    }
+
+    private void OnAudioSettingsPressed()
+    {
+        if (GameSettingsManager.Instance == null)
+        {
+            UpdateStatus("设置管理器未找到。");
+            return;
+        }
+
+        GameSettingsManager.Instance.CycleAudioPreset();
+        RefreshSettingsSummary();
+        UpdateStatus($"音频设置已切换：{GameSettingsManager.Instance.AudioLabel}");
+    }
+
+    private void OnControlsSettingsPressed()
+    {
+        if (GameSettingsManager.Instance == null)
+        {
+            UpdateStatus("设置管理器未找到。");
+            return;
+        }
+
+        GameSettingsManager.Instance.CycleInputPreset();
+        RefreshSettingsSummary();
+        UpdateStatus($"按键设置已切换：{GameSettingsManager.Instance.InputLabel}");
+    }
+
+    private void OnGameplaySettingsPressed()
+    {
+        if (GameSettingsManager.Instance == null)
+        {
+            UpdateStatus("设置管理器未找到。");
+            return;
+        }
+
+        GameSettingsManager.Instance.CycleGameplayPreset();
+        RefreshSettingsSummary();
+        UpdateStatus($"玩法设置已切换：{GameSettingsManager.Instance.GameplayLabel}");
     }
 
     private void OnQuitPressed()
@@ -173,19 +228,8 @@ public partial class MainMenuController : Control
             return;
         }
 
-        _settingsSummary.Text =
-            "这里先保留设置系统的入口层。\n\n" +
-            "后续可以在这里接入：\n" +
-            "1. 显示模式 / 分辨率 / 垂直同步\n" +
-            "2. 总音量 / 音效 / BGM / 界面音\n" +
-            "3. 键位重绑定 / 手柄支持\n" +
-            "4. 镜头震动 / 受击停顿 / 辅助选项\n\n" +
-            "当前各按钮已经留好回调接口。";
-    }
-
-    private void ShowPlaceholder(string featureName)
-    {
-        UpdateStatus($"{featureName}接口已预留，后续接入正式设置系统。");
+        _settingsSummary.Text = GameSettingsManager.Instance?.BuildSummary()
+            ?? "设置管理器未找到。请检查 SettingsManager Autoload 是否已启用。";
     }
 
     private void ResetPrototypeGlobalState()

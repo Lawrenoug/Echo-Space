@@ -48,6 +48,7 @@
 - 巡逻敌人：`Scripts/Gameplay/Enemies/EnemyController.cs`
 - 追击敌人：`Scripts/Gameplay/Enemies/ChaserEnemyController.cs`
 - 双世界系统：`Scripts/Core/World/`
+- 设置系统：`Scripts/Core/Settings/GameSettingsManager.cs`
 - HUD 与系统面板：`Scripts/UI/WorldOverlay.cs`
 - 背包系统：`Scripts/Gameplay/Inventory/`
 - 加点系统：`Scripts/Gameplay/Progression/`
@@ -64,10 +65,9 @@
 - 加点系统当前负责：等级、未分配点数、属性分配 / 退点 / 重置、战斗修正值快照
 - 当前已有巡逻敌人与追击敌人两种派生敌人，用于验证敌人战斗基类的复用性
 - `Docs/Art` 用于存放你自己制作的美术素材、参考图和提示词文档
-- `Assets` 用于存放后续通过 GoPeak 搜索 / 下载并确认可用的 CC0 素材内容
-- 项目内保留 GoPeak 编辑器插件与自动重载插件，用于让 GoPeak 场景工具连接 Godot Editor
-- `MCPRuntime` Autoload 暂不接入项目，避免在游戏运行时额外启动调试服务；后续如果需要运行时调试，再单独评估
-- GoPeak 编辑器桥接端口已改为 `6506`，用于避开本机 `6505` 多实例占用问题
+- `Assets` 用于存放后续外部搜索 / 下载并确认可用的 CC0 素材内容
+- GoPeak 相关 Godot 插件已经从项目内移除，后续以纯 Codex 文件开发和本地构建验证为主
+- 设置系统当前接入显示、音频、按键和玩法四类预设，会保存到 `user://settings.cfg`
 
 ## 人工资源填充清单
 
@@ -145,7 +145,7 @@
 
 ## 当前最适合继续推进的方向
 
-1. 让设置菜单真正接入显示、音频、按键和玩法配置
-2. 让加点系统真正影响玩家血量、耐力、攻击和弹反等实际战斗数值
-3. 让背包系统支持物品使用、丢弃、关键道具判定与掉落拾取
+1. 让加点系统真正影响玩家血量、耐力、攻击和弹反等实际战斗数值
+2. 让背包系统支持物品使用、丢弃、关键道具判定与掉落拾取
+3. 给设置菜单补正式控件外观，例如滑条、勾选框、下拉框和键位捕获弹窗
 4. 等核心功能基本稳定后，再评估是否重新接入存档系统

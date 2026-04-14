@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using EchoSpace.Core.Fsm;
 using EchoSpace.Core.Input;
+using EchoSpace.Core.Settings;
 using EchoSpace.Core.World;
 using EchoSpace.Gameplay.Combat;
 using EchoSpace.Gameplay.Enemies;
@@ -82,6 +83,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	public override void _Ready()
 	{
 		GameInputActions.EnsureDefaults();
+		GameSettingsManager.Instance?.ApplyAll();
+		GameSettingsManager.Instance?.ApplyGameplaySettings(this);
 		AddToGroup("player");
 
 		_currentHealth = MaxHealth;

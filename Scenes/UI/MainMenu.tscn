@@ -197,10 +197,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -303.0
-offset_right = 300.0
-offset_bottom = 287.0
+offset_left = -330.0
+offset_top = -330.0
+offset_right = 330.0
+offset_bottom = 330.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("2")
@@ -228,8 +228,9 @@ theme_override_font_sizes/font_size = 34
 text = "设置"
 
 [node name="Summary" type="RichTextLabel" parent="Overlay/SettingsCard/Margin/Body" unique_id=1047223452]
-custom_minimum_size = Vector2(0, 190)
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
+bbcode_enabled = true
 text = "设置说明"
 fit_content = true
 scroll_active = false
@@ -239,24 +240,28 @@ custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "显示设置"
+tooltip_text = "循环切换窗口 / 全屏与垂直同步预设"
 
 [node name="AudioButton" type="Button" parent="Overlay/SettingsCard/Margin/Body" unique_id=921198406]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "音频设置"
+tooltip_text = "循环切换主音量预设"
 
 [node name="ControlsButton" type="Button" parent="Overlay/SettingsCard/Margin/Body" unique_id=993566518]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "按键设置"
+tooltip_text = "循环切换默认鼠标战斗与键盘扩展预设"
 
 [node name="GameplayButton" type="Button" parent="Overlay/SettingsCard/Margin/Body" unique_id=1419650785]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "玩法设置"
+tooltip_text = "循环切换标准、宽松、辅助三种手感预设"
 
 [node name="BackButton" type="Button" parent="Overlay/SettingsCard/Margin/Body" unique_id=1409918812]
 custom_minimum_size = Vector2(0, 52)
