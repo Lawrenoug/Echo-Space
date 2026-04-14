@@ -8,6 +8,7 @@ public partial class DualWorldObject : Node
     [Export] public NodePath? TargetRootPath { get; set; }
     [Export] public NodePath? VisualRootPath { get; set; }
     [Export] public NodePath? CollisionRootPath { get; set; }
+    [Export] public bool ApplyPositionOffsetOnWorldChange { get; set; } = true;
 
     [ExportGroup("Reality")]
     [Export] public bool ExistsInReality { get; set; } = true;
@@ -63,7 +64,10 @@ public partial class DualWorldObject : Node
         var isVisible = state.Exists && !state.IsBroken;
         var hasCollision = isVisible && state.IsActive;
 
-        _targetRoot.Position = _basePosition + state.PositionOffset;
+        if (ApplyPositionOffsetOnWorldChange)
+        {
+            _targetRoot.Position = _basePosition + state.PositionOffset;
+        }
 
         if (_visualRoot != null)
         {

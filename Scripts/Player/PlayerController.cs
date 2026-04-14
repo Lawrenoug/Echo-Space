@@ -32,6 +32,9 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public float CoyoteTime { get; set; } = 0.10f;
 	[Export] public float JumpApexGravityScale { get; set; } = 0.5f;
 	[Export] public float FallGravityScale { get; set; } = 1.8f;
+	[Export] public float JumpHoldMaxTime { get; set; } = 0.18f;
+	[Export] public float JumpHoldGravityScale { get; set; } = 0.28f;
+	[Export] public float JumpCutVelocityMultiplier { get; set; } = 0.55f;
 
 	[ExportGroup("Combat")]
 	[Export] public int MaxHealth { get; set; } = 5;
@@ -66,6 +69,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private double _lastDamageTakenAt = double.NegativeInfinity;
 	private double _lastGuardPressedAt = double.NegativeInfinity;
 	private double _guardBreakRemaining;
+	private double _jumpHoldRemaining;
 	private int _remainingAirJumps;
 	private int _currentHealth;
 	private float _currentStamina;
@@ -85,6 +89,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private float _baseDeflectStaminaCost;
 	private bool _isAttackActive;
 	private bool _isGuarding;
+	private bool _jumpCutApplied;
 
 	public int CurrentHealth => _currentHealth;
 	public float CurrentStamina => _currentStamina;
@@ -392,6 +397,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 
 		Velocity = new Vector2(Velocity.X, -JumpSpeed);
+		_jumpHoldRemaining = JumpHoldMaxTime;
+		_jumpCutApplied = false;
 		_lastGroundedAt = double.NegativeInfinity;
 	}
 
@@ -504,6 +511,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		if (IsOnFloor() && Velocity.Y > 0f)
 		{
 			Velocity = new Vector2(Velocity.X, 0f);
+			_jumpHoldRemaining = 0d;
+			_jumpCutApplied = true;
 			return;
 		}
 
@@ -513,8 +522,31 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 
 		var gravity = (float)ProjectSettings.GetSetting("physics/2d/default_gravity");
-		var gravityScale = Velocity.Y < 0f ? JumpApexGravityScale : FallGravityScale;
+		var gravityScale = GetCurrentGravityScale(delta);
 		Velocity += new Vector2(0f, gravity * gravityScale * (float)delta);
+	}
+
+	private float GetCurrentGravityScale(double delta)
+	{
+		if (Velocity.Y >= 0f)
+		{
+			_jumpHoldRemaining = 0d;
+			return FallGravityScale;
+		}
+
+		if (Input.IsActionPressed(GameInputActions.Jump) && _jumpHoldRemaining > 0d)
+		{
+			_jumpHoldRemaining = Math.Max(0d, _jumpHoldRemaining - delta);
+			return JumpHoldGravityScale;
+		}
+
+		if (!Input.IsActionPressed(GameInputActions.Jump) && !_jumpCutApplied)
+		{
+			Velocity = new Vector2(Velocity.X, Velocity.Y * JumpCutVelocityMultiplier);
+			_jumpCutApplied = true;
+		}
+
+		return JumpApexGravityScale;
 	}
 
 	private void ProcessAttackHits()

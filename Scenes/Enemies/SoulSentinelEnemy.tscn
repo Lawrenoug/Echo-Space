@@ -16,6 +16,7 @@ size = Vector2(38, 28)
 
 [node name="SoulSentinelEnemy" type="CharacterBody2D"]
 script = ExtResource("1")
+collision_layer = 0
 max_health = 8
 max_posture = 155.0
 posture_recovery_per_second = 7.0
@@ -104,7 +105,8 @@ color = Color(1, 0.9, 0.58, 0.95)
 [node name="DualWorldObject" type="Node" parent="."]
 script = ExtResource("3")
 target_root_path = NodePath("..")
-visual_root_path = NodePath("../Body")
-collision_root_path = NodePath("..")
+visual_root_path = NodePath("..")
+collision_root_path = NodePath("../Hurtbox")
+apply_position_offset_on_world_change = false
 exists_in_reality = false
 exists_in_soul = true

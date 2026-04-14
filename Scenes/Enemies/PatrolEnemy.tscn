@@ -17,6 +17,7 @@ size = Vector2(26, 20)
 [node name="PatrolEnemy" type="CharacterBody2D"]
 script = ExtResource("1")
 position = Vector2(520, 300)
+collision_layer = 0
 visual_root_path = NodePath("Body")
 
 [node name="Body" type="Polygon2D" parent="."]
@@ -81,7 +82,8 @@ color = Color(1, 0.9, 0.58, 0.95)
 [node name="DualWorldObject" type="Node" parent="."]
 script = ExtResource("3")
 target_root_path = NodePath("..")
-visual_root_path = NodePath("../Body")
-collision_root_path = NodePath("..")
+visual_root_path = NodePath("..")
+collision_root_path = NodePath("../Hurtbox")
+apply_position_offset_on_world_change = false
 exists_in_reality = true
 exists_in_soul = false
