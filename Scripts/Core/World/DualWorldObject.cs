@@ -64,7 +64,7 @@ public partial class DualWorldObject : Node
         var isVisible = state.Exists && !state.IsBroken;
         var hasCollision = isVisible && state.IsActive;
 
-        if (ApplyPositionOffsetOnWorldChange)
+        if (ShouldApplyPositionOffset())
         {
             _targetRoot.Position = _basePosition + state.PositionOffset;
         }
@@ -149,6 +149,16 @@ public partial class DualWorldObject : Node
         }
 
         return _targetRoot;
+    }
+
+    private bool ShouldApplyPositionOffset()
+    {
+        if (!ApplyPositionOffsetOnWorldChange || _targetRoot == null)
+        {
+            return false;
+        }
+
+        return _targetRoot is not CharacterBody2D;
     }
 
     private void SetCollisionEnabled(Node node, bool enabled)

@@ -66,6 +66,7 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
     public int CurrentHealth => _currentHealth;
     public float CurrentPosture => _currentPosture;
     public bool IsBroken => _phase == CombatPhase.Broken;
+    protected bool IsInAffiliatedWorld => (WorldManager.Instance?.CurrentWorld ?? WorldType.Reality) == AffiliatedWorld;
     protected CombatPhase CurrentPhase => _phase;
     protected Vector2 SpawnPosition => _spawnPosition;
     protected PlayerController? Player => _player;

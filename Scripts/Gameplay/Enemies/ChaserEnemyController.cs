@@ -13,6 +13,12 @@ public partial class ChaserEnemyController : EnemyCombatant
 
     protected override void TickNeutral(double delta)
     {
+        if (!IsInAffiliatedWorld)
+        {
+            SetHorizontalVelocity(0f);
+            return;
+        }
+
         var distanceFromSpawn = GlobalPosition.X - SpawnPosition.X;
 
         if (MathF.Abs(distanceFromSpawn) > LeashDistance)

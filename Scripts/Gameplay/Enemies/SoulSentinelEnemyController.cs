@@ -17,6 +17,12 @@ public partial class SoulSentinelEnemyController : EnemyCombatant
 
 	protected override void TickNeutral(double delta)
 	{
+		if (!IsInAffiliatedWorld)
+		{
+			SetHorizontalVelocity(0f);
+			return;
+		}
+
 		var distanceFromSpawn = GlobalPosition.X - SpawnPosition.X;
 
 		if (IsPlayerRelevant() && Player != null)
