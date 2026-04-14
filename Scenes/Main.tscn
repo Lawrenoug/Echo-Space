@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/PatrolEnemy.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/BreakableWall.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/ChaserEnemy.tscn" id="7"]
+[ext_resource type="Script" path="res://Scripts/Gameplay/Inventory/InventoryPickup.cs" id="8"]
 
 [sub_resource type="RectangleShape2D" id="1"]
 size = Vector2(4200, 64)
@@ -22,6 +23,9 @@ size = Vector2(180, 24)
 
 [sub_resource type="RectangleShape2D" id="5"]
 size = Vector2(140, 24)
+
+[sub_resource type="CircleShape2D" id="6"]
+radius = 18.0
 
 [node name="Main" type="Node2D" unique_id=195052086]
 script = ExtResource("1")
@@ -175,6 +179,26 @@ shape = SubResource("5")
 
 [node name="Player" parent="." unique_id=1704508750 instance=ExtResource("2")]
 position = Vector2(120, 562)
+
+[node name="FieldSupplyPickup" type="Area2D" parent="." unique_id=1661722512]
+position = Vector2(720, 470)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("8")
+item_id = "field_supply"
+display_name = "野外补给"
+description = "拾取后加入背包，可恢复 1 点生命和 25 点耐力。"
+quantity = 1
+max_stack = 9
+health_restore = 1
+stamina_restore = 25.0
+
+[node name="Visual" type="Polygon2D" parent="FieldSupplyPickup" unique_id=218461702]
+color = Color(0.45, 0.86, 0.62, 1)
+polygon = PackedVector2Array(0, -18, 15, 0, 0, 18, -15, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FieldSupplyPickup" unique_id=674129108]
+shape = SubResource("6")
 
 [node name="PatrolEnemy" parent="." unique_id=61361803 instance=ExtResource("5")]
 position = Vector2(1000, 566)

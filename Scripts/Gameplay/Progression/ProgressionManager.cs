@@ -150,7 +150,9 @@ public partial class ProgressionManager : Node
         return new PlayerCombatModifierSnapshot(
             bonusHealth: vitalityBonus * 2,
             bonusStamina: enduranceBonus * 6f,
+            bonusAttackDamage: strengthBonus / 4,
             attackPostureMultiplier: 1f + strengthBonus * 0.06f,
+            deflectPostureMultiplier: 1f + deflectionBonus * 0.05f,
             guardStaminaMultiplier: Mathf.Max(0.65f, 1f - deflectionBonus * 0.04f),
             soulAttunementMultiplier: 1f + soulBonus * 0.08f);
     }

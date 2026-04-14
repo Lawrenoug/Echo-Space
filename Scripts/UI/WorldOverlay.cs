@@ -42,6 +42,7 @@ public partial class WorldOverlay : CanvasLayer
     private int _lastDisplayedMaxHealth = int.MinValue;
     private int _lastDisplayedStamina = int.MinValue;
     private int _lastDisplayedMaxStamina = int.MinValue;
+    private string _lastInventoryMessage = string.Empty;
 
     public override void _Ready()
     {
@@ -328,7 +329,18 @@ public partial class WorldOverlay : CanvasLayer
             return;
         }
 
+        if (IsTopSystemPanel(_inventoryPanel) && _inventoryManager != null)
+        {
+            HandleInventoryInput(keyEvent);
+            return;
+        }
+
         if (_progressionPanel?.Visible != true || _progressionManager == null)
+        {
+            return;
+        }
+
+        if (!IsTopSystemPanel(_progressionPanel))
         {
             return;
         }
@@ -363,6 +375,46 @@ public partial class WorldOverlay : CanvasLayer
         {
             _progressionManager.ResetAllocatedPoints();
             RefreshProgressionPanel();
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
+    private void HandleInventoryInput(InputEventKey keyEvent)
+    {
+        if (_inventoryManager == null)
+        {
+            return;
+        }
+
+        var slotIndex = GetNumberKeyIndex(keyEvent.Keycode);
+        if (slotIndex >= 0)
+        {
+            var changed = keyEvent.ShiftPressed
+                ? _inventoryManager.TryDropSlot(slotIndex)
+                : _inventoryManager.TryUseSlot(slotIndex, _player);
+
+            _lastInventoryMessage = changed
+                ? keyEvent.ShiftPressed ? $"已丢弃第 {slotIndex + 1} 格物品。" : $"已使用第 {slotIndex + 1} 格物品。"
+                : keyEvent.ShiftPressed ? $"第 {slotIndex + 1} 格物品不可丢弃。" : $"第 {slotIndex + 1} 格物品不可使用。";
+            RefreshInventoryPanel();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        if (keyEvent.Keycode == Key.U)
+        {
+            var used = _inventoryManager.TryUseFirstUsable(_player);
+            _lastInventoryMessage = used ? "已使用第一个可用消耗品。" : "当前没有可使用物品，或状态已满。";
+            RefreshInventoryPanel();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        if (keyEvent.Keycode == Key.Delete)
+        {
+            var dropped = _inventoryManager.TryDropFirstDroppable();
+            _lastInventoryMessage = dropped ? "已丢弃第一个可丢弃物品。" : "当前没有可丢弃物品。";
+            RefreshInventoryPanel();
             GetViewport().SetInputAsHandled();
         }
     }
@@ -410,6 +462,15 @@ public partial class WorldOverlay : CanvasLayer
         builder.AppendLine();
         builder.Append("容量: ").Append(occupiedSlots).Append('/').Append(_inventoryManager.Slots.Count);
         builder.AppendLine();
+        builder.AppendLine("按 1-9 使用对应槽位");
+        builder.AppendLine("按 Shift+1-9 丢弃对应槽位");
+        builder.AppendLine("按 U 使用第一个可用消耗品，按 Delete 丢弃第一个可丢弃物品");
+        builder.AppendLine("关键道具 / 任务道具不可丢弃");
+        if (!string.IsNullOrWhiteSpace(_lastInventoryMessage))
+        {
+            builder.Append("状态: ").AppendLine(_lastInventoryMessage);
+        }
+
         builder.Append("按 [Esc] 关闭");
 
         _inventoryText.Text = builder.ToString();
@@ -442,6 +503,16 @@ public partial class WorldOverlay : CanvasLayer
         AppendAttributeLine(builder, Key.Key4, PlayerAttributeType.Deflection, "防反效率");
         AppendAttributeLine(builder, Key.Key5, PlayerAttributeType.SoulAttunement, "灵魂适性");
 
+        builder.AppendLine();
+        var modifiers = _progressionManager.BuildCombatModifiers();
+        builder.Append("当前加成: HP +").Append(modifiers.BonusHealth);
+        builder.Append(" / 耐力 +").Append(Mathf.RoundToInt(modifiers.BonusStamina));
+        builder.Append(" / 攻击 +").Append(modifiers.BonusAttackDamage);
+        builder.AppendLine();
+        builder.Append("架势输出 x").Append(modifiers.AttackPostureMultiplier.ToString("0.00"));
+        builder.Append(" / 防反架势 x").Append(modifiers.DeflectPostureMultiplier.ToString("0.00"));
+        builder.Append(" / 防御耗耐 x").Append(modifiers.GuardStaminaMultiplier.ToString("0.00"));
+        builder.AppendLine();
         builder.AppendLine();
         builder.AppendLine("按 1-5 加点");
         builder.AppendLine("按 Shift+1-5 退点");
@@ -549,5 +620,29 @@ public partial class WorldOverlay : CanvasLayer
         panel.Modulate = isTop
             ? new Color(1f, 1f, 1f, 1f)
             : new Color(0.82f, 0.82f, 0.82f, 0.82f);
+    }
+
+    private bool IsTopSystemPanel(Control? panel)
+    {
+        return panel != null
+            && _systemPanelStack.Count > 0
+            && ReferenceEquals(_systemPanelStack[^1], panel);
+    }
+
+    private static int GetNumberKeyIndex(Key key)
+    {
+        return key switch
+        {
+            Key.Key1 => 0,
+            Key.Key2 => 1,
+            Key.Key3 => 2,
+            Key.Key4 => 3,
+            Key.Key5 => 4,
+            Key.Key6 => 5,
+            Key.Key7 => 6,
+            Key.Key8 => 7,
+            Key.Key9 => 8,
+            _ => -1,
+        };
     }
 }

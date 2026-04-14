@@ -6,6 +6,7 @@ using EchoSpace.Core.Settings;
 using EchoSpace.Core.World;
 using EchoSpace.Gameplay.Combat;
 using EchoSpace.Gameplay.Enemies;
+using EchoSpace.Gameplay.Progression;
 using EchoSpace.Player.States;
 using Godot;
 
@@ -74,6 +75,14 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private CanvasItem? _bodyVisual;
 	private CanvasItem? _guardEffectVisual;
 	private Vector2 _attackProbeBasePosition;
+	private int _baseMaxHealth;
+	private int _baseAttackDamage;
+	private float _baseMaxStamina;
+	private float _baseAttackPostureDamage;
+	private float _baseGuardStaminaDrainPerSecond;
+	private float _baseGuardHitStaminaCost;
+	private float _baseDeflectPostureDamage;
+	private float _baseDeflectStaminaCost;
 	private bool _isAttackActive;
 	private bool _isGuarding;
 
@@ -85,6 +94,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		GameInputActions.EnsureDefaults();
 		GameSettingsManager.Instance?.ApplyAll();
 		GameSettingsManager.Instance?.ApplyGameplaySettings(this);
+		CaptureBaseCombatValues();
+		ApplyProgressionModifiers(false);
 		AddToGroup("player");
 
 		_currentHealth = MaxHealth;
@@ -118,6 +129,21 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
 		HealthChanged?.Invoke(_currentHealth, MaxHealth);
 		StaminaChanged?.Invoke(_currentStamina, MaxStamina);
+
+		if (ProgressionManager.Instance != null)
+		{
+			ProgressionManager.Instance.AttributeChanged += OnProgressionAttributeChanged;
+			ProgressionManager.Instance.AttributesReset += OnProgressionReset;
+		}
+	}
+
+	public override void _ExitTree()
+	{
+		if (ProgressionManager.Instance != null)
+		{
+			ProgressionManager.Instance.AttributeChanged -= OnProgressionAttributeChanged;
+			ProgressionManager.Instance.AttributesReset -= OnProgressionReset;
+		}
 	}
 
 	public override void _Input(InputEvent @event)
@@ -429,6 +455,30 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 	}
 
+	public bool RestoreHealth(int amount)
+	{
+		if (amount <= 0 || _currentHealth >= MaxHealth)
+		{
+			return false;
+		}
+
+		_currentHealth = Mathf.Min(MaxHealth, _currentHealth + amount);
+		HealthChanged?.Invoke(_currentHealth, MaxHealth);
+		return true;
+	}
+
+	public bool RestoreStamina(float amount)
+	{
+		if (amount <= 0f || _currentStamina >= MaxStamina)
+		{
+			return false;
+		}
+
+		_currentStamina = Mathf.Min(MaxStamina, _currentStamina + amount);
+		StaminaChanged?.Invoke(_currentStamina, MaxStamina);
+		return true;
+	}
+
 	private void ApplyHorizontalMovement(double delta)
 	{
 		var moveInput = GetMoveInput();
@@ -597,6 +647,57 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			_guardEffectVisual.Visible = true;
 			_guardEffectVisual.Modulate = new Color(1f, 0.72f, 0.62f, 0.95f);
 		}
+	}
+
+	private void CaptureBaseCombatValues()
+	{
+		_baseMaxHealth = MaxHealth;
+		_baseAttackDamage = AttackDamage;
+		_baseMaxStamina = MaxStamina;
+		_baseAttackPostureDamage = AttackPostureDamage;
+		_baseGuardStaminaDrainPerSecond = GuardStaminaDrainPerSecond;
+		_baseGuardHitStaminaCost = GuardHitStaminaCost;
+		_baseDeflectPostureDamage = DeflectPostureDamage;
+		_baseDeflectStaminaCost = DeflectStaminaCost;
+	}
+
+	private void ApplyProgressionModifiers(bool preserveCurrentRatios)
+	{
+		if (ProgressionManager.Instance == null)
+		{
+			return;
+		}
+
+		var healthRatio = MaxHealth > 0 ? Mathf.Clamp((float)_currentHealth / MaxHealth, 0f, 1f) : 1f;
+		var staminaRatio = MaxStamina > 0f ? Mathf.Clamp(_currentStamina / MaxStamina, 0f, 1f) : 1f;
+		var modifiers = ProgressionManager.Instance.BuildCombatModifiers();
+
+		MaxHealth = Mathf.Max(1, _baseMaxHealth + modifiers.BonusHealth);
+		AttackDamage = Mathf.Max(1, _baseAttackDamage + modifiers.BonusAttackDamage);
+		MaxStamina = Mathf.Max(1f, _baseMaxStamina + modifiers.BonusStamina);
+		AttackPostureDamage = _baseAttackPostureDamage * modifiers.AttackPostureMultiplier * modifiers.SoulAttunementMultiplier;
+		DeflectPostureDamage = _baseDeflectPostureDamage * modifiers.DeflectPostureMultiplier * modifiers.SoulAttunementMultiplier;
+		GuardStaminaDrainPerSecond = _baseGuardStaminaDrainPerSecond * modifiers.GuardStaminaMultiplier;
+		GuardHitStaminaCost = _baseGuardHitStaminaCost * modifiers.GuardStaminaMultiplier;
+		DeflectStaminaCost = _baseDeflectStaminaCost * modifiers.GuardStaminaMultiplier;
+
+		if (preserveCurrentRatios)
+		{
+			_currentHealth = Mathf.Clamp(Mathf.RoundToInt(MaxHealth * healthRatio), 1, MaxHealth);
+			_currentStamina = Mathf.Clamp(MaxStamina * staminaRatio, 0f, MaxStamina);
+			HealthChanged?.Invoke(_currentHealth, MaxHealth);
+			StaminaChanged?.Invoke(_currentStamina, MaxStamina);
+		}
+	}
+
+	private void OnProgressionAttributeChanged(PlayerAttributeType _, int __)
+	{
+		ApplyProgressionModifiers(true);
+	}
+
+	private void OnProgressionReset()
+	{
+		ApplyProgressionModifiers(true);
 	}
 
 	private static double GetGameTime()
