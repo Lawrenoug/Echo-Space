@@ -16,7 +16,6 @@ size = Vector2(30, 22)
 
 [node name="ChaserEnemy" type="CharacterBody2D"]
 script = ExtResource("1")
-position = Vector2(520, 300)
 collision_layer = 0
 max_health = 4
 max_posture = 115.0

@@ -120,8 +120,22 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
             _attackCollisionShape.Disabled = true;
         }
 
+        if (WorldManager.Instance != null)
+        {
+            WorldManager.Instance.WorldChanged += HandleWorldChanged;
+            HandleWorldChanged(WorldManager.Instance.CurrentWorld);
+        }
+
         OnCombatantReady();
         EmitCombatStateChanged();
+    }
+
+    public override void _ExitTree()
+    {
+        if (WorldManager.Instance != null)
+        {
+            WorldManager.Instance.WorldChanged -= HandleWorldChanged;
+        }
     }
 
     public override void _PhysicsProcess(double delta)
@@ -432,6 +446,22 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
         if (_player == null || !IsInstanceValid(_player))
         {
             _player = GetTree().GetFirstNodeInGroup("player") as PlayerController;
+        }
+    }
+
+    private void HandleWorldChanged(WorldType currentWorld)
+    {
+        if (currentWorld == AffiliatedWorld || _phase == CombatPhase.Dying)
+        {
+            return;
+        }
+
+        DisableAttackHitbox();
+        _attackVictims.Clear();
+
+        if (_phase is CombatPhase.Windup or CombatPhase.Attack or CombatPhase.Cooldown)
+        {
+            SetPhase(CombatPhase.Neutral, 0d);
         }
     }
 
