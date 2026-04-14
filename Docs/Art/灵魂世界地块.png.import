@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cmhed8i4o1t6m"
-valid=false
+uid="uid://d0xn8ga5am3v1"
+path="res://.godot/imported/灵魂世界地块.png-8e5444df2c071e4b9fdf95ec6847b543.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
-source_file="res://Docs/Art/处决图标.png"
+source_file="res://Docs/Art/灵魂世界地块.png"
+dest_files=["res://.godot/imported/灵魂世界地块.png-8e5444df2c071e4b9fdf95ec6847b543.ctex"]
 
 [params]
 

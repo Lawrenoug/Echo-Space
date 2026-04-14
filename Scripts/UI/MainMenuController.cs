@@ -9,7 +9,6 @@ namespace EchoSpace.UI;
 public partial class MainMenuController : Control
 {
     [Signal] public delegate void NewGameRequestedEventHandler();
-    [Signal] public delegate void ContinueRequestedEventHandler();
     [Signal] public delegate void SettingsOpenedEventHandler();
     [Signal] public delegate void SettingsClosedEventHandler();
     [Signal] public delegate void QuitRequestedEventHandler();
@@ -17,7 +16,6 @@ public partial class MainMenuController : Control
     [Export(PropertyHint.File, "*.tscn")] public string GameScenePath { get; set; } = "res://Scenes/Main.tscn";
     [Export] public NodePath? StatusLabelPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/Status");
     [Export] public NodePath? NewGameButtonPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/NewGameButton");
-    [Export] public NodePath? ContinueButtonPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/ContinueButton");
     [Export] public NodePath? SettingsButtonPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/SettingsButton");
     [Export] public NodePath? QuitButtonPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/QuitButton");
     [Export] public NodePath? SettingsBackdropPath { get; set; } = new("Overlay/SettingsBackdrop");
@@ -31,7 +29,6 @@ public partial class MainMenuController : Control
 
     private Label? _statusLabel;
     private Button? _newGameButton;
-    private Button? _continueButton;
     private Button? _settingsButton;
     private Button? _quitButton;
     private ColorRect? _settingsBackdrop;
@@ -48,7 +45,6 @@ public partial class MainMenuController : Control
         GameInputActions.EnsureDefaults();
         ResolveBindings();
         BindButtons();
-        RefreshContinueAvailability();
         RefreshSettingsSummary();
         SetSettingsVisible(false);
         UpdateStatus("主菜单入口已经就位。开始游戏会进入当前白盒关卡。");
@@ -71,7 +67,6 @@ public partial class MainMenuController : Control
     {
         _statusLabel = ResolveNode<Label>(StatusLabelPath);
         _newGameButton = ResolveNode<Button>(NewGameButtonPath);
-        _continueButton = ResolveNode<Button>(ContinueButtonPath);
         _settingsButton = ResolveNode<Button>(SettingsButtonPath);
         _quitButton = ResolveNode<Button>(QuitButtonPath);
         _settingsBackdrop = ResolveNode<ColorRect>(SettingsBackdropPath);
@@ -89,11 +84,6 @@ public partial class MainMenuController : Control
         if (_newGameButton != null)
         {
             _newGameButton.Pressed += OnNewGamePressed;
-        }
-
-        if (_continueButton != null)
-        {
-            _continueButton.Pressed += OnContinuePressed;
         }
 
         if (_settingsButton != null)
@@ -140,13 +130,6 @@ public partial class MainMenuController : Control
         CallDeferred(nameof(ChangeToGameScene));
     }
 
-    private void OnContinuePressed()
-    {
-        EmitSignal(SignalName.ContinueRequested);
-        UpdateStatus("存档功能已暂时移除，后续视项目状态再决定是否接回。");
-        RefreshContinueAvailability();
-    }
-
     private void OnSettingsPressed()
     {
         EmitSignal(SignalName.SettingsOpened);
@@ -181,17 +164,6 @@ public partial class MainMenuController : Control
         {
             UpdateStatus($"切换场景失败：{result}");
         }
-    }
-
-    private void RefreshContinueAvailability()
-    {
-        if (_continueButton == null)
-        {
-            return;
-        }
-
-        _continueButton.Disabled = true;
-        _continueButton.TooltipText = "存档系统暂时停用";
     }
 
     private void RefreshSettingsSummary()
