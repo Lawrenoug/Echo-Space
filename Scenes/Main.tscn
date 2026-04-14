@@ -8,9 +8,10 @@
 [ext_resource type="PackedScene" path="res://Scenes/Environment/BreakableWall.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/ChaserEnemy.tscn" id="7"]
 [ext_resource type="Script" path="res://Scripts/Gameplay/Inventory/InventoryPickup.cs" id="8"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/SoulSentinelEnemy.tscn" id="9"]
 
 [sub_resource type="RectangleShape2D" id="1"]
-size = Vector2(4200, 64)
+size = Vector2(6200, 64)
 
 [sub_resource type="RectangleShape2D" id="2"]
 size = Vector2(320, 24)
@@ -39,16 +40,16 @@ layer = -10
 [node name="ColorRect" type="ColorRect" parent="Background" unique_id=1243766741]
 offset_left = -3000.0
 offset_top = -2200.0
-offset_right = 6000.0
+offset_right = 8200.0
 offset_bottom = 2200.0
 color = Color(0.901961, 0.894118, 0.87451, 1)
 
 [node name="Ground" type="StaticBody2D" parent="." unique_id=1225502027]
-position = Vector2(2100, 612)
+position = Vector2(3100, 612)
 
 [node name="Visual" type="Polygon2D" parent="Ground" unique_id=555160238]
 color = Color(0.286275, 0.309804, 0.313726, 1)
-polygon = PackedVector2Array(-2100, -32, 2100, -32, 2100, 32, -2100, 32)
+polygon = PackedVector2Array(-3100, -32, 3100, -32, 3100, 32, -3100, 32)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=2093765322]
 shape = SubResource("1")
@@ -177,6 +178,87 @@ polygon = PackedVector2Array(-70, -12, 70, -12, 70, 12, -70, 12)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="FarUpperPlatform" unique_id=292296212]
 shape = SubResource("5")
 
+[node name="CombatPlatformA" type="StaticBody2D" parent="." unique_id=411948299]
+position = Vector2(3940, 432)
+
+[node name="Visual" type="Polygon2D" parent="CombatPlatformA" unique_id=1683883771]
+color = Color(0.403922, 0.439216, 0.470588, 1)
+polygon = PackedVector2Array(-160, -12, 160, -12, 160, 12, -160, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CombatPlatformA" unique_id=392100103]
+shape = SubResource("2")
+
+[node name="CombatPlatformB" type="StaticBody2D" parent="." unique_id=1842024412]
+position = Vector2(4320, 330)
+
+[node name="Visual" type="Polygon2D" parent="CombatPlatformB" unique_id=883118527]
+color = Color(0.454902, 0.494118, 0.529412, 1)
+polygon = PackedVector2Array(-110, -12, 110, -12, 110, 12, -110, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CombatPlatformB" unique_id=1493549857]
+shape = SubResource("3")
+
+[node name="SoulClimbPlatform" type="Node2D" parent="." unique_id=1127388523]
+position = Vector2(4740, 386)
+
+[node name="Visual" type="Polygon2D" parent="SoulClimbPlatform" unique_id=116902319]
+color = Color(0.466667, 0.760784, 1, 1)
+polygon = PackedVector2Array(-90, -12, 90, -12, 90, 12, -90, 12)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="SoulClimbPlatform" unique_id=2069740041]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SoulClimbPlatform/StaticBody2D" unique_id=568414394]
+shape = SubResource("4")
+
+[node name="DualWorldObject" type="Node" parent="SoulClimbPlatform" unique_id=2022690971]
+script = ExtResource("4")
+target_root_path = NodePath("..")
+visual_root_path = NodePath("../Visual")
+collision_root_path = NodePath("../StaticBody2D")
+exists_in_reality = false
+exists_in_soul = true
+reality_position_offset = Vector2(0, 20)
+soul_position_offset = Vector2(0, 0)
+
+[node name="RealityRestPlatform" type="Node2D" parent="." unique_id=2051233251]
+position = Vector2(5140, 458)
+
+[node name="Visual" type="Polygon2D" parent="RealityRestPlatform" unique_id=557889168]
+color = Color(0.905882, 0.576471, 0.235294, 1)
+polygon = PackedVector2Array(-110, -12, 110, -12, 110, 12, -110, 12)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="RealityRestPlatform" unique_id=842645603]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RealityRestPlatform/StaticBody2D" unique_id=1608043555]
+shape = SubResource("3")
+
+[node name="DualWorldObject" type="Node" parent="RealityRestPlatform" unique_id=593528497]
+script = ExtResource("4")
+target_root_path = NodePath("..")
+visual_root_path = NodePath("../Visual")
+collision_root_path = NodePath("../StaticBody2D")
+exists_in_reality = true
+exists_in_soul = false
+reality_position_offset = Vector2(0, 0)
+soul_position_offset = Vector2(0, -18)
+
+[node name="FinalPlatform" type="StaticBody2D" parent="." unique_id=1939738309]
+position = Vector2(5680, 390)
+
+[node name="Visual" type="Polygon2D" parent="FinalPlatform" unique_id=518079972]
+color = Color(0.454902, 0.494118, 0.529412, 1)
+polygon = PackedVector2Array(-160, -12, 160, -12, 160, 12, -160, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FinalPlatform" unique_id=1314689719]
+shape = SubResource("2")
+
+[node name="GoalMarker" type="Node2D" parent="." unique_id=1814829800]
+position = Vector2(6020, 548)
+
+[node name="Visual" type="Polygon2D" parent="GoalMarker" unique_id=709423736]
+color = Color(0.96, 0.75, 0.28, 1)
+polygon = PackedVector2Array(0, -36, 24, 0, 0, 36, -24, 0)
+
 [node name="Player" parent="." unique_id=1704508750 instance=ExtResource("2")]
 position = Vector2(120, 562)
 
@@ -200,14 +282,91 @@ polygon = PackedVector2Array(0, -18, 15, 0, 0, 18, -15, 0)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="FieldSupplyPickup" unique_id=674129108]
 shape = SubResource("6")
 
-[node name="PatrolEnemy" parent="." unique_id=61361803 instance=ExtResource("5")]
-position = Vector2(1000, 566)
+[node name="OreCachePickup" type="Area2D" parent="." unique_id=1299477951]
+position = Vector2(4300, 302)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("8")
+item_id = "ore_cache"
+display_name = "灵魂矿石包"
+description = "拾取后加入背包，可作为后续强化材料原型。"
+category = 2
+quantity = 4
+max_stack = 99
+health_restore = 0
+stamina_restore = 0.0
 
-[node name="ChaserEnemy" parent="." instance=ExtResource("7")]
+[node name="Visual" type="Polygon2D" parent="OreCachePickup" unique_id=129599394]
+color = Color(0.58, 0.72, 1, 1)
+polygon = PackedVector2Array(0, -16, 14, 0, 0, 16, -14, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="OreCachePickup" unique_id=245484316]
+shape = SubResource("6")
+
+[node name="TrainingPointPickup" type="Area2D" parent="." unique_id=1550631776]
+position = Vector2(5200, 430)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("8")
+item_id = "training_memory"
+display_name = "残响记忆"
+description = "使用后获得 1 个加点点数的原型道具。"
+quantity = 1
+max_stack = 3
+progression_points_granted = 1
+
+[node name="Visual" type="Polygon2D" parent="TrainingPointPickup" unique_id=898681877]
+color = Color(1, 0.82, 0.44, 1)
+polygon = PackedVector2Array(0, -17, 16, 0, 0, 17, -16, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TrainingPointPickup" unique_id=577342407]
+shape = SubResource("6")
+
+[node name="PatrolEnemyA" parent="." unique_id=61361803 instance=ExtResource("5")]
+position = Vector2(1000, 566)
+max_posture = 85.0
+attack_windup_duration = 0.58
+attack_cooldown_duration = 0.62
+attack_posture_damage = 24.0
+move_speed = 58.0
+patrol_distance = 130.0
+
+[node name="ChaserEnemyA" parent="." instance=ExtResource("7")]
 position = Vector2(1780, 566)
+attack_windup_duration = 0.58
+attack_cooldown_duration = 0.7
+approach_speed = 92.0
+leash_distance = 260.0
 
 [node name="BreakableWall" parent="." unique_id=960738665 instance=ExtResource("6")]
 position = Vector2(2580, 537)
+
+[node name="PatrolEnemyB" parent="." unique_id=1289049570 instance=ExtResource("5")]
+position = Vector2(3640, 566)
+max_health = 4
+max_posture = 95.0
+detection_range = 170.0
+attack_windup_duration = 0.54
+attack_cooldown_duration = 0.66
+attack_posture_damage = 28.0
+move_speed = 64.0
+patrol_distance = 160.0
+
+[node name="ChaserEnemyB" parent="." unique_id=2003012758 instance=ExtResource("7")]
+position = Vector2(4560, 566)
+max_health = 5
+max_posture = 125.0
+detection_range = 250.0
+attack_windup_duration = 0.62
+attack_cooldown_duration = 0.74
+attack_damage = 1
+attack_posture_damage = 36.0
+approach_speed = 102.0
+return_speed = 76.0
+leash_distance = 320.0
+
+[node name="SoulSentinelEnemy" parent="." unique_id=542923110 instance=ExtResource("9")]
+position = Vector2(5520, 566)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1840655520]
 script = ExtResource("3")

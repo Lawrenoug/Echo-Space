@@ -1,0 +1,110 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Gameplay/Enemies/SoulSentinelEnemyController.cs" id="1"]
+[ext_resource type="Script" path="res://Scripts/Gameplay/Combat/DamageReceiver.cs" id="2"]
+[ext_resource type="Script" path="res://Scripts/Core/World/DualWorldObject.cs" id="3"]
+[ext_resource type="Script" path="res://Scripts/UI/EnemyPostureBar.cs" id="4"]
+
+[sub_resource type="RectangleShape2D" id="1"]
+size = Vector2(36, 42)
+
+[sub_resource type="RectangleShape2D" id="2"]
+size = Vector2(44, 38)
+
+[sub_resource type="RectangleShape2D" id="3"]
+size = Vector2(38, 28)
+
+[node name="SoulSentinelEnemy" type="CharacterBody2D"]
+script = ExtResource("1")
+max_health = 8
+max_posture = 155.0
+posture_recovery_per_second = 7.0
+detection_range = 260.0
+attack_range = 68.0
+attack_vertical_tolerance = 48.0
+attack_hit_vertical_tolerance = 52.0
+attack_windup_duration = 0.68
+attack_active_duration = 0.16
+attack_cooldown_duration = 0.72
+broken_duration = 2.6
+attack_damage = 2
+attack_posture_damage = 40.0
+death_duration = 0.42
+death_rise_distance = 34.0
+affiliated_world = 1
+visual_root_path = NodePath("Body")
+guard_radius = 190.0
+drift_speed = 48.0
+return_speed = 64.0
+
+[node name="Body" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-18, -20, 18, -20, 13, 19, -13, 19)
+color = Color(0.38, 0.7, 1, 0.86)
+
+[node name="Core" type="Polygon2D" parent="Body"]
+position = Vector2(0, -2)
+polygon = PackedVector2Array(0, -11, 10, 0, 0, 11, -10, 0)
+color = Color(0.78, 0.96, 1, 0.95)
+
+[node name="Crown" type="Polygon2D" parent="Body"]
+position = Vector2(0, -25)
+polygon = PackedVector2Array(-10, 8, -4, -2, 0, 6, 4, -2, 10, 8)
+color = Color(0.55, 0.88, 1, 0.8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 8
+collision_mask = 0
+script = ExtResource("2")
+target_path = NodePath("..")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+shape = SubResource("2")
+
+[node name="AttackBox" type="Area2D" parent="."]
+position = Vector2(30, 0)
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackBox"]
+shape = SubResource("3")
+disabled = true
+
+[node name="PostureBar" type="Node2D" parent="."]
+position = Vector2(0, -44)
+script = ExtResource("4")
+
+[node name="HealthBackground" type="Polygon2D" parent="PostureBar"]
+position = Vector2(0, -5)
+polygon = PackedVector2Array(-24, -3, 24, -3, 24, 3, -24, 3)
+color = Color(0.12, 0.22, 0.12, 0.9)
+
+[node name="HealthFill" type="Polygon2D" parent="PostureBar"]
+position = Vector2(-24, -5)
+polygon = PackedVector2Array(0, -2, 48, -2, 48, 2, 0, 2)
+color = Color(0.48, 0.92, 0.52, 1)
+
+[node name="PostureBackground" type="Polygon2D" parent="PostureBar"]
+position = Vector2(0, 5)
+polygon = PackedVector2Array(-24, -3, 24, -3, 24, 3, -24, 3)
+color = Color(0.18, 0.1, 0.1, 0.85)
+
+[node name="PostureFill" type="Polygon2D" parent="PostureBar"]
+position = Vector2(-24, 5)
+polygon = PackedVector2Array(0, -2, 48, -2, 48, 2, 0, 2)
+color = Color(0.95, 0.45, 0.35, 1)
+
+[node name="ExecutionMarker" type="Polygon2D" parent="PostureBar"]
+position = Vector2(0, -18)
+polygon = PackedVector2Array(0, -7, 8, 0, 0, 7, -8, 0)
+color = Color(1, 0.9, 0.58, 0.95)
+
+[node name="DualWorldObject" type="Node" parent="."]
+script = ExtResource("3")
+target_root_path = NodePath("..")
+visual_root_path = NodePath("../Body")
+collision_root_path = NodePath("..")
+exists_in_reality = false
+exists_in_soul = true
