@@ -9,6 +9,12 @@
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/ChaserEnemy.tscn" id="7"]
 [ext_resource type="Script" path="res://Scripts/Gameplay/Inventory/InventoryPickup.cs" id="8"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/SoulSentinelEnemy.tscn" id="9"]
+[ext_resource type="Texture2D" path="res://Docs/Art/HP.png" id="10"]
+[ext_resource type="Texture2D" path="res://Docs/Art/Stamina.png" id="11"]
+[ext_resource type="Texture2D" path="res://Docs/Art/背包.png" id="12"]
+[ext_resource type="Texture2D" path="res://Docs/Art/背包格子.png" id="13"]
+[ext_resource type="Texture2D" path="res://Docs/Art/加点面板.png" id="14"]
+[ext_resource type="Texture2D" path="res://Docs/Art/属性图标面板.png" id="15"]
 
 [sub_resource type="RectangleShape2D" id="1"]
 size = Vector2(6200, 64)
@@ -27,6 +33,60 @@ size = Vector2(140, 24)
 
 [sub_resource type="CircleShape2D" id="6"]
 radius = 18.0
+
+[sub_resource type="AtlasTexture" id="7"]
+atlas = ExtResource("10")
+region = Rect2(37, 449, 951, 177)
+
+[sub_resource type="AtlasTexture" id="8"]
+atlas = ExtResource("10")
+region = Rect2(99, 489, 792, 83)
+
+[sub_resource type="AtlasTexture" id="9"]
+atlas = ExtResource("11")
+region = Rect2(37, 449, 951, 177)
+
+[sub_resource type="AtlasTexture" id="10"]
+atlas = ExtResource("11")
+region = Rect2(99, 489, 792, 83)
+
+[sub_resource type="AtlasTexture" id="11"]
+atlas = ExtResource("12")
+region = Rect2(59, 21, 891, 928)
+
+[sub_resource type="AtlasTexture" id="12"]
+atlas = ExtResource("13")
+region = Rect2(59, 292, 921, 462)
+
+[sub_resource type="AtlasTexture" id="13"]
+atlas = ExtResource("14")
+region = Rect2(37, 32, 950, 961)
+
+[sub_resource type="AtlasTexture" id="14"]
+atlas = ExtResource("15")
+region = Rect2(121, 137, 735, 794)
+
+[sub_resource type="StyleBoxTexture" id="15"]
+texture = SubResource("11")
+texture_margin_left = 116.0
+texture_margin_top = 116.0
+texture_margin_right = 116.0
+texture_margin_bottom = 116.0
+content_margin_left = 42.0
+content_margin_top = 42.0
+content_margin_right = 42.0
+content_margin_bottom = 42.0
+
+[sub_resource type="StyleBoxTexture" id="16"]
+texture = SubResource("13")
+texture_margin_left = 118.0
+texture_margin_top = 118.0
+texture_margin_right = 118.0
+texture_margin_bottom = 118.0
+content_margin_left = 42.0
+content_margin_top = 42.0
+content_margin_right = 42.0
+content_margin_bottom = 42.0
 
 [node name="Main" type="Node2D" unique_id=195052086]
 script = ExtResource("1")
@@ -373,9 +433,9 @@ script = ExtResource("3")
 tint_path = NodePath("../WorldTint")
 player_path = NodePath("../Player")
 health_label_path = NodePath("Panel/HealthLabel")
-health_bar_path = NodePath("Panel/HealthBar")
+health_bar_path = NodePath("Panel/HealthBar/Fill")
 stamina_label_path = NodePath("Panel/StaminaLabel")
-stamina_bar_path = NodePath("Panel/StaminaBar")
+stamina_bar_path = NodePath("Panel/StaminaBar/Fill")
 inventory_panel_path = NodePath("InventoryPanel")
 inventory_text_path = NodePath("InventoryPanel/Body")
 progression_panel_path = NodePath("ProgressionPanel")
@@ -384,45 +444,95 @@ progression_text_path = NodePath("ProgressionPanel/Body")
 [node name="Panel" type="Panel" parent="UI" unique_id=466358434]
 offset_left = 14.0
 offset_top = 14.0
-offset_right = 250.0
-offset_bottom = 112.0
+offset_right = 282.0
+offset_bottom = 156.0
 
 [node name="HealthLabel" type="Label" parent="UI/Panel" unique_id=902007311]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 12.0
-offset_right = 214.0
-offset_bottom = 30.0
+offset_top = 10.0
+offset_right = 236.0
+offset_bottom = 28.0
 text = "HP 5/5"
 
-[node name="HealthBar" type="ProgressBar" parent="UI/Panel" unique_id=142820090]
+[node name="HealthBar" type="Control" parent="UI/Panel" unique_id=142820090]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 34.0
-offset_right = 224.0
-offset_bottom = 50.0
-modulate = Color(1, 0.47, 0.47, 1)
+offset_top = 30.0
+offset_right = 240.0
+offset_bottom = 72.0
+mouse_filter = 2
+
+[node name="Fill" type="TextureProgressBar" parent="UI/Panel/HealthBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 10.0
+offset_right = -18.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_progress = SubResource("8")
 max_value = 5.0
 value = 5.0
-show_percentage = false
+
+[node name="Frame" type="TextureRect" parent="UI/Panel/HealthBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("7")
+expand_mode = 1
+stretch_mode = 1
 
 [node name="StaminaLabel" type="Label" parent="UI/Panel" unique_id=1778622566]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 58.0
-offset_right = 214.0
-offset_bottom = 76.0
+offset_top = 80.0
+offset_right = 236.0
+offset_bottom = 98.0
 text = "Stamina 100/100"
 
-[node name="StaminaBar" type="ProgressBar" parent="UI/Panel" unique_id=2122529244]
+[node name="StaminaBar" type="Control" parent="UI/Panel" unique_id=2122529244]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 80.0
-offset_right = 224.0
-offset_bottom = 96.0
-modulate = Color(0.45, 0.84, 1, 1)
+offset_top = 100.0
+offset_right = 240.0
+offset_bottom = 142.0
+mouse_filter = 2
+
+[node name="Fill" type="TextureProgressBar" parent="UI/Panel/StaminaBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 10.0
+offset_right = -18.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture_progress = SubResource("10")
 value = 100.0
-show_percentage = false
+
+[node name="Frame" type="TextureRect" parent="UI/Panel/StaminaBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("9")
+expand_mode = 1
+stretch_mode = 1
 
 [node name="InventoryPanel" type="Panel" parent="UI" unique_id=677510331]
 visible = false
@@ -431,21 +541,33 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -220.0
-offset_right = 300.0
-offset_bottom = 220.0
+offset_left = -380.0
+offset_top = -300.0
+offset_right = 380.0
+offset_bottom = 300.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("15")
+
+[node name="SlotsArt" type="TextureRect" parent="UI/InventoryPanel"]
+layout_mode = 0
+offset_left = 230.0
+offset_top = 54.0
+offset_right = 530.0
+offset_bottom = 206.0
+mouse_filter = 2
+texture = SubResource("12")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="Body" type="RichTextLabel" parent="UI/InventoryPanel" unique_id=990338136]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 16.0
-offset_right = -16.0
-offset_bottom = -16.0
+offset_left = 44.0
+offset_top = 224.0
+offset_right = -44.0
+offset_bottom = -38.0
 bbcode_enabled = false
 scroll_active = true
 fit_content = false
@@ -457,21 +579,33 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -220.0
-offset_right = 300.0
-offset_bottom = 220.0
+offset_left = -380.0
+offset_top = -300.0
+offset_right = 380.0
+offset_bottom = 300.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("16")
+
+[node name="AttributeArt" type="TextureRect" parent="UI/ProgressionPanel"]
+layout_mode = 0
+offset_left = 224.0
+offset_top = 48.0
+offset_right = 536.0
+offset_bottom = 316.0
+mouse_filter = 2
+texture = SubResource("14")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="Body" type="RichTextLabel" parent="UI/ProgressionPanel" unique_id=934611173]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 16.0
-offset_right = -16.0
-offset_bottom = -16.0
+offset_left = 44.0
+offset_top = 328.0
+offset_right = -44.0
+offset_bottom = -38.0
 bbcode_enabled = false
 scroll_active = true
 fit_content = false

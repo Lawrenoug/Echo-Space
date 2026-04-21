@@ -1,6 +1,10 @@
-[gd_scene format=3 uid="uid://dpmydyu0br6lq"]
+[gd_scene load_steps=10 format=3 uid="uid://dpmydyu0br6lq"]
 
 [ext_resource type="Script" uid="uid://c5j82rsgfx7kq" path="res://Scripts/UI/MainMenuController.cs" id="1"]
+[ext_resource type="Texture2D" path="res://Docs/Art/Menu.png" id="2"]
+[ext_resource type="Texture2D" path="res://Docs/Art/button.png" id="3"]
+[ext_resource type="Texture2D" path="res://Docs/Art/button hover.png" id="4"]
+[ext_resource type="Texture2D" path="res://Docs/Art/button pressed.png" id="5"]
 
 [sub_resource type="StyleBoxFlat" id="1"]
 bg_color = Color(0.0705882, 0.101961, 0.137255, 0.94902)
@@ -30,6 +34,62 @@ corner_radius_bottom_left = 20
 shadow_color = Color(0, 0, 0, 0.3)
 shadow_size = 16
 
+[sub_resource type="AtlasTexture" id="3"]
+atlas = ExtResource("3")
+region = Rect2(63, 350, 898, 298)
+
+[sub_resource type="AtlasTexture" id="4"]
+atlas = ExtResource("4")
+region = Rect2(64, 350, 897, 298)
+
+[sub_resource type="AtlasTexture" id="5"]
+atlas = ExtResource("5")
+region = Rect2(33, 320, 961, 370)
+
+[sub_resource type="StyleBoxTexture" id="6"]
+texture = SubResource("3")
+texture_margin_left = 96.0
+texture_margin_top = 88.0
+texture_margin_right = 96.0
+texture_margin_bottom = 88.0
+content_margin_left = 36.0
+content_margin_top = 20.0
+content_margin_right = 36.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxTexture" id="7"]
+texture = SubResource("4")
+texture_margin_left = 96.0
+texture_margin_top = 88.0
+texture_margin_right = 96.0
+texture_margin_bottom = 88.0
+content_margin_left = 36.0
+content_margin_top = 20.0
+content_margin_right = 36.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxTexture" id="8"]
+texture = SubResource("5")
+texture_margin_left = 104.0
+texture_margin_top = 104.0
+texture_margin_right = 104.0
+texture_margin_bottom = 104.0
+content_margin_left = 40.0
+content_margin_top = 24.0
+content_margin_right = 40.0
+content_margin_bottom = 24.0
+
+[sub_resource type="StyleBoxTexture" id="9"]
+texture = SubResource("4")
+texture_margin_left = 96.0
+texture_margin_top = 88.0
+texture_margin_right = 96.0
+texture_margin_bottom = 88.0
+content_margin_left = 36.0
+content_margin_top = 20.0
+content_margin_right = 36.0
+content_margin_bottom = 20.0
+
 [node name="MainMenu" type="Control" unique_id=1680056303]
 layout_mode = 3
 anchors_preset = 15
@@ -47,6 +107,18 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0313726, 0.0470588, 0.0666667, 1)
+
+[node name="BackgroundArt" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 7
 
 [node name="WarmGlow" type="ColorRect" parent="." unique_id=43402510]
 layout_mode = 1
@@ -154,21 +226,39 @@ layout_mode = 2
 theme_override_constants/separation = 14
 
 [node name="NewGameButton" type="Button" parent="Overlay/Center/Frame/Margin/Content/ActionColumn" unique_id=1231497258]
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.941176, 0.952941, 0.972549, 1)
 theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("6")
+theme_override_styles/hover = SubResource("7")
+theme_override_styles/pressed = SubResource("8")
+theme_override_styles/focus = SubResource("9")
+theme_override_styles/disabled = SubResource("6")
 text = "开始游戏"
 
 [node name="SettingsButton" type="Button" parent="Overlay/Center/Frame/Margin/Content/ActionColumn" unique_id=1017438280]
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.941176, 0.952941, 0.972549, 1)
 theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("6")
+theme_override_styles/hover = SubResource("7")
+theme_override_styles/pressed = SubResource("8")
+theme_override_styles/focus = SubResource("9")
+theme_override_styles/disabled = SubResource("6")
 text = "设置"
 
 [node name="QuitButton" type="Button" parent="Overlay/Center/Frame/Margin/Content/ActionColumn" unique_id=2129182089]
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.941176, 0.952941, 0.972549, 1)
 theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("6")
+theme_override_styles/hover = SubResource("7")
+theme_override_styles/pressed = SubResource("8")
+theme_override_styles/focus = SubResource("9")
+theme_override_styles/disabled = SubResource("6")
 text = "退出游戏"
 
 [node name="Status" type="Label" parent="Overlay/Center/Frame/Margin/Content/ActionColumn" unique_id=783033082]
@@ -236,35 +326,65 @@ fit_content = true
 scroll_active = false
 
 [node name="DisplayButton" type="Button" parent="Overlay/SettingsCard/Margin/Body" unique_id=52559435]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "显示设置"
 tooltip_text = "循环切换窗口 / 全屏与垂直同步预设"
+theme_override_colors/font_color = Color(0.941176, 0.952941, 0.972549, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("6")
+theme_override_styles/hover = SubResource("7")
+theme_override_styles/pressed = SubResource("8")
+theme_override_styles/focus = SubResource("9")
+theme_override_styles/disabled = SubResource("6")
+text = "显示设置"
 
 [node name="AudioButton" type="Button" parent="Overlay/SettingsCard/Margin/Body" unique_id=921198406]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "音频设置"
 tooltip_text = "循环切换主音量预设"
+theme_override_colors/font_color = Color(0.941176, 0.952941, 0.972549, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("6")
+theme_override_styles/hover = SubResource("7")
+theme_override_styles/pressed = SubResource("8")
+theme_override_styles/focus = SubResource("9")
+theme_override_styles/disabled = SubResource("6")
+text = "音频设置"
 
 [node name="ControlsButton" type="Button" parent="Overlay/SettingsCard/Margin/Body" unique_id=993566518]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "按键设置"
 tooltip_text = "循环切换默认鼠标战斗与键盘扩展预设"
+theme_override_colors/font_color = Color(0.941176, 0.952941, 0.972549, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("6")
+theme_override_styles/hover = SubResource("7")
+theme_override_styles/pressed = SubResource("8")
+theme_override_styles/focus = SubResource("9")
+theme_override_styles/disabled = SubResource("6")
+text = "按键设置"
 
 [node name="GameplayButton" type="Button" parent="Overlay/SettingsCard/Margin/Body" unique_id=1419650785]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "玩法设置"
 tooltip_text = "循环切换标准、宽松、辅助三种手感预设"
+theme_override_colors/font_color = Color(0.941176, 0.952941, 0.972549, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("6")
+theme_override_styles/hover = SubResource("7")
+theme_override_styles/pressed = SubResource("8")
+theme_override_styles/focus = SubResource("9")
+theme_override_styles/disabled = SubResource("6")
+text = "玩法设置"
 
 [node name="BackButton" type="Button" parent="Overlay/SettingsCard/Margin/Body" unique_id=1409918812]
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.941176, 0.952941, 0.972549, 1)
 theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("6")
+theme_override_styles/hover = SubResource("7")
+theme_override_styles/pressed = SubResource("8")
+theme_override_styles/focus = SubResource("9")
+theme_override_styles/disabled = SubResource("6")
 text = "返回"

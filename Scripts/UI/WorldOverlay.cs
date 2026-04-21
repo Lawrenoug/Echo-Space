@@ -26,8 +26,8 @@ public partial class WorldOverlay : CanvasLayer
     private Label? _label;
     private Label? _healthLabel;
     private Label? _staminaLabel;
-    private ProgressBar? _healthBar;
-    private ProgressBar? _staminaBar;
+    private Range? _healthBar;
+    private Range? _staminaBar;
     private Control? _inventoryPanel;
     private RichTextLabel? _inventoryText;
     private Control? _progressionPanel;
@@ -176,8 +176,8 @@ public partial class WorldOverlay : CanvasLayer
         _label ??= ResolveNode<Label>(LabelPath, "Panel/Label");
         _healthLabel ??= ResolveNode<Label>(HealthLabelPath, "Panel/HealthLabel");
         _staminaLabel ??= ResolveNode<Label>(StaminaLabelPath, "Panel/StaminaLabel");
-        _healthBar ??= ResolveNode<ProgressBar>(HealthBarPath, "Panel/HealthBar");
-        _staminaBar ??= ResolveNode<ProgressBar>(StaminaBarPath, "Panel/StaminaBar");
+        _healthBar ??= ResolveNode<Range>(HealthBarPath, "Panel/HealthBar");
+        _staminaBar ??= ResolveNode<Range>(StaminaBarPath, "Panel/StaminaBar");
         _tint ??= ResolveNode<CanvasModulate>(TintPath, "../WorldTint");
         _player ??= ResolvePlayer();
         _inventoryPanel ??= ResolveNode<Control>(InventoryPanelPath, "InventoryPanel");
