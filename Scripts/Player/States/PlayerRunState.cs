@@ -17,7 +17,7 @@ public sealed class PlayerRunState : PlayerState
             return;
         }
 
-        if (TryEnterGuard() || TryEnterAttack() || TryEnterJump())
+        if (TryEnterSoulTether() || TryEnterGuard() || TryEnterAttack() || TryEnterJump())
         {
             return;
         }

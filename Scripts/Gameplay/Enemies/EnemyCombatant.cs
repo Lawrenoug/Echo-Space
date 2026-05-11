@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using EchoSpace.Core.World;
 using EchoSpace.Gameplay.Combat;
+using EchoSpace.Gameplay.Inventory;
 using EchoSpace.Player;
 using Godot;
 
@@ -11,6 +12,7 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
 {
     public event Action<int, int>? HealthChanged;
     public event Action<float, float, bool>? PostureChanged;
+    public event Action<EnemyCombatant>? Died;
 
     protected enum CombatPhase
     {
@@ -41,6 +43,21 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
     [Export] public float DeathRiseDistance { get; set; } = 22f;
     [Export] public WorldType AffiliatedWorld { get; set; } = WorldType.Reality;
 
+    [ExportGroup("Drops")]
+    [Export] public bool DropEnabled { get; set; }
+    [Export(PropertyHint.File, "*.tscn")] public string DropPickupScenePath { get; set; } = "res://Scenes/Inventory/InventoryPickup.tscn";
+    [Export] public string DropItemId { get; set; } = string.Empty;
+    [Export] public string DropDisplayName { get; set; } = string.Empty;
+    [Export(PropertyHint.MultilineText)] public string DropDescription { get; set; } = string.Empty;
+    [Export] public ItemCategory DropCategory { get; set; } = ItemCategory.Material;
+    [Export] public int DropQuantity { get; set; } = 1;
+    [Export] public int DropMaxStack { get; set; } = 9;
+    [Export] public bool DropIsUnique { get; set; }
+    [Export] public int DropHealthRestore { get; set; }
+    [Export] public float DropStaminaRestore { get; set; }
+    [Export] public int DropProgressionPointsGranted { get; set; }
+    [Export] public Vector2 DropSpawnOffset { get; set; } = new(0f, -10f);
+
     [ExportGroup("Nodes")]
     [Export] public NodePath? VisualRootPath { get; set; }
     [Export] public NodePath? AttackBoxPath { get; set; } = new("AttackBox");
@@ -62,6 +79,7 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
     private Vector2 _visualBaseScale = Vector2.One;
     private Vector2 _visualBasePosition = Vector2.Zero;
     private Vector2 _attackBoxBasePosition = Vector2.Zero;
+    private bool _deathStarted;
 
     public int CurrentHealth => _currentHealth;
     public float CurrentPosture => _currentPosture;
@@ -568,11 +586,19 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
 
     private void BeginDeathSequence()
     {
+        if (_deathStarted)
+        {
+            return;
+        }
+
+        _deathStarted = true;
         SetPhase(CombatPhase.Dying, DeathDuration);
         DisableAttackHitbox();
         Velocity = Vector2.Zero;
         DisableCollisionRecursive(this);
         PostureChanged?.Invoke(MaxPosture, MaxPosture, true);
+        SpawnConfiguredDrop();
+        Died?.Invoke(this);
         UpdateVisualTint();
     }
 
@@ -643,5 +669,41 @@ public abstract partial class EnemyCombatant : CharacterBody2D, IDamageable, IDe
         {
             DisableCollisionRecursive(child);
         }
+    }
+
+    private void SpawnConfiguredDrop()
+    {
+        if (!DropEnabled || string.IsNullOrWhiteSpace(DropPickupScenePath))
+        {
+            return;
+        }
+
+        var dropScene = ResourceLoader.Load<PackedScene>(DropPickupScenePath);
+        if (dropScene == null)
+        {
+            GD.PushWarning($"Unable to load enemy drop scene: {DropPickupScenePath}");
+            return;
+        }
+
+        var dropNode = dropScene.Instantiate();
+        if (dropNode is not InventoryPickup pickup || GetParent() == null)
+        {
+            dropNode.QueueFree();
+            return;
+        }
+
+        pickup.ItemId = DropItemId;
+        pickup.DisplayName = DropDisplayName;
+        pickup.Description = DropDescription;
+        pickup.Category = DropCategory;
+        pickup.Quantity = Mathf.Max(1, DropQuantity);
+        pickup.MaxStack = Mathf.Max(1, DropMaxStack);
+        pickup.IsUnique = DropIsUnique;
+        pickup.HealthRestore = DropHealthRestore;
+        pickup.StaminaRestore = DropStaminaRestore;
+        pickup.ProgressionPointsGranted = DropProgressionPointsGranted;
+
+        GetParent().AddChild(pickup);
+        pickup.GlobalPosition = GlobalPosition + DropSpawnOffset;
     }
 }

@@ -11,6 +11,8 @@ public partial class DualWorldPlatform : Node2D
     [Export] public float PlatformWidth { get; set; } = 180f;
     [Export] public float PlatformHeight { get; set; } = 24f;
     [Export] public Color PlatformColor { get; set; } = new(0.45f, 0.64f, 0.92f, 1f);
+    [Export] public bool OneWayCollision { get; set; }
+    [Export] public float OneWayCollisionMargin { get; set; } = 2f;
     [ExportGroup("World State")]
     [Export] public bool ExistsInReality { get; set; } = true;
     [Export] public bool ExistsInSoul { get; set; } = true;
@@ -73,6 +75,8 @@ public partial class DualWorldPlatform : Node2D
             _collisionShape.Shape = rectangleShape;
         }
 
+        _collisionShape.OneWayCollision = OneWayCollision;
+        _collisionShape.OneWayCollisionMargin = Mathf.Max(0f, OneWayCollisionMargin);
         rectangleShape.Size = new Vector2(width, height);
     }
 }

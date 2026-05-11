@@ -14,6 +14,7 @@ public partial class WorldGate : Node2D, IWorldActivationTarget
     [Export] public float OpenOffsetY { get; set; } = -108f;
     [Export] public bool StartsOpenInReality { get; set; }
     [Export] public bool StartsOpenInSoul { get; set; }
+    [Export] public bool OpenWhenDeactivated { get; set; }
     [Export] public Color ClosedColor { get; set; } = new(0.72f, 0.32f, 0.22f, 1f);
     [Export] public Color OpenColor { get; set; } = new(0.46f, 0.84f, 0.62f, 0.78f);
     [ExportGroup("World State")]
@@ -63,7 +64,7 @@ public partial class WorldGate : Node2D, IWorldActivationTarget
 
     public void SetActivatedForWorld(bool isActivated, WorldType worldType)
     {
-        _openStates[worldType] = isActivated;
+        _openStates[worldType] = OpenWhenDeactivated ? !isActivated : isActivated;
 
         if ((WorldManager.Instance?.CurrentWorld ?? WorldType.Reality) == worldType)
         {

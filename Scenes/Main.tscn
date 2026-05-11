@@ -7,21 +7,29 @@
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/PatrolEnemy.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/BreakableWall.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/ChaserEnemy.tscn" id="7"]
-[ext_resource type="Script" path="res://Scripts/Gameplay/Inventory/InventoryPickup.cs" id="8"]
+[ext_resource type="Script" uid="uid://cbnyxr3ffnjyf" path="res://Scripts/Gameplay/Inventory/InventoryPickup.cs" id="8"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/SoulSentinelEnemy.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/DualWorldPlatform.tscn" id="10"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/WorldGate.tscn" id="11"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/WorldButtonSwitch.tscn" id="12"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/DifferentialMovingPlatform.tscn" id="13"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/WorldStateLift.tscn" id="14"]
+[ext_resource type="PackedScene" path="res://Scenes/Environment/SoulTetherAnchor.tscn" id="15"]
 
 [sub_resource type="RectangleShape2D" id="1"]
-size = Vector2(6200, 64)
+size = Vector2(7800, 64)
 
-[sub_resource type="RectangleShape2D" id="2"]
-size = Vector2(320, 24)
+[sub_resource type="RectangleShape2D" id="7"]
+size = Vector2(56, 260)
+
+[sub_resource type="RectangleShape2D" id="8"]
+size = Vector2(96, 282)
 
 [sub_resource type="RectangleShape2D" id="3"]
 size = Vector2(220, 24)
+
+[sub_resource type="RectangleShape2D" id="2"]
+size = Vector2(320, 24)
 
 [sub_resource type="RectangleShape2D" id="4"]
 size = Vector2(180, 24)
@@ -29,20 +37,17 @@ size = Vector2(180, 24)
 [sub_resource type="RectangleShape2D" id="5"]
 size = Vector2(140, 24)
 
-[sub_resource type="CircleShape2D" id="6"]
-radius = 18.0
-
-[sub_resource type="RectangleShape2D" id="7"]
-size = Vector2(56, 260)
-
-[sub_resource type="RectangleShape2D" id="8"]
-size = Vector2(96, 380)
-
 [sub_resource type="RectangleShape2D" id="9"]
 size = Vector2(176, 360)
 
 [sub_resource type="RectangleShape2D" id="10"]
-size = Vector2(128, 320)
+size = Vector2(128, 256)
+
+[sub_resource type="CircleShape2D" id="6"]
+radius = 18.0
+
+[sub_resource type="RectangleShape2D" id="11"]
+size = Vector2(260, 24)
 
 [node name="Main" type="Node2D" unique_id=195052086]
 script = ExtResource("1")
@@ -54,18 +59,18 @@ color = Color(1, 0.972549, 0.921569, 1)
 layer = -10
 
 [node name="ColorRect" type="ColorRect" parent="Background" unique_id=1243766741]
-offset_left = -3000.0
-offset_top = -2200.0
-offset_right = 8200.0
-offset_bottom = 2200.0
+offset_left = -3200.0
+offset_top = -2111.0
+offset_right = 9800.0
+offset_bottom = 2289.0
 color = Color(0.901961, 0.894118, 0.87451, 1)
 
 [node name="Ground" type="StaticBody2D" parent="." unique_id=1225502027]
-position = Vector2(3100, 612)
+position = Vector2(3900, 612)
 
 [node name="Visual" type="Polygon2D" parent="Ground" unique_id=555160238]
 color = Color(0.286275, 0.309804, 0.313726, 1)
-polygon = PackedVector2Array(-3100, -32, 3100, -32, 3100, 32, -3100, 32)
+polygon = PackedVector2Array(-3900, -32, 3900, -32, 3900, 32, -3900, 32)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=2093765322]
 shape = SubResource("1")
@@ -84,10 +89,13 @@ shape = SubResource("7")
 position = Vector2(2660, 390)
 
 [node name="Visual" type="Polygon2D" parent="WorldShiftBarrier" unique_id=1071223877]
+position = Vector2(0, 48.5)
+scale = Vector2(1, 0.74473685)
 color = Color(0.239216, 0.258824, 0.278431, 1)
 polygon = PackedVector2Array(-48, -190, 48, -190, 48, 190, -48, 190)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="WorldShiftBarrier" unique_id=2097294589]
+position = Vector2(0, 49)
 shape = SubResource("8")
 
 [node name="LowerPlatformA" type="StaticBody2D" parent="." unique_id=160417900]
@@ -164,13 +172,6 @@ shape = SubResource("3")
 
 [node name="DualWorldObject" type="Node" parent="RealityPlatform" unique_id=274693524]
 script = ExtResource("4")
-target_root_path = NodePath("..")
-visual_root_path = NodePath("../Visual")
-collision_root_path = NodePath("../StaticBody2D")
-exists_in_reality = true
-exists_in_soul = false
-reality_position_offset = Vector2(0, 0)
-soul_position_offset = Vector2(0, 24)
 
 [node name="SoulBridge" type="Node2D" parent="." unique_id=120879509]
 position = Vector2(2810, 366)
@@ -186,13 +187,6 @@ shape = SubResource("5")
 
 [node name="DualWorldObject" type="Node" parent="SoulBridge" unique_id=243965015]
 script = ExtResource("4")
-target_root_path = NodePath("..")
-visual_root_path = NodePath("../Visual")
-collision_root_path = NodePath("../StaticBody2D")
-exists_in_reality = false
-exists_in_soul = true
-reality_position_offset = Vector2(0, 16)
-soul_position_offset = Vector2(0, 0)
 
 [node name="FarMidPlatform" type="StaticBody2D" parent="." unique_id=162573910]
 position = Vector2(3140, 420)
@@ -248,13 +242,6 @@ shape = SubResource("4")
 
 [node name="DualWorldObject" type="Node" parent="SoulClimbPlatform" unique_id=2022690971]
 script = ExtResource("4")
-target_root_path = NodePath("..")
-visual_root_path = NodePath("../Visual")
-collision_root_path = NodePath("../StaticBody2D")
-exists_in_reality = false
-exists_in_soul = true
-reality_position_offset = Vector2(0, 20)
-soul_position_offset = Vector2(0, 0)
 
 [node name="RealityRestPlatform" type="Node2D" parent="." unique_id=2051233251]
 position = Vector2(5140, 458)
@@ -270,13 +257,6 @@ shape = SubResource("3")
 
 [node name="DualWorldObject" type="Node" parent="RealityRestPlatform" unique_id=593528497]
 script = ExtResource("4")
-target_root_path = NodePath("..")
-visual_root_path = NodePath("../Visual")
-collision_root_path = NodePath("../StaticBody2D")
-exists_in_reality = true
-exists_in_soul = false
-reality_position_offset = Vector2(0, 0)
-soul_position_offset = Vector2(0, -18)
 
 [node name="FinalPlatform" type="StaticBody2D" parent="." unique_id=1939738309]
 position = Vector2(5680, 390)
@@ -302,10 +282,13 @@ shape = SubResource("9")
 position = Vector2(5480, 420)
 
 [node name="Visual" type="Polygon2D" parent="FinalBarrier" unique_id=773558147]
+position = Vector2(0, 31)
+scale = Vector2(1, 0.80625)
 color = Color(0.239216, 0.258824, 0.278431, 1)
 polygon = PackedVector2Array(-64, -160, 64, -160, 64, 160, -64, 160)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="FinalBarrier" unique_id=1386508925]
+position = Vector2(0, 32)
 shape = SubResource("10")
 
 [node name="RealityLockButton" parent="." unique_id=1590029336 instance=ExtResource("12")]
@@ -344,8 +327,94 @@ platform_color = Color(0.905882, 0.576471, 0.235294, 1)
 exists_in_reality = true
 exists_in_soul = false
 
+[node name="ReverseGateButton" parent="." instance=ExtResource("12")]
+position = Vector2(6280, 266)
+target_paths = Array[NodePath]([NodePath("../ReverseStepGate")])
+activates_in_soul = false
+exists_in_soul = false
+plate_width = 70.0
+
+[node name="ReverseStepGate" parent="." instance=ExtResource("11")]
+position = Vector2(6480, 304)
+gate_width = 72.0
+gate_height = 168.0
+open_offset_y = -116.0
+starts_open_in_reality = true
+open_when_deactivated = true
+exists_in_soul = false
+
+[node name="SwitchUpperPlatform" type="StaticBody2D" parent="."]
+position = Vector2(6740, 188)
+
+[node name="Visual" type="Polygon2D" parent="SwitchUpperPlatform"]
+color = Color(0.454902, 0.494118, 0.529412, 1)
+polygon = PackedVector2Array(-130, -12, 130, -12, 130, 12, -130, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SwitchUpperPlatform"]
+shape = SubResource("11")
+
+[node name="SoulPassPlatformA" parent="." instance=ExtResource("10")]
+position = Vector2(6880, 276)
+platform_width = 150.0
+platform_color = Color(0.466667, 0.760784, 1, 1)
+exists_in_reality = false
+exists_in_soul = true
+one_way_collision = true
+
+[node name="SoulPassPlatformB" parent="." instance=ExtResource("10")]
+position = Vector2(7090, 216)
+platform_width = 150.0
+platform_color = Color(0.466667, 0.760784, 1, 1)
+exists_in_reality = false
+exists_in_soul = true
+one_way_collision = true
+
+[node name="StateLiftButton" parent="." instance=ExtResource("12")]
+position = Vector2(6820, 166)
+target_paths = Array[NodePath]([NodePath("../WorldStateLift")])
+plate_width = 64.0
+
+[node name="WorldStateLift" parent="." instance=ExtResource("14")]
+position = Vector2(7050, 360)
+platform_width = 176.0
+starts_active_in_reality = false
+starts_active_in_soul = false
+reality_inactive_offset = Vector2(0, 40)
+reality_active_offset = Vector2(0, -48)
+soul_inactive_offset = Vector2(0, 36)
+soul_active_offset = Vector2(0, -150)
+
+[node name="SoulAnchorRest" parent="." instance=ExtResource("10")]
+position = Vector2(7250, 188)
+platform_width = 170.0
+platform_color = Color(0.466667, 0.760784, 1, 1)
+exists_in_reality = false
+exists_in_soul = true
+
+[node name="SoulTetherAnchorA" parent="." instance=ExtResource("15")]
+position = Vector2(7240, 150)
+pull_target_offset = Vector2(0, 38)
+
+[node name="SoulLandingBridge" parent="." instance=ExtResource("10")]
+position = Vector2(7480, 162)
+platform_width = 180.0
+platform_color = Color(0.466667, 0.760784, 1, 1)
+exists_in_reality = false
+exists_in_soul = true
+
+[node name="SoulTetherAnchorB" parent="." instance=ExtResource("15")]
+position = Vector2(7470, 124)
+pull_target_offset = Vector2(0, 38)
+
+[node name="RealityFinalBridge" parent="." instance=ExtResource("10")]
+position = Vector2(7560, 162)
+platform_width = 420.0
+platform_color = Color(0.905882, 0.576471, 0.235294, 1)
+exists_in_reality = true
+exists_in_soul = false
+
 [node name="GoalMarker" type="Node2D" parent="." unique_id=1814829800]
-position = Vector2(6220, 244)
+position = Vector2(7760, 118)
 
 [node name="Visual" type="Polygon2D" parent="GoalMarker" unique_id=709423736]
 color = Color(0.96, 0.75, 0.28, 1)
@@ -357,15 +426,7 @@ position = Vector2(120, 562)
 [node name="FieldSupplyPickup" type="Area2D" parent="." unique_id=1661722512]
 position = Vector2(720, 470)
 collision_layer = 0
-collision_mask = 1
 script = ExtResource("8")
-item_id = "field_supply"
-display_name = "野外补给"
-description = "拾取后加入背包，可恢复 1 点生命和 25 点耐力。"
-quantity = 1
-max_stack = 9
-health_restore = 1
-stamina_restore = 25.0
 
 [node name="Visual" type="Polygon2D" parent="FieldSupplyPickup" unique_id=218461702]
 color = Color(0.45, 0.86, 0.62, 1)
@@ -377,16 +438,7 @@ shape = SubResource("6")
 [node name="OreCachePickup" type="Area2D" parent="." unique_id=1299477951]
 position = Vector2(4300, 302)
 collision_layer = 0
-collision_mask = 1
 script = ExtResource("8")
-item_id = "ore_cache"
-display_name = "灵魂矿石包"
-description = "拾取后加入背包，可作为后续强化材料原型。"
-category = 2
-quantity = 4
-max_stack = 99
-health_restore = 0
-stamina_restore = 0.0
 
 [node name="Visual" type="Polygon2D" parent="OreCachePickup" unique_id=129599394]
 color = Color(0.58, 0.72, 1, 1)
@@ -398,14 +450,7 @@ shape = SubResource("6")
 [node name="TrainingPointPickup" type="Area2D" parent="." unique_id=1550631776]
 position = Vector2(5200, 430)
 collision_layer = 0
-collision_mask = 1
 script = ExtResource("8")
-item_id = "training_memory"
-display_name = "残响记忆"
-description = "使用后获得 1 个加点点数的原型道具。"
-quantity = 1
-max_stack = 3
-progression_points_granted = 1
 
 [node name="Visual" type="Polygon2D" parent="TrainingPointPickup" unique_id=898681877]
 color = Color(1, 0.82, 0.44, 1)
@@ -416,62 +461,24 @@ shape = SubResource("6")
 
 [node name="PatrolEnemyA" parent="." unique_id=61361803 instance=ExtResource("5")]
 position = Vector2(1000, 566)
-max_posture = 85.0
-attack_windup_duration = 0.58
-attack_cooldown_duration = 0.62
-attack_posture_damage = 24.0
-move_speed = 58.0
-patrol_distance = 130.0
 
-[node name="ChaserEnemyA" parent="." instance=ExtResource("7")]
+[node name="ChaserEnemyA" parent="." unique_id=603862338 instance=ExtResource("7")]
 position = Vector2(1780, 566)
-attack_windup_duration = 0.58
-attack_cooldown_duration = 0.7
-approach_speed = 92.0
-leash_distance = 260.0
 
 [node name="BreakableWall" parent="." unique_id=960738665 instance=ExtResource("6")]
 position = Vector2(2960, 311)
 
 [node name="PatrolEnemyB" parent="." unique_id=1289049570 instance=ExtResource("5")]
 position = Vector2(3950, 406)
-max_health = 4
-max_posture = 95.0
-detection_range = 170.0
-attack_windup_duration = 0.54
-attack_cooldown_duration = 0.66
-attack_posture_damage = 28.0
-move_speed = 64.0
-patrol_distance = 160.0
 
 [node name="ChaserEnemyB" parent="." unique_id=2003012758 instance=ExtResource("7")]
 position = Vector2(4560, 566)
-max_health = 5
-max_posture = 125.0
-detection_range = 250.0
-attack_windup_duration = 0.62
-attack_cooldown_duration = 0.74
-attack_damage = 1
-attack_posture_damage = 36.0
-approach_speed = 102.0
-return_speed = 76.0
-leash_distance = 320.0
 
 [node name="SoulSentinelEnemy" parent="." unique_id=542923110 instance=ExtResource("9")]
 position = Vector2(5680, 364)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1840655520]
 script = ExtResource("3")
-tint_path = NodePath("../WorldTint")
-player_path = NodePath("../Player")
-health_label_path = NodePath("Panel/HealthLabel")
-health_bar_path = NodePath("Panel/HealthBar")
-stamina_label_path = NodePath("Panel/StaminaLabel")
-stamina_bar_path = NodePath("Panel/StaminaBar")
-inventory_panel_path = NodePath("InventoryPanel")
-inventory_text_path = NodePath("InventoryPanel/Body")
-progression_panel_path = NodePath("ProgressionPanel")
-progression_text_path = NodePath("ProgressionPanel/Body")
 
 [node name="Panel" type="Panel" parent="UI" unique_id=466358434]
 offset_left = 14.0
@@ -488,12 +495,12 @@ offset_bottom = 30.0
 text = "HP 5/5"
 
 [node name="HealthBar" type="ProgressBar" parent="UI/Panel" unique_id=142820090]
+modulate = Color(1, 0.47, 0.47, 1)
 layout_mode = 0
 offset_left = 12.0
 offset_top = 34.0
 offset_right = 224.0
 offset_bottom = 50.0
-modulate = Color(1, 0.47, 0.47, 1)
 max_value = 5.0
 value = 5.0
 show_percentage = false
@@ -507,12 +514,12 @@ offset_bottom = 76.0
 text = "Stamina 100/100"
 
 [node name="StaminaBar" type="ProgressBar" parent="UI/Panel" unique_id=2122529244]
+modulate = Color(0.45, 0.84, 1, 1)
 layout_mode = 0
 offset_left = 12.0
 offset_top = 80.0
 offset_right = 224.0
 offset_bottom = 96.0
-modulate = Color(0.45, 0.84, 1, 1)
 value = 100.0
 show_percentage = false
 
@@ -531,16 +538,13 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Body" type="RichTextLabel" parent="UI/InventoryPanel" unique_id=990338136]
-anchors_preset = 15
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
 offset_top = 16.0
 offset_right = -16.0
 offset_bottom = -16.0
-bbcode_enabled = false
-scroll_active = true
-fit_content = false
 
 [node name="ProgressionPanel" type="Panel" parent="UI" unique_id=404296118]
 visible = false
@@ -557,13 +561,10 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Body" type="RichTextLabel" parent="UI/ProgressionPanel" unique_id=934611173]
-anchors_preset = 15
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
 offset_top = 16.0
 offset_right = -16.0
 offset_bottom = -16.0
-bbcode_enabled = false
-scroll_active = true
-fit_content = false

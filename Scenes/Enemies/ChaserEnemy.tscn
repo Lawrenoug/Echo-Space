@@ -24,6 +24,13 @@ attack_range = 58.0
 attack_windup_duration = 0.5
 attack_posture_damage = 34.0
 visual_root_path = NodePath("Body")
+drop_enabled = true
+drop_item_id = "memory_shard"
+drop_display_name = "Memory Shard"
+drop_description = "A condensed shard that grants 1 progression point when used."
+drop_quantity = 1
+drop_max_stack = 9
+drop_progression_points_granted = 1
 
 [node name="Body" type="Polygon2D" parent="."]
 polygon = PackedVector2Array(-14, -15, 14, -15, 10, 15, -10, 15)

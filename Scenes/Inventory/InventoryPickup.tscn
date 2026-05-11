@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Gameplay/Inventory/InventoryPickup.cs" id="1"]
+
+[sub_resource type="CircleShape2D" id="1"]
+radius = 16.0
+
+[node name="InventoryPickup" type="Area2D"]
+script = ExtResource("1")
+collision_layer = 0
+collision_mask = 1
+
+[node name="Visual" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0, -16, 12, -6, 12, 6, 0, 16, -12, 6, -12, -6)
+color = Color(0.6, 0.9, 1, 1)
+
+[node name="Core" type="Polygon2D" parent="Visual"]
+polygon = PackedVector2Array(0, -7, 6, 0, 0, 7, -6, 0)
+color = Color(1, 0.97, 0.82, 0.95)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")

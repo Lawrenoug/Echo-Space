@@ -37,6 +37,14 @@ visual_root_path = NodePath("Body")
 guard_radius = 190.0
 drift_speed = 48.0
 return_speed = 64.0
+drop_enabled = true
+drop_item_id = "soul_cluster"
+drop_display_name = "Soul Cluster"
+drop_description = "A dense soul mass that grants 2 progression points and 10 stamina when used."
+drop_quantity = 1
+drop_max_stack = 9
+drop_stamina_restore = 10.0
+drop_progression_points_granted = 2
 
 [node name="Body" type="Polygon2D" parent="."]
 polygon = PackedVector2Array(-18, -20, 18, -20, 13, 19, -13, 19)

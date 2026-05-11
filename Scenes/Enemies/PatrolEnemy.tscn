@@ -18,6 +18,14 @@ size = Vector2(26, 20)
 script = ExtResource("1")
 collision_layer = 0
 visual_root_path = NodePath("Body")
+drop_enabled = true
+drop_item_id = "field_supply"
+drop_display_name = "Field Supply"
+drop_description = "Restores 1 HP and 20 stamina."
+drop_quantity = 1
+drop_max_stack = 9
+drop_health_restore = 1
+drop_stamina_restore = 20.0
 
 [node name="Body" type="Polygon2D" parent="."]
 polygon = PackedVector2Array(-12, -14, 12, -14, 12, 14, -12, 14)

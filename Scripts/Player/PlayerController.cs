@@ -6,6 +6,7 @@ using EchoSpace.Core.Settings;
 using EchoSpace.Core.World;
 using EchoSpace.Gameplay.Combat;
 using EchoSpace.Gameplay.Enemies;
+using EchoSpace.Gameplay.Environment;
 using EchoSpace.Gameplay.Progression;
 using EchoSpace.Player.States;
 using Godot;
@@ -35,6 +36,13 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public float JumpHoldMaxTime { get; set; } = 0.18f;
 	[Export] public float JumpHoldGravityScale { get; set; } = 0.28f;
 	[Export] public float JumpCutVelocityMultiplier { get; set; } = 0.55f;
+
+	[ExportGroup("Ability")]
+	[Export] public float SoulTetherRange { get; set; } = 340f;
+	[Export] public float SoulTetherSpeed { get; set; } = 760f;
+	[Export] public float SoulTetherSnapDistance { get; set; } = 12f;
+	[Export] public float SoulTetherCooldown { get; set; } = 0.4f;
+	[Export] public float SoulTetherStaminaCost { get; set; } = 16f;
 
 	[ExportGroup("Combat")]
 	[Export] public int MaxHealth { get; set; } = 5;
@@ -68,6 +76,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private double _lastGroundedAt = double.NegativeInfinity;
 	private double _lastDamageTakenAt = double.NegativeInfinity;
 	private double _lastGuardPressedAt = double.NegativeInfinity;
+	private double _lastSoulTetherAt = double.NegativeInfinity;
 	private double _guardBreakRemaining;
 	private double _jumpHoldRemaining;
 	private int _remainingAirJumps;
@@ -89,6 +98,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private float _baseDeflectStaminaCost;
 	private bool _isAttackActive;
 	private bool _isGuarding;
+	private bool _isSoulTethering;
 	private bool _jumpCutApplied;
 
 	public int CurrentHealth => _currentHealth;
@@ -120,6 +130,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_stateMachine.Register(new PlayerFallState(this, _stateMachine));
 		_stateMachine.Register(new PlayerAttackState(this, _stateMachine));
 		_stateMachine.Register(new PlayerGuardState(this, _stateMachine));
+		_stateMachine.Register(new PlayerSoulTetherState(this, _stateMachine));
 		_stateMachine.ChangeState<PlayerIdleState>();
 
 		if (_attackProbe != null)
@@ -174,6 +185,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		{
 			_inputBuffer.Buffer(GameInputActions.SwitchWorld, now);
 		}
+
+		if (@event.IsActionPressed(GameInputActions.Ability))
+		{
+			_inputBuffer.Buffer(GameInputActions.Ability, now);
+		}
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -197,9 +213,14 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 
 		_stateMachine?.PhysicsUpdate(delta);
-		ApplyHorizontalMovement(delta);
-		ApplyGravity(delta);
-		MoveAndSlide();
+
+		if (CurrentPlayerState?.SuppressDefaultPhysics != true)
+		{
+			ApplyHorizontalMovement(delta);
+			ApplyGravity(delta);
+			MoveAndSlide();
+		}
+
 		ProcessAttackHits();
 
 		if (IsOnFloor())
@@ -219,6 +240,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		return _inputBuffer.HasBuffered(GameInputActions.Attack, GetGameTime(), InputBufferTime);
 	}
 
+	public bool HasBufferedAbility()
+	{
+		return _inputBuffer.HasBuffered(GameInputActions.Ability, GetGameTime(), InputBufferTime);
+	}
+
 	public void ConsumeJumpBuffer()
 	{
 		_inputBuffer.Consume(GameInputActions.Jump, GetGameTime(), InputBufferTime);
@@ -227,6 +253,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	public void ConsumeAttackBuffer()
 	{
 		_inputBuffer.Consume(GameInputActions.Attack, GetGameTime(), InputBufferTime);
+	}
+
+	public void ConsumeAbilityBuffer()
+	{
+		_inputBuffer.Consume(GameInputActions.Ability, GetGameTime(), InputBufferTime);
 	}
 
 	public float GetMoveInput()
@@ -257,6 +288,27 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	public bool WantsToGuard()
 	{
 		return Input.IsActionPressed(GameInputActions.Guard) && _guardBreakRemaining <= 0d && _currentStamina > 0f;
+	}
+
+	public bool CanStartSoulTether()
+	{
+		var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
+		if (currentWorld != WorldType.Soul)
+		{
+			return false;
+		}
+
+		if (GetGameTime() - _lastSoulTetherAt < SoulTetherCooldown)
+		{
+			return false;
+		}
+
+		if (_currentStamina < SoulTetherStaminaCost)
+		{
+			return false;
+		}
+
+		return FindSoulTetherTarget() != null;
 	}
 
 	public bool CanGuard()
@@ -329,6 +381,45 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 	}
 
+	public SoulTetherAnchor? FindSoulTetherTarget()
+	{
+		var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
+		if (currentWorld != WorldType.Soul)
+		{
+			return null;
+		}
+
+		SoulTetherAnchor? bestAnchor = null;
+		var bestScore = float.MaxValue;
+
+		foreach (Node node in GetTree().GetNodesInGroup("soul_tether_anchor"))
+		{
+			if (node is not SoulTetherAnchor anchor || !GodotObject.IsInstanceValid(anchor) || !anchor.IsAvailableFor(currentWorld))
+			{
+				continue;
+			}
+
+			var delta = anchor.GlobalPosition - GlobalPosition;
+			var distance = delta.Length();
+			if (distance > SoulTetherRange || distance < 8f)
+			{
+				continue;
+			}
+
+			var directionalBias = Mathf.Sign(delta.X) == Mathf.Sign(_facingDirection) ? -36f : 0f;
+			var score = distance + Mathf.Abs(delta.Y) * 0.2f + directionalBias;
+			if (score >= bestScore)
+			{
+				continue;
+			}
+
+			bestScore = score;
+			bestAnchor = anchor;
+		}
+
+		return bestAnchor;
+	}
+
 	public bool UpdateExecutionApproach(EnemyCombatant target, double delta)
 	{
 		if (!IsInstanceValid(target))
@@ -374,6 +465,58 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		{
 			_attackProbeCollisionShape.SetDeferred(CollisionShape2D.PropertyName.Disabled, false);
 		}
+	}
+
+	public void BeginSoulTether(SoulTetherAnchor target)
+	{
+		_isSoulTethering = true;
+		_lastSoulTetherAt = GetGameTime();
+		ConsumeStamina(SoulTetherStaminaCost);
+		FaceTowards(target.GlobalPosition.X);
+		Velocity = Vector2.Zero;
+
+		if (_guardEffectVisual != null)
+		{
+			_guardEffectVisual.Visible = true;
+			_guardEffectVisual.Modulate = new Color(0.62f, 0.96f, 1f, 0.95f);
+		}
+
+		if (_bodyVisual != null)
+		{
+			_bodyVisual.Modulate = new Color(0.82f, 0.96f, 1f, 1f);
+		}
+	}
+
+	public void EndSoulTether()
+	{
+		_isSoulTethering = false;
+		Velocity = Vector2.Zero;
+
+		if (_guardEffectVisual != null && !_isGuarding && _guardBreakRemaining <= 0d)
+		{
+			_guardEffectVisual.Visible = false;
+		}
+
+		if (_bodyVisual != null && _lastDamageTakenAt + DamageInvulnerabilityTime < GetGameTime())
+		{
+			_bodyVisual.Modulate = Colors.White;
+		}
+	}
+
+	public bool UpdateSoulTetherTravel(SoulTetherAnchor target, double delta)
+	{
+		if (!GodotObject.IsInstanceValid(target))
+		{
+			return true;
+		}
+
+		FaceTowards(target.GlobalPosition.X);
+		var destination = target.PullTargetGlobalPosition;
+		var nextPosition = GlobalPosition.MoveToward(destination, SoulTetherSpeed * (float)delta);
+		GlobalPosition = nextPosition;
+		Velocity = Vector2.Zero;
+
+		return nextPosition.DistanceTo(destination) <= SoulTetherSnapDistance;
 	}
 
 	public void EndAttack()
@@ -632,7 +775,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			return;
 		}
 
-		if (_currentStamina >= MaxStamina)
+		if (_isSoulTethering || _currentStamina >= MaxStamina)
 		{
 			return;
 		}
@@ -736,4 +879,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	{
 		return Time.GetTicksMsec() / 1000.0;
 	}
+
+	private PlayerState? CurrentPlayerState => _stateMachine?.CurrentState as PlayerState;
 }

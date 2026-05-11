@@ -10,6 +10,7 @@ public abstract class PlayerState : State<PlayerController>
     }
 
     public virtual float SpeedMultiplier => 1f;
+    public virtual bool SuppressDefaultPhysics => false;
 
     protected bool TryEnterGuard()
     {
@@ -41,6 +42,24 @@ public abstract class PlayerState : State<PlayerController>
 
         Context.ConsumeAttackBuffer();
         StateMachine.ChangeState<PlayerAttackState>();
+        return true;
+    }
+
+    protected bool TryEnterSoulTether()
+    {
+        if (!Context.HasBufferedAbility())
+        {
+            return false;
+        }
+
+        if (!Context.CanStartSoulTether())
+        {
+            Context.ConsumeAbilityBuffer();
+            return false;
+        }
+
+        Context.ConsumeAbilityBuffer();
+        StateMachine.ChangeState<PlayerSoulTetherState>();
         return true;
     }
 
