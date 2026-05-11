@@ -1,92 +1,106 @@
 # Echo Space
 
-`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作游戏原型，当前核心方向是：
-
-- 现实世界 / 灵魂世界实时切换
-- 长横向、多层结构地图探索
-- 以《只狼》为参考方向的近战战斗
-- 逐步搭建可扩展的系统框架，而不是一次性堆完整内容
+`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作游戏原型。当前项目重点不是一次性堆完整内容，而是先把双世界切换、平台探索、战斗循环和可扩展系统框架做扎实。
 
 ## README 维护规则
 
-- 每次有代码或场景文件修改时，都要同步检查并更新 `README`
-- 每次修改文件后，都需要提交并推送到 GitHub 仓库
-- `README` 不再维护容易快速过期的“已实现功能流水账”
-- 保留“当前框架说明”“关键文件位置”“当前最适合继续推进的方向”这类稳定信息
-- 正式策划案统一维护在根目录 `GameDesignDocument.md`，`Docs/GameDesignDocument.md` 保留同步副本，当前版本为 `v0.3`
+- 每次有代码、场景或系统配置文件修改时，都要同步检查并更新 `README`
+- 每次修改文件后，都要提交版本；如果仓库状态允许，也同步推送到 GitHub
+- `README` 不再维护容易快速过期的“细碎已完成流水账”
+- 重点保留“当前框架说明”“关键文件位置”“当前最适合继续推进的方向”“人工资源填充清单”
+- 正式策划案统一维护在 [GameDesignDocument.md](/F:/Godot%20project/echo-space/GameDesignDocument.md) 和 [Docs/GameDesignDocument.md](/F:/Godot%20project/echo-space/Docs/GameDesignDocument.md)
 
-## 当前战斗方向
+## 当前项目方向
 
-当前战斗设计方向已经明确为“血量 + 耐力 + 架势 + 处决”的组合：
-
-- 玩家拥有血量和耐力
-- 敌人拥有血量和架势
-- 普通攻击会削减敌人血量，并附带较少的架势伤害
-- 防御可以减轻压力，精准弹反会更快累积敌人架势
-- 当敌人架势打满后，会进入可处决状态
-- 玩家贴近破绽敌人时，可通过一次处决攻击直接终结敌人
-- 跳跃支持轻按低跳、长按高跳，长按会在阈值时间内减弱上升重力，松开会提前截断上升速度
+- 核心玩法：现实世界 / 灵魂世界实时切换
+- 关卡结构：长横向、多层白盒地图，强调探索和折返验证
+- 战斗方向：以“血量 + 耐力 + 架势 + 处决”为原型的近战系统
+- 开发方式：先完成可玩的系统闭环，再逐步接入正式美术、音效和内容
 
 ## 当前默认按键
 
 - `A` / `Left`：向左移动
 - `D` / `Right`：向右移动
 - `Space` / `W` / `Up`：跳跃
-- `鼠标左键`：攻击 / 处决
+- `鼠标左键`：普通攻击 / 处决
 - `鼠标右键`：防御 / 弹反
 - `Tab`：切换世界
-- `I`：打开 / 关闭背包界面
+- `I`：打开 / 关闭背包
 - `P`：打开 / 关闭加点界面
-- 背包界面内 `1-9`：使用对应槽位物品
-- 背包界面内 `Shift+1-9`：丢弃对应槽位物品
-- 背包界面内 `U`：使用第一个可用消耗品
-- 背包界面内 `Delete`：丢弃第一个可丢弃物品
-- `Esc`：关闭当前最上层系统界面
+- `1-9`：在背包界面使用对应槽位物品
+- `Shift + 1-9`：在背包界面丢弃对应槽位物品
+- `U`：在背包界面使用第一个可用消耗品
+- `Delete`：在背包界面丢弃第一个可丢弃物品
+- `Esc`：关闭当前最上层界面
 
 ## 关键文件位置
 
-- 正式策划案：`GameDesignDocument.md`
-- 策划案同步副本：`Docs/GameDesignDocument.md`
-- 项目启动菜单：`Scenes/UI/MainMenu.tscn`
-- 主菜单控制器：`Scripts/UI/MainMenuController.cs`
-- 主场景：`Scenes/Main.tscn`
-- 玩家控制器：`Scripts/Player/PlayerController.cs`
-- 玩家状态：`Scripts/Player/States/`
-- 敌人战斗基类：`Scripts/Gameplay/Enemies/EnemyCombatant.cs`
-- 巡逻敌人：`Scripts/Gameplay/Enemies/EnemyController.cs`
-- 追击敌人：`Scripts/Gameplay/Enemies/ChaserEnemyController.cs`
-- 灵魂哨卫小 Boss 原型：`Scripts/Gameplay/Enemies/SoulSentinelEnemyController.cs`
-- 双世界系统：`Scripts/Core/World/`
-- 设置系统：`Scripts/Core/Settings/GameSettingsManager.cs`
-- HUD 与系统面板：`Scripts/UI/WorldOverlay.cs`
-- 背包系统：`Scripts/Gameplay/Inventory/`
-- 加点系统：`Scripts/Gameplay/Progression/`
-- Banana 美术资源提示词：`Docs/Art/BananaAssetPrompts.md`
+- 项目主关卡：[Scenes/Main.tscn](/F:/Godot%20project/echo-space/Scenes/Main.tscn)
+- 主菜单场景：[Scenes/UI/MainMenu.tscn](/F:/Godot%20project/echo-space/Scenes/UI/MainMenu.tscn)
+- 玩家控制器：[Scripts/Player/PlayerController.cs](/F:/Godot%20project/echo-space/Scripts/Player/PlayerController.cs)
+- 玩家状态机：[Scripts/Player/States](/F:/Godot%20project/echo-space/Scripts/Player/States)
+- 双世界系统：[Scripts/Core/World](/F:/Godot%20project/echo-space/Scripts/Core/World)
+- 敌人战斗基类：[Scripts/Gameplay/Enemies/EnemyCombatant.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/EnemyCombatant.cs)
+- 巡逻敌人：[Scripts/Gameplay/Enemies/EnemyController.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/EnemyController.cs)
+- 追击敌人：[Scripts/Gameplay/Enemies/ChaserEnemyController.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/ChaserEnemyController.cs)
+- 灵魂哨卫：[Scripts/Gameplay/Enemies/SoulSentinelEnemyController.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/SoulSentinelEnemyController.cs)
+- 白盒环境与机关脚本目录：[Scripts/Gameplay/Environment](/F:/Godot%20project/echo-space/Scripts/Gameplay/Environment)
+- HUD 与系统界面：[Scripts/UI/WorldOverlay.cs](/F:/Godot%20project/echo-space/Scripts/UI/WorldOverlay.cs)
+- 背包系统：[Scripts/Gameplay/Inventory](/F:/Godot%20project/echo-space/Scripts/Gameplay/Inventory)
+- 加点系统：[Scripts/Gameplay/Progression](/F:/Godot%20project/echo-space/Scripts/Gameplay/Progression)
+- 项目正式策划案：[Docs/GameDesignDocument.md](/F:/Godot%20project/echo-space/Docs/GameDesignDocument.md)
 
 ## 当前框架说明
 
-- 项目启动入口为主菜单场景，菜单预留了开始游戏、设置和退出接口
-- 当前阶段已经移除存档系统，后续等游戏整体结构更稳定后再评估是否重新接入
-- 主菜单里的“继续游戏”入口已经暂时移除，后续和存档系统一同重新加入
-- 开始游戏会重置当前原型中的世界状态、背包和加点数据，再进入白盒关卡
-- 二级系统界面当前采用统一的“面板栈”逻辑，切换界面时下层界面保留，关闭顶层后自动恢复
-- 背包系统当前负责：物品定义、分类、槽位、堆叠、增删查、变化事件
-- 加点系统当前负责：等级、未分配点数、属性分配 / 退点 / 重置、战斗修正值快照
-- 加点系统已经接入玩家战斗数值，会影响血量、耐力、攻击伤害、攻击架势伤害、防反架势伤害和防御耐力消耗
-- 背包系统已经支持物品使用、丢弃、关键道具防丢弃和场景拾取原型；打开背包后可按 `1-9` 使用槽位，`Shift+1-9` 丢弃槽位
-- 当前白盒关卡已经扩成更长的横向测试路线，串起跳跃、战斗、拾取、加点、可破坏墙、现实 / 灵魂平台和灵魂世界敌人验证点
-- 当前已有巡逻敌人、追击敌人、灵魂哨卫三种派生敌人，用于验证敌人战斗基类和双世界敌人的复用性
-- 敌人的运行时位置已经从双世界位置刷新中隔离：`CharacterBody2D` 敌人不会再被 `DualWorldObject` 写回出生坐标；巡逻敌人继续按自身巡逻段运动，原地检测 / 追击敌人在非所属世界暂停寻敌和回守点，切回所属世界后从离开时的位置继续判断
-- `Docs/Art` 用于存放你自己制作的美术素材、参考图和提示词文档
-- `Assets` 用于存放后续外部搜索 / 下载并确认可用的 CC0 素材内容
-- GoPeak 相关 Godot 插件已经从项目内移除，后续以纯 Codex 文件开发和本地构建验证为主
-- 设置系统当前接入显示、音频、按键和玩法四类预设，会保存到 `user://settings.cfg`
-- 当前阶段先不强行接入新 UI 美术，优先继续补玩法闭环、关卡结构和系统逻辑，等版式和风格稳定后再统一接资源
-- `GameDesignDocument.md` 已调整为完整游戏形态的正式策划案，Demo 内容和完整版本内容在文档中单独区分；`Docs/GameDesignDocument.md` 与根目录版本保持同步
+- 启动入口是独立主菜单场景，不和游戏主关卡混在一起
+- 当前存档系统已移除，后续等关卡、敌人、双世界状态和 UI 结构更稳定后再决定是否重做
+- “继续游戏”入口当前暂不接回，后续和存档系统一并恢复
+- 主菜单点击开始游戏时，会重置当前原型里的世界状态、背包和加点数据，再进入白盒关卡
+- 背包、加点等二级界面使用统一的“面板栈”逻辑：切换时下层界面保留，关闭顶层后恢复下层
+- 玩家当前具备血量、耐力、普通攻击、防御、弹反、处决、轻按低跳 / 长按高跳
+- 敌人当前具备血量、架势、受击、破绽、处决、所属世界判定
+- 敌人运行时位置已经和双世界静态位置刷新解耦，切换世界时不会再因为 `DualWorldObject` 被写回出生点
+- 当前白盒关卡已经扩成一段可从左到右连续推进的长横向路线，串起跳跃、战斗、拾取、加点、双世界切换和处决验证
+
+## 当前白盒关卡结构
+
+当前主关卡已经接入第一批双世界机关模板，并按一条连续路线布置：
+
+1. 起点教学段：基础移动、跳跃、拾取与第一只巡逻敌人
+2. 早期平台段：用多层平台验证跳跃手感与横向移动
+3. 单世界平台段：通过现实平台和灵魂桥验证“切世界找路”
+4. 按钮门段：踩下按钮后打开前方门，验证机关联动
+5. 差异运动平台段：平台在现实世界静止，在灵魂世界移动，用于跨越障碍
+6. 终段爬升：结合单世界平台、灵魂敌人与最终目标点完成收尾
+
+## 当前双世界机关模板
+
+- 按钮门：`WorldButtonSwitch + WorldGate`
+- 单世界平台：`DualWorldPlatform`
+- 差异运动平台：`DifferentialMovingPlatform`
+- 可破坏墙：`BreakableWall`
+
+对应场景与脚本：
+
+- [Scenes/Environment/WorldButtonSwitch.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/WorldButtonSwitch.tscn)
+- [Scenes/Environment/WorldGate.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/WorldGate.tscn)
+- [Scenes/Environment/DualWorldPlatform.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/DualWorldPlatform.tscn)
+- [Scenes/Environment/DifferentialMovingPlatform.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/DifferentialMovingPlatform.tscn)
+
+## 当前最适合继续推进的方向
+
+建议下一步优先从下面这些方向里选：
+
+1. 战斗验证：基于这张新白盒图反复测试普通攻击、弹反、架势打满、破绽提示、处决和敌人掉落是否顺畅
+2. 机关扩展：继续补第二批双世界机关，例如按钮反向门、双状态升降台、灵魂世界可穿透平台、连续切换谜题段
+3. 掉落闭环：让敌人稳定掉落可拾取物，把战斗、背包、加点串成一个完整循环
+4. 内容扩展：增加第三种敌人或第一个小 Boss，验证敌人战斗基类在更复杂行为上的复用性
+5. 能力原型：开始做一个新的探索能力，例如灵魂牵引、短冲刺或垂直位移，用来验证后续 Metroidvania 式回收路线
+6. 白盒细化：继续优化关卡节奏，把当前长横向路线压成更像 3-5 分钟教学关的体验
 
 ## 人工资源填充清单
 
-以下内容默认需要你后续手工补充。  
+以下内容默认需要你后续手工填充。  
 这部分是长期保留区：
 
 - 后续无论我怎样更新 `README`，都必须保留这块“人工资源填充清单”，如果有新增资源需求，在这里追加，删除已经完成的功能。
@@ -106,7 +120,7 @@
 
 ### 敌人资源
 
-- 基础敌人待机 / 巡逻动画
+- 基础敌人待机 / 巡逻动作
 - 基础敌人攻击动画
 - 基础敌人受击动画
 - 基础敌人破绽状态表现
@@ -136,9 +150,8 @@
 
 ### 关卡与场景资源
 
-- 白盒关卡布局
-- 正式关卡美术
-- 沉没档案馆区域概念资源
+- 白盒关卡正式美术替换
+- 长横向多层地图的场景拼接资源
 - 背景层
 - 前景遮挡
 - 装饰物
@@ -169,23 +182,3 @@
 - 世界切换音效
 - 场景环境音
 - BGM
-
-## 当前最适合继续推进的方向
-
-建议优先从下面这些真正会推进原型的待办里选：
-
-1. 双世界机关扩展：补按钮门、单世界平台、切世界后运动逻辑不同的平台
-2. 关卡白盒继续拉长：按“安全探索 -> 教学 -> 练习 -> 组合挑战 -> 捷径 / 奖励”的节奏扩一段完整路线
-3. 战斗复测与修正：检查普通攻击、精准弹反、架势打满、破绽提示和处决收益是否足够清晰
-4. 敌人生态扩展：做第二类正式敌人，验证敌人战斗基类在不同攻击方式和双世界形态下是否好复用
-5. 敌人掉落闭环：让敌人死亡后稳定掉落可拾取物，把战斗、背包、加点资源串成一个完整循环
-6. 新能力原型：优先考虑灵魂牵引或蓄力重击，用来验证“能力解锁 -> 新路线 -> 旧区域回收 -> 战斗策略”的闭环
-7. 第三类双世界谜题：设计一个必须连续切换现实 / 灵魂才能通过的路段，验证核心玩法是否足够成立
-8. 存档系统暂缓评估：等关卡、背包、加点、双世界状态和敌人唯一 ID 更稳定后，再决定是否重新接入
-
-如果想按最稳的顺序推进，建议优先级是：
-
-1. 双世界机关扩展
-2. 关卡白盒继续拉长
-3. 战斗复测与修正
-4. 第二类正式敌人
