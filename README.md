@@ -13,7 +13,7 @@
 - 每次修改文件后，都需要提交并推送到 GitHub 仓库
 - `README` 不再维护容易快速过期的“已实现功能流水账”
 - 保留“当前框架说明”“关键文件位置”“当前最适合继续推进的方向”这类稳定信息
-- 正式策划案统一维护在 `Docs/GameDesignDocument.md`，当前版本为 `v0.3`
+- 正式策划案统一维护在根目录 `GameDesignDocument.md`，`Docs/GameDesignDocument.md` 保留同步副本，当前版本为 `v0.3`
 
 ## 当前战斗方向
 
@@ -45,7 +45,8 @@
 
 ## 关键文件位置
 
-- 正式策划案：`Docs/GameDesignDocument.md`
+- 正式策划案：`GameDesignDocument.md`
+- 策划案同步副本：`Docs/GameDesignDocument.md`
 - 项目启动菜单：`Scenes/UI/MainMenu.tscn`
 - 主菜单控制器：`Scripts/UI/MainMenuController.cs`
 - 主场景：`Scenes/Main.tscn`
@@ -81,7 +82,7 @@
 - GoPeak 相关 Godot 插件已经从项目内移除，后续以纯 Codex 文件开发和本地构建验证为主
 - 设置系统当前接入显示、音频、按键和玩法四类预设，会保存到 `user://settings.cfg`
 - 当前阶段先不强行接入新 UI 美术，优先继续补玩法闭环、关卡结构和系统逻辑，等版式和风格稳定后再统一接资源
-- `Docs/GameDesignDocument.md` 已调整为完整游戏形态的正式策划案，Demo 内容和完整版本内容在文档中单独区分
+- `GameDesignDocument.md` 已调整为完整游戏形态的正式策划案，Demo 内容和完整版本内容在文档中单独区分；`Docs/GameDesignDocument.md` 与根目录版本保持同步
 
 ## 人工资源填充清单
 
