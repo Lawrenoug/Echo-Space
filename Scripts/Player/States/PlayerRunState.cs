@@ -9,6 +9,11 @@ public sealed class PlayerRunState : PlayerState
     {
     }
 
+    public override void Enter()
+    {
+        Context.PlayStateAnimation("run");
+    }
+
     public override void PhysicsUpdate(double delta)
     {
         if (!Context.IsGrounded())
@@ -17,7 +22,7 @@ public sealed class PlayerRunState : PlayerState
             return;
         }
 
-        if (TryEnterSoulTether() || TryEnterGuard() || TryEnterAttack() || TryEnterJump())
+        if (TryEnterDash() || TryEnterSoulTether() || TryEnterGuard() || TryEnterAttack() || TryEnterJump())
         {
             return;
         }

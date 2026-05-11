@@ -15,6 +15,36 @@ namespace EchoSpace.Player;
 
 public partial class PlayerController : CharacterBody2D, IDamageable
 {
+	private sealed class PlayerAnimationDefinition
+	{
+		public PlayerAnimationDefinition(string actionName, int frameCount, float fps, bool loop)
+		{
+			ActionName = actionName;
+			FrameCount = frameCount;
+			Fps = fps;
+			Loop = loop;
+		}
+
+		public string ActionName { get; }
+		public int FrameCount { get; }
+		public float Fps { get; }
+		public bool Loop { get; }
+	}
+
+	private static readonly PlayerAnimationDefinition[] AnimationDefinitions =
+	[
+		new("idle", 6, 6f, true),
+		new("run", 8, 12f, true),
+		new("jumpstart", 3, 10f, false),
+		new("fall", 3, 8f, false),
+		new("attack", 6, 12f, false),
+		new("hurt", 3, 10f, false),
+		new("dead", 6, 8f, false),
+		new("execute", 6, 12f, false),
+		new("guard", 1, 8f, false),
+		new("parry", 4, 15f, false)
+	];
+
 	public event Action<int, int>? HealthChanged;
 	public event Action<float, float>? StaminaChanged;
 
@@ -37,7 +67,12 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public float JumpHoldGravityScale { get; set; } = 0.28f;
 	[Export] public float JumpCutVelocityMultiplier { get; set; } = 0.55f;
 
-	[ExportGroup("Ability")]
+	[ExportGroup("Traversal")]
+	[Export] public float DashSpeed { get; set; } = 460f;
+	[Export] public float DashDuration { get; set; } = 0.16f;
+	[Export] public float DashCooldown { get; set; } = 0.35f;
+	[Export] public float DashStaminaCost { get; set; } = 12f;
+	[Export] public int MaxAirDashes { get; set; } = 1;
 	[Export] public float SoulTetherRange { get; set; } = 340f;
 	[Export] public float SoulTetherSpeed { get; set; } = 760f;
 	[Export] public float SoulTetherSnapDistance { get; set; } = 12f;
@@ -67,7 +102,9 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public NodePath? AttackProbePath { get; set; } = new("AttackProbe");
 	[Export] public NodePath? AttackProbeCollisionShapePath { get; set; } = new("AttackProbe/CollisionShape2D");
 	[Export] public NodePath? HurtboxVisualPath { get; set; } = new("GuardEffect");
-	[Export] public NodePath? BodyVisualPath { get; set; } = new("Body");
+	[Export] public NodePath? BodyVisualPath { get; set; } = new("AnimatedSprite");
+	[Export] public NodePath? AnimatedSpritePath { get; set; } = new("AnimatedSprite");
+	[Export] public string AnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerSpriteFrames";
 
 	private readonly InputBuffer _inputBuffer = new();
 	private readonly HashSet<ulong> _damagedTargetsThisAttack = new();
@@ -76,10 +113,12 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private double _lastGroundedAt = double.NegativeInfinity;
 	private double _lastDamageTakenAt = double.NegativeInfinity;
 	private double _lastGuardPressedAt = double.NegativeInfinity;
+	private double _lastDashAt = double.NegativeInfinity;
 	private double _lastSoulTetherAt = double.NegativeInfinity;
 	private double _guardBreakRemaining;
 	private double _jumpHoldRemaining;
 	private int _remainingAirJumps;
+	private int _remainingAirDashes;
 	private int _currentHealth;
 	private float _currentStamina;
 	private float _facingDirection = 1f;
@@ -87,6 +126,9 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private CollisionShape2D? _attackProbeCollisionShape;
 	private CanvasItem? _bodyVisual;
 	private CanvasItem? _guardEffectVisual;
+	private CanvasItem? _fallbackBodyVisual;
+	private CanvasItem? _fallbackFeetVisual;
+	private AnimatedSprite2D? _animatedSprite;
 	private Vector2 _attackProbeBasePosition;
 	private int _baseMaxHealth;
 	private int _baseAttackDamage;
@@ -98,11 +140,17 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private float _baseDeflectStaminaCost;
 	private bool _isAttackActive;
 	private bool _isGuarding;
+	private bool _isDashing;
+	private bool _isDead;
 	private bool _isSoulTethering;
 	private bool _jumpCutApplied;
+	private string _currentAnimationAction = "idle";
+	private double _animationOverrideRemaining;
+	private double _deathAnimationRemaining;
 
 	public int CurrentHealth => _currentHealth;
 	public float CurrentStamina => _currentStamina;
+	private PlayerState? CurrentPlayerState => _stateMachine?.CurrentState as PlayerState;
 
 	public override void _Ready()
 	{
@@ -116,13 +164,20 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_currentHealth = MaxHealth;
 		_currentStamina = MaxStamina;
 		_remainingAirJumps = MaxAirJumps;
+		_remainingAirDashes = MaxAirDashes;
 		_stateMachine = new StateMachine<PlayerController>(this);
 		_attackProbe = AttackProbePath != null && !AttackProbePath.IsEmpty ? GetNodeOrNull<Area2D>(AttackProbePath) : null;
 		_attackProbeCollisionShape = AttackProbeCollisionShapePath != null && !AttackProbeCollisionShapePath.IsEmpty
 			? GetNodeOrNull<CollisionShape2D>(AttackProbeCollisionShapePath)
 			: null;
+		_animatedSprite = AnimatedSpritePath != null && !AnimatedSpritePath.IsEmpty
+			? GetNodeOrNull<AnimatedSprite2D>(AnimatedSpritePath)
+			: null;
 		_bodyVisual = BodyVisualPath != null && !BodyVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(BodyVisualPath) : null;
 		_guardEffectVisual = HurtboxVisualPath != null && !HurtboxVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(HurtboxVisualPath) : null;
+		_fallbackBodyVisual = GetNodeOrNull<CanvasItem>("Body");
+		_fallbackFeetVisual = GetNodeOrNull<CanvasItem>("Feet");
+		ConfigureAnimatedSprite();
 
 		_stateMachine.Register(new PlayerIdleState(this, _stateMachine));
 		_stateMachine.Register(new PlayerRunState(this, _stateMachine));
@@ -130,6 +185,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_stateMachine.Register(new PlayerFallState(this, _stateMachine));
 		_stateMachine.Register(new PlayerAttackState(this, _stateMachine));
 		_stateMachine.Register(new PlayerGuardState(this, _stateMachine));
+		_stateMachine.Register(new PlayerDashState(this, _stateMachine));
 		_stateMachine.Register(new PlayerSoulTetherState(this, _stateMachine));
 		_stateMachine.ChangeState<PlayerIdleState>();
 
@@ -151,10 +207,20 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			ProgressionManager.Instance.AttributeChanged += OnProgressionAttributeChanged;
 			ProgressionManager.Instance.AttributesReset += OnProgressionReset;
 		}
+
+		if (WorldManager.Instance != null)
+		{
+			WorldManager.Instance.WorldChanged += OnWorldChanged;
+		}
 	}
 
 	public override void _ExitTree()
 	{
+		if (WorldManager.Instance != null)
+		{
+			WorldManager.Instance.WorldChanged -= OnWorldChanged;
+		}
+
 		if (ProgressionManager.Instance != null)
 		{
 			ProgressionManager.Instance.AttributeChanged -= OnProgressionAttributeChanged;
@@ -164,6 +230,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
 	public override void _Input(InputEvent @event)
 	{
+		if (_isDead)
+		{
+			return;
+		}
+
 		var now = GetGameTime();
 
 		if (@event.IsActionPressed(GameInputActions.Jump))
@@ -181,30 +252,50 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			_lastGuardPressedAt = now;
 		}
 
-		if (@event.IsActionPressed(GameInputActions.SwitchWorld))
+		if (@event.IsActionPressed(GameInputActions.Dash))
 		{
-			_inputBuffer.Buffer(GameInputActions.SwitchWorld, now);
+			_inputBuffer.Buffer(GameInputActions.Dash, now);
 		}
 
 		if (@event.IsActionPressed(GameInputActions.Ability))
 		{
 			_inputBuffer.Buffer(GameInputActions.Ability, now);
 		}
+
+		if (@event.IsActionPressed(GameInputActions.SwitchWorld))
+		{
+			_inputBuffer.Buffer(GameInputActions.SwitchWorld, now);
+		}
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
+		if (_isDead)
+		{
+			UpdateTransientAnimation(delta);
+			_deathAnimationRemaining = Math.Max(0d, _deathAnimationRemaining - delta);
+			if (_deathAnimationRemaining <= 0d)
+			{
+				QueueFree();
+			}
+
+			return;
+		}
+
 		var now = GetGameTime();
 		_inputBuffer.ExpireOlderThan(now, InputBufferTime);
 		UpdateFacingDirection();
+		UpdateSpriteFacing();
 		UpdateAttackProbeTransform();
 		UpdateStamina(delta);
 		UpdateGuardBreak(delta);
+		UpdateTransientAnimation(delta);
 
 		if (IsOnFloor())
 		{
 			_lastGroundedAt = now;
 			_remainingAirJumps = MaxAirJumps;
+			_remainingAirDashes = MaxAirDashes;
 		}
 
 		if (_inputBuffer.Consume(GameInputActions.SwitchWorld, now, InputBufferTime))
@@ -227,6 +318,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		{
 			_lastGroundedAt = now;
 			_remainingAirJumps = MaxAirJumps;
+			_remainingAirDashes = MaxAirDashes;
 		}
 	}
 
@@ -238,6 +330,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	public bool HasBufferedAttack()
 	{
 		return _inputBuffer.HasBuffered(GameInputActions.Attack, GetGameTime(), InputBufferTime);
+	}
+
+	public bool HasBufferedDash()
+	{
+		return _inputBuffer.HasBuffered(GameInputActions.Dash, GetGameTime(), InputBufferTime);
 	}
 
 	public bool HasBufferedAbility()
@@ -253,6 +350,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	public void ConsumeAttackBuffer()
 	{
 		_inputBuffer.Consume(GameInputActions.Attack, GetGameTime(), InputBufferTime);
+	}
+
+	public void ConsumeDashBuffer()
+	{
+		_inputBuffer.Consume(GameInputActions.Dash, GetGameTime(), InputBufferTime);
 	}
 
 	public void ConsumeAbilityBuffer()
@@ -290,6 +392,21 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		return Input.IsActionPressed(GameInputActions.Guard) && _guardBreakRemaining <= 0d && _currentStamina > 0f;
 	}
 
+	public bool CanGuard()
+	{
+		return IsGrounded() && _guardBreakRemaining <= 0d && _currentStamina > 0f;
+	}
+
+	public bool CanDash()
+	{
+		if (GetGameTime() - _lastDashAt < DashCooldown || _currentStamina < DashStaminaCost)
+		{
+			return false;
+		}
+
+		return IsOnFloor() || _remainingAirDashes > 0;
+	}
+
 	public bool CanStartSoulTether()
 	{
 		var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
@@ -298,22 +415,12 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			return false;
 		}
 
-		if (GetGameTime() - _lastSoulTetherAt < SoulTetherCooldown)
-		{
-			return false;
-		}
-
-		if (_currentStamina < SoulTetherStaminaCost)
+		if (GetGameTime() - _lastSoulTetherAt < SoulTetherCooldown || _currentStamina < SoulTetherStaminaCost)
 		{
 			return false;
 		}
 
 		return FindSoulTetherTarget() != null;
-	}
-
-	public bool CanGuard()
-	{
-		return IsGrounded() && _guardBreakRemaining <= 0d && _currentStamina > 0f;
 	}
 
 	public EnemyCombatant? FindExecutionTarget()
@@ -344,6 +451,45 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 
 		return closestTarget;
+	}
+
+	public SoulTetherAnchor? FindSoulTetherTarget()
+	{
+		var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
+		if (currentWorld != WorldType.Soul)
+		{
+			return null;
+		}
+
+		SoulTetherAnchor? bestAnchor = null;
+		var bestScore = float.MaxValue;
+
+		foreach (Node node in GetTree().GetNodesInGroup("soul_tether_anchor"))
+		{
+			if (node is not SoulTetherAnchor anchor || !IsInstanceValid(anchor) || !anchor.IsAvailableFor(currentWorld))
+			{
+				continue;
+			}
+
+			var delta = anchor.GlobalPosition - GlobalPosition;
+			var distance = delta.Length();
+			if (distance > SoulTetherRange || distance < 8f)
+			{
+				continue;
+			}
+
+			var directionalBias = Mathf.Sign(delta.X) == Mathf.Sign(_facingDirection) ? -36f : 0f;
+			var score = distance + Mathf.Abs(delta.Y) * 0.2f + directionalBias;
+			if (score >= bestScore)
+			{
+				continue;
+			}
+
+			bestScore = score;
+			bestAnchor = anchor;
+		}
+
+		return bestAnchor;
 	}
 
 	public void BeginGuard()
@@ -379,45 +525,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		{
 			_bodyVisual.Modulate = Colors.White;
 		}
-	}
-
-	public SoulTetherAnchor? FindSoulTetherTarget()
-	{
-		var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
-		if (currentWorld != WorldType.Soul)
-		{
-			return null;
-		}
-
-		SoulTetherAnchor? bestAnchor = null;
-		var bestScore = float.MaxValue;
-
-		foreach (Node node in GetTree().GetNodesInGroup("soul_tether_anchor"))
-		{
-			if (node is not SoulTetherAnchor anchor || !GodotObject.IsInstanceValid(anchor) || !anchor.IsAvailableFor(currentWorld))
-			{
-				continue;
-			}
-
-			var delta = anchor.GlobalPosition - GlobalPosition;
-			var distance = delta.Length();
-			if (distance > SoulTetherRange || distance < 8f)
-			{
-				continue;
-			}
-
-			var directionalBias = Mathf.Sign(delta.X) == Mathf.Sign(_facingDirection) ? -36f : 0f;
-			var score = distance + Mathf.Abs(delta.Y) * 0.2f + directionalBias;
-			if (score >= bestScore)
-			{
-				continue;
-			}
-
-			bestScore = score;
-			bestAnchor = anchor;
-		}
-
-		return bestAnchor;
 	}
 
 	public bool UpdateExecutionApproach(EnemyCombatant target, double delta)
@@ -467,6 +574,49 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 	}
 
+	public void BeginDash()
+	{
+		_lastDashAt = GetGameTime();
+		if (!IsOnFloor() && _remainingAirDashes > 0)
+		{
+			_remainingAirDashes -= 1;
+		}
+
+		ConsumeStamina(DashStaminaCost);
+		_isDashing = true;
+		Velocity = Vector2.Zero;
+		PlayStateAnimation("run", true);
+
+		if (_guardEffectVisual != null)
+		{
+			_guardEffectVisual.Visible = true;
+			_guardEffectVisual.Modulate = new Color(1f, 1f, 1f, 0.4f);
+		}
+	}
+
+	public void UpdateDashTravel(double delta)
+	{
+		var direction = _facingDirection;
+		if (Mathf.IsZeroApprox(direction))
+		{
+			direction = 1f;
+		}
+
+		Velocity = new Vector2(direction * DashSpeed, 0f);
+		MoveAndSlide();
+	}
+
+	public void EndDash()
+	{
+		_isDashing = false;
+		Velocity = new Vector2(0f, Velocity.Y);
+
+		if (_guardEffectVisual != null && !_isGuarding)
+		{
+			_guardEffectVisual.Visible = false;
+		}
+	}
+
 	public void BeginSoulTether(SoulTetherAnchor target)
 	{
 		_isSoulTethering = true;
@@ -474,38 +624,18 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		ConsumeStamina(SoulTetherStaminaCost);
 		FaceTowards(target.GlobalPosition.X);
 		Velocity = Vector2.Zero;
+		PlayStateAnimation("jumpstart", true);
 
 		if (_guardEffectVisual != null)
 		{
 			_guardEffectVisual.Visible = true;
 			_guardEffectVisual.Modulate = new Color(0.62f, 0.96f, 1f, 0.95f);
 		}
-
-		if (_bodyVisual != null)
-		{
-			_bodyVisual.Modulate = new Color(0.82f, 0.96f, 1f, 1f);
-		}
-	}
-
-	public void EndSoulTether()
-	{
-		_isSoulTethering = false;
-		Velocity = Vector2.Zero;
-
-		if (_guardEffectVisual != null && !_isGuarding && _guardBreakRemaining <= 0d)
-		{
-			_guardEffectVisual.Visible = false;
-		}
-
-		if (_bodyVisual != null && _lastDamageTakenAt + DamageInvulnerabilityTime < GetGameTime())
-		{
-			_bodyVisual.Modulate = Colors.White;
-		}
 	}
 
 	public bool UpdateSoulTetherTravel(SoulTetherAnchor target, double delta)
 	{
-		if (!GodotObject.IsInstanceValid(target))
+		if (!IsInstanceValid(target))
 		{
 			return true;
 		}
@@ -515,8 +645,18 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		var nextPosition = GlobalPosition.MoveToward(destination, SoulTetherSpeed * (float)delta);
 		GlobalPosition = nextPosition;
 		Velocity = Vector2.Zero;
-
 		return nextPosition.DistanceTo(destination) <= SoulTetherSnapDistance;
+	}
+
+	public void EndSoulTether()
+	{
+		_isSoulTethering = false;
+		Velocity = Vector2.Zero;
+
+		if (_guardEffectVisual != null && !_isGuarding)
+		{
+			_guardEffectVisual.Visible = false;
+		}
 	}
 
 	public void EndAttack()
@@ -545,8 +685,32 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_lastGroundedAt = double.NegativeInfinity;
 	}
 
+	public void PlayStateAnimation(string action, bool restart = false)
+	{
+		_currentAnimationAction = action;
+		_animationOverrideRemaining = 0d;
+		PlayResolvedAnimation(action, restart);
+	}
+
+	public void PlayParryAnimation()
+	{
+		_animationOverrideRemaining = GetAnimationDuration("parry");
+		PlayResolvedAnimation("parry", true);
+	}
+
+	public void PlayTransientAnimation(string action)
+	{
+		_animationOverrideRemaining = GetAnimationDuration(action);
+		PlayResolvedAnimation(action, true);
+	}
+
 	public void ApplyDamage(in DamageInfo damageInfo)
 	{
+		if (_isDead)
+		{
+			return;
+		}
+
 		var now = GetGameTime();
 		if (!_isGuarding && now - _lastDamageTakenAt < DamageInvulnerabilityTime)
 		{
@@ -574,6 +738,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 					_guardEffectVisual.Modulate = new Color(0.82f, 1f, 1f, 1f);
 				}
 
+				PlayParryAnimation();
+
 				return;
 			}
 
@@ -599,9 +765,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			_bodyVisual.Modulate = new Color(1f, 0.55f, 0.55f, 1f);
 		}
 
+		PlayTransientAnimation(_currentHealth <= 0 ? "dead" : "hurt");
+
 		if (_currentHealth <= 0)
 		{
-			QueueFree();
+			TriggerDeath();
 		}
 	}
 
@@ -751,6 +919,16 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 	}
 
+	private void UpdateSpriteFacing()
+	{
+		if (_animatedSprite == null)
+		{
+			return;
+		}
+
+		_animatedSprite.FlipH = _facingDirection < 0f;
+	}
+
 	private void UpdateAttackProbeTransform()
 	{
 		if (_attackProbe == null)
@@ -775,7 +953,12 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			return;
 		}
 
-		if (_isSoulTethering || _currentStamina >= MaxStamina)
+		if (_isDashing || _isSoulTethering)
+		{
+			return;
+		}
+
+		if (_currentStamina >= MaxStamina)
 		{
 			return;
 		}
@@ -821,6 +1004,25 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		{
 			_guardEffectVisual.Visible = true;
 			_guardEffectVisual.Modulate = new Color(1f, 0.72f, 0.62f, 0.95f);
+		}
+	}
+
+	private void TriggerDeath()
+	{
+		_isDead = true;
+		_isGuarding = false;
+		_isAttackActive = false;
+		Velocity = Vector2.Zero;
+		_deathAnimationRemaining = Math.Max(0.5d, GetAnimationDuration("dead"));
+
+		if (_guardEffectVisual != null)
+		{
+			_guardEffectVisual.Visible = false;
+		}
+
+		if (_attackProbeCollisionShape != null)
+		{
+			_attackProbeCollisionShape.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
 		}
 	}
 
@@ -875,10 +1077,171 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		ApplyProgressionModifiers(true);
 	}
 
+	private void ConfigureAnimatedSprite()
+	{
+		if (_animatedSprite == null)
+		{
+			_bodyVisual = _fallbackBodyVisual;
+			return;
+		}
+
+		var spriteFrames = BuildSpriteFrames();
+		if (spriteFrames == null)
+		{
+			_bodyVisual = _fallbackBodyVisual;
+			return;
+		}
+
+		_animatedSprite.SpriteFrames = spriteFrames;
+		_animatedSprite.Visible = true;
+		_bodyVisual = _animatedSprite;
+
+		if (_fallbackBodyVisual != null)
+		{
+			_fallbackBodyVisual.Visible = false;
+		}
+
+		if (_fallbackFeetVisual != null)
+		{
+			_fallbackFeetVisual.Visible = false;
+		}
+	}
+
+	private SpriteFrames? BuildSpriteFrames()
+	{
+		var spriteFrames = new SpriteFrames();
+		var loadedAnyAnimation = false;
+
+		foreach (var worldName in new[] { "reality", "soul" })
+		{
+			foreach (var definition in AnimationDefinitions)
+			{
+				var animationName = $"{worldName}_{definition.ActionName}";
+				var framePrefix = $"player_{worldName}_{definition.ActionName}";
+				var frameDirectory = $"{AnimationFramesRoot}/{framePrefix}_frames_v1";
+				var loadedFrameCount = 0;
+
+				for (var frameIndex = 0; frameIndex < definition.FrameCount; frameIndex++)
+				{
+					var framePath = $"{frameDirectory}/{framePrefix}_{frameIndex:00}.png";
+					var texture = ResourceLoader.Load<Texture2D>(framePath);
+					if (texture == null)
+					{
+						continue;
+					}
+
+					if (loadedFrameCount == 0)
+					{
+						spriteFrames.AddAnimation(animationName);
+						spriteFrames.SetAnimationSpeed(animationName, definition.Fps);
+						spriteFrames.SetAnimationLoop(animationName, definition.Loop);
+					}
+
+					spriteFrames.AddFrame(animationName, texture);
+					loadedFrameCount += 1;
+				}
+
+				loadedAnyAnimation |= loadedFrameCount > 0;
+			}
+		}
+
+		return loadedAnyAnimation ? spriteFrames : null;
+	}
+
+	private void PlayResolvedAnimation(string action, bool restart)
+	{
+		if (_animatedSprite?.SpriteFrames == null)
+		{
+			return;
+		}
+
+		var animationName = ResolveAnimationName(action);
+		if (animationName == null)
+		{
+			return;
+		}
+
+		var shouldRestart = restart || _animatedSprite.Animation != animationName || !_animatedSprite.IsPlaying();
+		if (!shouldRestart)
+		{
+			return;
+		}
+
+		_animatedSprite.Play(animationName);
+	}
+
+	private string? ResolveAnimationName(string action)
+	{
+		if (_animatedSprite?.SpriteFrames == null)
+		{
+			return null;
+		}
+
+		var preferred = $"{GetCurrentWorldAnimationPrefix()}_{action}";
+		if (_animatedSprite.SpriteFrames.HasAnimation(preferred))
+		{
+			return preferred;
+		}
+
+		var realityFallback = $"reality_{action}";
+		if (_animatedSprite.SpriteFrames.HasAnimation(realityFallback))
+		{
+			return realityFallback;
+		}
+
+		var idleFallback = $"{GetCurrentWorldAnimationPrefix()}_idle";
+		return _animatedSprite.SpriteFrames.HasAnimation(idleFallback) ? idleFallback : null;
+	}
+
+	private string GetCurrentWorldAnimationPrefix()
+	{
+		return (WorldManager.Instance?.CurrentWorld ?? WorldType.Reality) == WorldType.Soul ? "soul" : "reality";
+	}
+
+	private double GetAnimationDuration(string action)
+	{
+		if (_animatedSprite?.SpriteFrames == null)
+		{
+			return 0d;
+		}
+
+		var animationName = ResolveAnimationName(action);
+		if (animationName == null)
+		{
+			return 0d;
+		}
+
+		var frameCount = _animatedSprite.SpriteFrames.GetFrameCount(animationName);
+		var speed = _animatedSprite.SpriteFrames.GetAnimationSpeed(animationName);
+		if (frameCount <= 0 || speed <= 0f)
+		{
+			return 0d;
+		}
+
+		return frameCount / speed;
+	}
+
+	private void UpdateTransientAnimation(double delta)
+	{
+		if (_animationOverrideRemaining <= 0d)
+		{
+			return;
+		}
+
+		_animationOverrideRemaining = Math.Max(0d, _animationOverrideRemaining - delta);
+		if (_animationOverrideRemaining <= 0d)
+		{
+			PlayResolvedAnimation(_currentAnimationAction, true);
+		}
+	}
+
+	private void OnWorldChanged(WorldType _)
+	{
+		PlayResolvedAnimation(_animationOverrideRemaining > 0d ? "parry" : _currentAnimationAction, true);
+	}
+
 	private static double GetGameTime()
 	{
 		return Time.GetTicksMsec() / 1000.0;
 	}
-
-	private PlayerState? CurrentPlayerState => _stateMachine?.CurrentState as PlayerState;
 }

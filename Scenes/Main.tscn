@@ -243,6 +243,17 @@ shape = SubResource("4")
 [node name="DualWorldObject" type="Node" parent="SoulClimbPlatform" unique_id=2022690971]
 script = ExtResource("4")
 
+[node name="SoulTetherTestBridge" parent="." instance=ExtResource("10")]
+position = Vector2(5140, 248)
+platform_width = 180.0
+platform_color = Color(0.466667, 0.760784, 1, 1)
+exists_in_reality = false
+exists_in_soul = true
+
+[node name="SoulTetherTestAnchor" parent="." instance=ExtResource("15")]
+position = Vector2(5000, 214)
+pull_target_offset = Vector2(0, 40)
+
 [node name="RealityRestPlatform" type="Node2D" parent="." unique_id=2051233251]
 position = Vector2(5140, 458)
 

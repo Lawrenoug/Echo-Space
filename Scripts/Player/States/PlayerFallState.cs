@@ -9,9 +9,14 @@ public sealed class PlayerFallState : PlayerState
     {
     }
 
+    public override void Enter()
+    {
+        Context.PlayStateAnimation("fall", true);
+    }
+
     public override void PhysicsUpdate(double delta)
     {
-        if (TryEnterSoulTether() || TryEnterAttack() || TryEnterJump())
+        if (TryEnterDash() || TryEnterSoulTether() || TryEnterAttack() || TryEnterJump())
         {
             return;
         }

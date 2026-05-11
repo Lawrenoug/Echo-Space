@@ -11,12 +11,13 @@ public sealed class PlayerJumpState : PlayerState
 
     public override void Enter()
     {
+        Context.PlayStateAnimation("jumpstart", true);
         Context.CommitJump();
     }
 
     public override void PhysicsUpdate(double delta)
     {
-        if (TryEnterSoulTether() || TryEnterAttack())
+        if (TryEnterDash() || TryEnterSoulTether() || TryEnterAttack())
         {
             return;
         }
