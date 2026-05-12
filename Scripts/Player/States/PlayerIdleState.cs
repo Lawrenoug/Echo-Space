@@ -22,7 +22,7 @@ public sealed class PlayerIdleState : PlayerState
             return;
         }
 
-        if (TryEnterDash() || TryEnterSoulTether() || TryEnterGuard() || TryEnterAttack() || TryEnterJump())
+        if (TryEnterDash() || TryEnterGuard() || TryEnterAttack() || TryEnterJump())
         {
             return;
         }

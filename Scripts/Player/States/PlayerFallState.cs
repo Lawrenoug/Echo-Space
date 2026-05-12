@@ -16,7 +16,7 @@ public sealed class PlayerFallState : PlayerState
 
     public override void PhysicsUpdate(double delta)
     {
-        if (TryEnterDash() || TryEnterSoulTether() || TryEnterAttack() || TryEnterJump())
+        if (TryEnterDash() || TryEnterAttack() || TryEnterJump())
         {
             return;
         }

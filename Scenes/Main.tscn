@@ -14,7 +14,6 @@
 [ext_resource type="PackedScene" path="res://Scenes/Environment/WorldButtonSwitch.tscn" id="12"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/DifferentialMovingPlatform.tscn" id="13"]
 [ext_resource type="PackedScene" path="res://Scenes/Environment/WorldStateLift.tscn" id="14"]
-[ext_resource type="PackedScene" path="res://Scenes/Environment/SoulTetherAnchor.tscn" id="15"]
 
 [sub_resource type="RectangleShape2D" id="1"]
 size = Vector2(7800, 64)
@@ -243,17 +242,6 @@ shape = SubResource("4")
 [node name="DualWorldObject" type="Node" parent="SoulClimbPlatform" unique_id=2022690971]
 script = ExtResource("4")
 
-[node name="SoulTetherTestBridge" parent="." instance=ExtResource("10")]
-position = Vector2(5140, 248)
-platform_width = 180.0
-platform_color = Color(0.466667, 0.760784, 1, 1)
-exists_in_reality = false
-exists_in_soul = true
-
-[node name="SoulTetherTestAnchor" parent="." instance=ExtResource("15")]
-position = Vector2(5000, 214)
-pull_target_offset = Vector2(0, 40)
-
 [node name="RealityRestPlatform" type="Node2D" parent="." unique_id=2051233251]
 position = Vector2(5140, 458)
 
@@ -394,28 +382,6 @@ reality_inactive_offset = Vector2(0, 40)
 reality_active_offset = Vector2(0, -48)
 soul_inactive_offset = Vector2(0, 36)
 soul_active_offset = Vector2(0, -150)
-
-[node name="SoulAnchorRest" parent="." instance=ExtResource("10")]
-position = Vector2(7250, 188)
-platform_width = 170.0
-platform_color = Color(0.466667, 0.760784, 1, 1)
-exists_in_reality = false
-exists_in_soul = true
-
-[node name="SoulTetherAnchorA" parent="." instance=ExtResource("15")]
-position = Vector2(7240, 150)
-pull_target_offset = Vector2(0, 38)
-
-[node name="SoulLandingBridge" parent="." instance=ExtResource("10")]
-position = Vector2(7480, 162)
-platform_width = 180.0
-platform_color = Color(0.466667, 0.760784, 1, 1)
-exists_in_reality = false
-exists_in_soul = true
-
-[node name="SoulTetherAnchorB" parent="." instance=ExtResource("15")]
-position = Vector2(7470, 124)
-pull_target_offset = Vector2(0, 38)
 
 [node name="RealityFinalBridge" parent="." instance=ExtResource("10")]
 position = Vector2(7560, 162)

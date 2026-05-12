@@ -63,24 +63,6 @@ public abstract class PlayerState : State<PlayerController>
         return true;
     }
 
-    protected bool TryEnterSoulTether()
-    {
-        if (!Context.HasBufferedAbility())
-        {
-            return false;
-        }
-
-        if (!Context.CanStartSoulTether())
-        {
-            Context.ConsumeAbilityBuffer();
-            return false;
-        }
-
-        Context.ConsumeAbilityBuffer();
-        StateMachine.ChangeState<PlayerSoulTetherState>();
-        return true;
-    }
-
     protected bool TryEnterJump()
     {
         if (!Context.CanStartJump() || !Context.HasBufferedJump())

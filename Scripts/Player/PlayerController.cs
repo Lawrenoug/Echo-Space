@@ -6,7 +6,6 @@ using EchoSpace.Core.Settings;
 using EchoSpace.Core.World;
 using EchoSpace.Gameplay.Combat;
 using EchoSpace.Gameplay.Enemies;
-using EchoSpace.Gameplay.Environment;
 using EchoSpace.Gameplay.Progression;
 using EchoSpace.Player.States;
 using Godot;
@@ -61,8 +60,10 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[ExportGroup("Feel Tuning")]
 	[Export] public float InputBufferTime { get; set; } = 0.12f;
 	[Export] public float CoyoteTime { get; set; } = 0.10f;
+	[Export] public float RiseGravityScale { get; set; } = 0.78f;
 	[Export] public float JumpApexGravityScale { get; set; } = 0.5f;
 	[Export] public float FallGravityScale { get; set; } = 1.8f;
+	[Export] public float JumpApexVelocityThreshold { get; set; } = 42f;
 	[Export] public float JumpHoldMaxTime { get; set; } = 0.18f;
 	[Export] public float JumpHoldGravityScale { get; set; } = 0.28f;
 	[Export] public float JumpCutVelocityMultiplier { get; set; } = 0.55f;
@@ -73,11 +74,9 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public float DashCooldown { get; set; } = 0.35f;
 	[Export] public float DashStaminaCost { get; set; } = 12f;
 	[Export] public int MaxAirDashes { get; set; } = 1;
-	[Export] public float SoulTetherRange { get; set; } = 340f;
-	[Export] public float SoulTetherSpeed { get; set; } = 760f;
-	[Export] public float SoulTetherSnapDistance { get; set; } = 12f;
-	[Export] public float SoulTetherCooldown { get; set; } = 0.4f;
-	[Export] public float SoulTetherStaminaCost { get; set; } = 16f;
+	[Export] public float DashExitSpeedMultiplier { get; set; } = 0.62f;
+	[Export] public float DashMomentumDuration { get; set; } = 0.14f;
+	[Export] public float DashMomentumDecelerationMultiplier { get; set; } = 0.34f;
 
 	[ExportGroup("Combat")]
 	[Export] public int MaxHealth { get; set; } = 5;
@@ -114,7 +113,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private double _lastDamageTakenAt = double.NegativeInfinity;
 	private double _lastGuardPressedAt = double.NegativeInfinity;
 	private double _lastDashAt = double.NegativeInfinity;
-	private double _lastSoulTetherAt = double.NegativeInfinity;
+	private double _dashMomentumRemaining;
 	private double _guardBreakRemaining;
 	private double _jumpHoldRemaining;
 	private int _remainingAirJumps;
@@ -142,7 +141,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private bool _isGuarding;
 	private bool _isDashing;
 	private bool _isDead;
-	private bool _isSoulTethering;
 	private bool _jumpCutApplied;
 	private string _currentAnimationAction = "idle";
 	private double _animationOverrideRemaining;
@@ -186,7 +184,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_stateMachine.Register(new PlayerAttackState(this, _stateMachine));
 		_stateMachine.Register(new PlayerGuardState(this, _stateMachine));
 		_stateMachine.Register(new PlayerDashState(this, _stateMachine));
-		_stateMachine.Register(new PlayerSoulTetherState(this, _stateMachine));
 		_stateMachine.ChangeState<PlayerIdleState>();
 
 		if (_attackProbe != null)
@@ -257,11 +254,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			_inputBuffer.Buffer(GameInputActions.Dash, now);
 		}
 
-		if (@event.IsActionPressed(GameInputActions.Ability))
-		{
-			_inputBuffer.Buffer(GameInputActions.Ability, now);
-		}
-
 		if (@event.IsActionPressed(GameInputActions.SwitchWorld))
 		{
 			_inputBuffer.Buffer(GameInputActions.SwitchWorld, now);
@@ -290,6 +282,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		UpdateStamina(delta);
 		UpdateGuardBreak(delta);
 		UpdateTransientAnimation(delta);
+		_dashMomentumRemaining = Math.Max(0d, _dashMomentumRemaining - delta);
 
 		if (IsOnFloor())
 		{
@@ -337,11 +330,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		return _inputBuffer.HasBuffered(GameInputActions.Dash, GetGameTime(), InputBufferTime);
 	}
 
-	public bool HasBufferedAbility()
-	{
-		return _inputBuffer.HasBuffered(GameInputActions.Ability, GetGameTime(), InputBufferTime);
-	}
-
 	public void ConsumeJumpBuffer()
 	{
 		_inputBuffer.Consume(GameInputActions.Jump, GetGameTime(), InputBufferTime);
@@ -355,11 +343,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	public void ConsumeDashBuffer()
 	{
 		_inputBuffer.Consume(GameInputActions.Dash, GetGameTime(), InputBufferTime);
-	}
-
-	public void ConsumeAbilityBuffer()
-	{
-		_inputBuffer.Consume(GameInputActions.Ability, GetGameTime(), InputBufferTime);
 	}
 
 	public float GetMoveInput()
@@ -407,22 +390,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		return IsOnFloor() || _remainingAirDashes > 0;
 	}
 
-	public bool CanStartSoulTether()
-	{
-		var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
-		if (currentWorld != WorldType.Soul)
-		{
-			return false;
-		}
-
-		if (GetGameTime() - _lastSoulTetherAt < SoulTetherCooldown || _currentStamina < SoulTetherStaminaCost)
-		{
-			return false;
-		}
-
-		return FindSoulTetherTarget() != null;
-	}
-
 	public EnemyCombatant? FindExecutionTarget()
 	{
 		EnemyCombatant? closestTarget = null;
@@ -451,45 +418,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 
 		return closestTarget;
-	}
-
-	public SoulTetherAnchor? FindSoulTetherTarget()
-	{
-		var currentWorld = WorldManager.Instance?.CurrentWorld ?? WorldType.Reality;
-		if (currentWorld != WorldType.Soul)
-		{
-			return null;
-		}
-
-		SoulTetherAnchor? bestAnchor = null;
-		var bestScore = float.MaxValue;
-
-		foreach (Node node in GetTree().GetNodesInGroup("soul_tether_anchor"))
-		{
-			if (node is not SoulTetherAnchor anchor || !IsInstanceValid(anchor) || !anchor.IsAvailableFor(currentWorld))
-			{
-				continue;
-			}
-
-			var delta = anchor.GlobalPosition - GlobalPosition;
-			var distance = delta.Length();
-			if (distance > SoulTetherRange || distance < 8f)
-			{
-				continue;
-			}
-
-			var directionalBias = Mathf.Sign(delta.X) == Mathf.Sign(_facingDirection) ? -36f : 0f;
-			var score = distance + Mathf.Abs(delta.Y) * 0.2f + directionalBias;
-			if (score >= bestScore)
-			{
-				continue;
-			}
-
-			bestScore = score;
-			bestAnchor = anchor;
-		}
-
-		return bestAnchor;
 	}
 
 	public void BeginGuard()
@@ -584,7 +512,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
 		ConsumeStamina(DashStaminaCost);
 		_isDashing = true;
-		Velocity = Vector2.Zero;
+		_dashMomentumRemaining = 0d;
+		Velocity = new Vector2(0f, IsOnFloor() ? 0f : Velocity.Y * 0.2f);
 		PlayStateAnimation("run", true);
 
 		if (_guardEffectVisual != null)
@@ -602,56 +531,16 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			direction = 1f;
 		}
 
-		Velocity = new Vector2(direction * DashSpeed, 0f);
+		Velocity = new Vector2(direction * DashSpeed, IsOnFloor() ? 0f : Velocity.Y);
 		MoveAndSlide();
 	}
 
 	public void EndDash()
 	{
 		_isDashing = false;
-		Velocity = new Vector2(0f, Velocity.Y);
-
-		if (_guardEffectVisual != null && !_isGuarding)
-		{
-			_guardEffectVisual.Visible = false;
-		}
-	}
-
-	public void BeginSoulTether(SoulTetherAnchor target)
-	{
-		_isSoulTethering = true;
-		_lastSoulTetherAt = GetGameTime();
-		ConsumeStamina(SoulTetherStaminaCost);
-		FaceTowards(target.GlobalPosition.X);
-		Velocity = Vector2.Zero;
-		PlayStateAnimation("jumpstart", true);
-
-		if (_guardEffectVisual != null)
-		{
-			_guardEffectVisual.Visible = true;
-			_guardEffectVisual.Modulate = new Color(0.62f, 0.96f, 1f, 0.95f);
-		}
-	}
-
-	public bool UpdateSoulTetherTravel(SoulTetherAnchor target, double delta)
-	{
-		if (!IsInstanceValid(target))
-		{
-			return true;
-		}
-
-		FaceTowards(target.GlobalPosition.X);
-		var destination = target.PullTargetGlobalPosition;
-		var nextPosition = GlobalPosition.MoveToward(destination, SoulTetherSpeed * (float)delta);
-		GlobalPosition = nextPosition;
-		Velocity = Vector2.Zero;
-		return nextPosition.DistanceTo(destination) <= SoulTetherSnapDistance;
-	}
-
-	public void EndSoulTether()
-	{
-		_isSoulTethering = false;
-		Velocity = Vector2.Zero;
+		var carryVelocity = DashSpeed * DashExitSpeedMultiplier * _facingDirection;
+		Velocity = new Vector2(carryVelocity, Velocity.Y);
+		_dashMomentumRemaining = DashMomentumDuration;
 
 		if (_guardEffectVisual != null && !_isGuarding)
 		{
@@ -810,6 +699,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		var targetSpeed = moveInput * MoveSpeed * speedMultiplier;
 		var acceleration = IsOnFloor() ? GroundAcceleration : AirAcceleration;
 		var deceleration = IsOnFloor() ? GroundDeceleration : AirDeceleration;
+		if (_dashMomentumRemaining > 0d && (Mathf.IsZeroApprox(moveInput) || Mathf.Sign(moveInput) == Mathf.Sign(Velocity.X)))
+		{
+			deceleration *= DashMomentumDecelerationMultiplier;
+		}
+
 		var weight = moveInput == 0f ? deceleration : acceleration;
 
 		Velocity = new Vector2(
@@ -857,7 +751,12 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			_jumpCutApplied = true;
 		}
 
-		return JumpApexGravityScale;
+		if (Mathf.Abs(Velocity.Y) <= JumpApexVelocityThreshold)
+		{
+			return JumpApexGravityScale;
+		}
+
+		return RiseGravityScale;
 	}
 
 	private void ProcessAttackHits()
@@ -953,7 +852,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			return;
 		}
 
-		if (_isDashing || _isSoulTethering)
+		if (_isDashing)
 		{
 			return;
 		}

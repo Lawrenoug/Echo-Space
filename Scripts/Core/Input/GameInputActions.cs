@@ -10,7 +10,6 @@ public static class GameInputActions
     public const string Attack = "attack";
     public const string Guard = "guard";
     public const string Dash = "dash";
-    public const string Ability = "ability";
     public const string SwitchWorld = "switch_world";
     public const string ToggleInventory = "toggle_inventory";
     public const string ToggleProgression = "toggle_progression";
@@ -23,7 +22,6 @@ public static class GameInputActions
         EnsureAction(Attack);
         EnsureAction(Guard);
         EnsureAction(Dash, Key.Shift);
-        EnsureAction(Ability, Key.Q);
         EnsureMouseActionIfEmpty(Attack, MouseButton.Left);
         EnsureMouseActionIfEmpty(Guard, MouseButton.Right);
         EnsureAction(SwitchWorld, Key.Tab);
@@ -55,14 +53,10 @@ public static class GameInputActions
         ResetAction(Dash);
         AddKeyAction(Dash, Key.Shift);
 
-        ResetAction(Ability);
-        AddKeyAction(Ability, Key.Q);
-
         if (includeKeyboardCombatAlternative)
         {
             AddKeyAction(Attack, Key.J);
             AddKeyAction(Guard, Key.K);
-            AddKeyAction(Ability, Key.L);
             AddKeyAction(Dash, Key.Shift);
         }
 
