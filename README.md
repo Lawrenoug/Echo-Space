@@ -201,3 +201,10 @@
 - 短冲刺音效
 - 场景环境音
 - BGM
+
+## 角色动作贴图尺寸不一致处理（Godot）
+
+- 新增脚本：`Scripts/Utils/AnimatedSpriteSizeNormalizer.cs`
+- 用法：把脚本挂到 `AnimatedSprite2D`（或其子节点）上，`SpritePath` 指向角色精灵节点，设置 `TargetFrameHeight` 为统一目标高度（像素）。
+- 效果：运行时按当前动画帧原图高度自动计算统一缩放，避免待机/跑步/攻击等动作切换时人物忽大忽小。
+
