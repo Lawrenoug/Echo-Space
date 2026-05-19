@@ -123,6 +123,35 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public Vector2 AnimationVisualOffset { get; set; } = new(0f, -38f);
 	[Export(PropertyHint.Range, "0.5,4.0,0.05")] public float AnimationVisualScale { get; set; } = 2.3f;
 
+	[ExportGroup("Weapon Motion")]
+	[Export] public Vector2 WeaponIdleOffset { get; set; } = new(0f, 0f);
+	[Export] public float WeaponIdleRotationDegrees { get; set; } = -14f;
+	[Export] public Vector2 WeaponRunOffset { get; set; } = new(4f, -2f);
+	[Export] public float WeaponRunRotationDegrees { get; set; } = 8f;
+	[Export] public float WeaponRunBobAmplitude { get; set; } = 3f;
+	[Export] public float WeaponRunBobSpeed { get; set; } = 10f;
+	[Export] public float WeaponRunRotationSwingDegrees { get; set; } = 8f;
+	[Export] public Vector2 WeaponJumpOffset { get; set; } = new(3f, -8f);
+	[Export] public float WeaponJumpRotationDegrees { get; set; } = 18f;
+	[Export] public Vector2 WeaponFallOffset { get; set; } = new(2f, 6f);
+	[Export] public float WeaponFallRotationDegrees { get; set; } = 28f;
+	[Export] public Vector2 WeaponAttackStartOffset { get; set; } = new(-4f, 6f);
+	[Export] public Vector2 WeaponAttackEndOffset { get; set; } = new(30f, -12f);
+	[Export] public float WeaponAttackStartRotationDegrees { get; set; } = -42f;
+	[Export] public float WeaponAttackEndRotationDegrees { get; set; } = 78f;
+	[Export] public Vector2 WeaponGuardOffset { get; set; } = new(2f, -6f);
+	[Export] public float WeaponGuardRotationDegrees { get; set; } = -62f;
+	[Export] public Vector2 WeaponParryStartOffset { get; set; } = new(0f, -4f);
+	[Export] public Vector2 WeaponParryEndOffset { get; set; } = new(18f, -18f);
+	[Export] public float WeaponParryStartRotationDegrees { get; set; } = -48f;
+	[Export] public float WeaponParryEndRotationDegrees { get; set; } = 40f;
+	[Export] public Vector2 WeaponExecuteOffset { get; set; } = new(18f, -10f);
+	[Export] public float WeaponExecuteRotationDegrees { get; set; } = 64f;
+	[Export] public Vector2 WeaponHurtOffset { get; set; } = new(-8f, 4f);
+	[Export] public float WeaponHurtRotationDegrees { get; set; } = -26f;
+	[Export] public Vector2 WeaponDeadOffset { get; set; } = new(-12f, 18f);
+	[Export] public float WeaponDeadRotationDegrees { get; set; } = 92f;
+
 	private readonly InputBuffer _inputBuffer = new();
 	private readonly HashSet<ulong> _damagedTargetsThisAttack = new();
 	private readonly Dictionary<string, float> _bodyAnimationScaleByName = new(StringComparer.Ordinal);
@@ -882,8 +911,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 
 		var direction = _facingDirection < 0f ? -1f : 1f;
-		_weaponMount.Position = new Vector2(Mathf.Abs(_weaponMountBasePosition.X) * direction, _weaponMountBasePosition.Y);
+		var (poseOffset, poseRotationDegrees) = ResolveWeaponPose(GetDisplayedAnimationAction());
+		var baseX = Mathf.Abs(_weaponMountBasePosition.X) + poseOffset.X;
+		_weaponMount.Position = new Vector2(baseX * direction, _weaponMountBasePosition.Y + poseOffset.Y);
 		_weaponMount.Scale = new Vector2(Mathf.Abs(_weaponMountBaseScale.X) * direction, _weaponMountBaseScale.Y);
+		_weaponMount.Rotation = Mathf.DegToRad(poseRotationDegrees * direction);
 	}
 
 	private void UpdateAttackProbeTransform()
@@ -1328,6 +1360,89 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 
 		return fileName.Substring(prefix.Length, fileName.Length - prefix.Length - suffix.Length);
+	}
+
+	private string GetDisplayedAnimationAction()
+	{
+		return _animationOverrideRemaining > 0d ? "parry" : _currentAnimationAction;
+	}
+
+	private (Vector2 offset, float rotationDegrees) ResolveWeaponPose(string action)
+	{
+		var animationProgress = GetCurrentAnimationProgress();
+		switch (action)
+		{
+			case "run":
+			{
+				var phase = (float)GetGameTime() * WeaponRunBobSpeed;
+				var bob = Mathf.Sin(phase) * WeaponRunBobAmplitude;
+				var rotationSwing = Mathf.Sin(phase) * WeaponRunRotationSwingDegrees;
+				return (WeaponRunOffset + new Vector2(0f, bob), WeaponRunRotationDegrees + rotationSwing);
+			}
+			case "jumpstart":
+				return (WeaponJumpOffset, WeaponJumpRotationDegrees);
+			case "fall":
+				return (WeaponFallOffset, WeaponFallRotationDegrees);
+			case "attack":
+				return ResolveAnimatedWeaponPose(
+					WeaponAttackStartOffset,
+					WeaponAttackEndOffset,
+					WeaponAttackStartRotationDegrees,
+					WeaponAttackEndRotationDegrees,
+					Mathf.SmoothStep(0f, 1f, animationProgress));
+			case "guard":
+				return (WeaponGuardOffset, WeaponGuardRotationDegrees);
+			case "parry":
+				return ResolveAnimatedWeaponPose(
+					WeaponParryStartOffset,
+					WeaponParryEndOffset,
+					WeaponParryStartRotationDegrees,
+					WeaponParryEndRotationDegrees,
+					Mathf.SmoothStep(0f, 1f, animationProgress));
+			case "execute":
+				return (WeaponExecuteOffset, WeaponExecuteRotationDegrees);
+			case "hurt":
+				return (WeaponHurtOffset, WeaponHurtRotationDegrees);
+			case "dead":
+				return (WeaponDeadOffset, WeaponDeadRotationDegrees);
+			default:
+				return (WeaponIdleOffset, WeaponIdleRotationDegrees);
+		}
+	}
+
+	private (Vector2 offset, float rotationDegrees) ResolveAnimatedWeaponPose(
+		Vector2 startOffset,
+		Vector2 endOffset,
+		float startRotationDegrees,
+		float endRotationDegrees,
+		float progress)
+	{
+		return (startOffset.Lerp(endOffset, progress), Mathf.Lerp(startRotationDegrees, endRotationDegrees, progress));
+	}
+
+	private float GetCurrentAnimationProgress()
+	{
+		if (_animatedSprite?.SpriteFrames == null)
+		{
+			return 0f;
+		}
+
+		var animationName = ResolveAnimationName(GetDisplayedAnimationAction());
+		if (animationName == null)
+		{
+			return 0f;
+		}
+
+		var frameCount = _animatedSprite.SpriteFrames.GetFrameCount(animationName);
+		if (frameCount <= 1)
+		{
+			return 0f;
+		}
+
+		var frameProgress = Mathf.Clamp(_animatedSprite.FrameProgress, 0f, 1f);
+		var currentFrame = Mathf.Clamp(_animatedSprite.Frame, 0, frameCount - 1);
+		var totalProgress = currentFrame + frameProgress;
+		return Mathf.Clamp(totalProgress / (frameCount - 1f), 0f, 1f);
 	}
 
 	private static double GetGameTime()
