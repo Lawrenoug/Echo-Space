@@ -144,20 +144,13 @@ public partial class TalentTreeManager : Node
     public void ResetUnlockedTalents()
     {
         EnsureInitialized();
-
-        foreach (var definition in _orderedDefinitions)
-        {
-            _states[definition.Id].SetUnlocked(definition.IsStart);
-        }
-
-        UnspentTalentPoints = Mathf.Max(0, StartingTalentPoints);
-        EmitTreeChanged();
+        ResetUnlockedTalentsInternal(emitChanged: true);
     }
 
     public void ResetToDefaults()
     {
         EnsureInitialized();
-        ResetUnlockedTalents();
+        ResetUnlockedTalentsInternal(emitChanged: true);
     }
 
     public int GetUnlockedNodeCount()
@@ -183,9 +176,26 @@ public partial class TalentTreeManager : Node
             return;
         }
 
-        BuildDefaultTree();
-        ResetUnlockedTalents();
+        // Mark initialized before resetting defaults so startup cannot recurse
+        // back into EnsureInitialized through public reset helpers.
         _isInitialized = true;
+        BuildDefaultTree();
+        ResetUnlockedTalentsInternal(emitChanged: false);
+    }
+
+    private void ResetUnlockedTalentsInternal(bool emitChanged)
+    {
+        foreach (var definition in _orderedDefinitions)
+        {
+            _states[definition.Id].SetUnlocked(definition.IsStart);
+        }
+
+        UnspentTalentPoints = Mathf.Max(0, StartingTalentPoints);
+
+        if (emitChanged)
+        {
+            EmitTreeChanged();
+        }
     }
 
     private void BuildDefaultTree()
