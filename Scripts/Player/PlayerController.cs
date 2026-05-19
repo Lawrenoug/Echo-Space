@@ -116,13 +116,10 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public NodePath? BodyVisualPath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? AnimatedSpritePath { get; set; } = new("AnimatedSprite");
 	[Export] public string AnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerSpriteFrames";
-	[Export] public NodePath? WeaponSpritePath { get; set; } = new("WeaponSprite");
-	[Export] public string WeaponAnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerWeaponFrames";
 
 	private readonly InputBuffer _inputBuffer = new();
 	private readonly HashSet<ulong> _damagedTargetsThisAttack = new();
 	private readonly Dictionary<string, float> _bodyAnimationScaleByName = new(StringComparer.Ordinal);
-	private readonly Dictionary<string, float> _weaponAnimationScaleByName = new(StringComparer.Ordinal);
 
 	private StateMachine<PlayerController>? _stateMachine;
 	private double _lastGroundedAt = double.NegativeInfinity;
@@ -144,12 +141,9 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private CanvasItem? _fallbackBodyVisual;
 	private CanvasItem? _fallbackFeetVisual;
 	private AnimatedSprite2D? _animatedSprite;
-	private AnimatedSprite2D? _weaponSprite;
 	private Vector2 _attackProbeBasePosition;
 	private Vector2 _bodySpriteBasePosition;
 	private Vector2 _bodySpriteBaseScale = Vector2.One;
-	private Vector2 _weaponSpriteBasePosition;
-	private Vector2 _weaponSpriteBaseScale = Vector2.One;
 	private int _baseMaxHealth;
 	private int _baseAttackDamage;
 	private float _baseMaxStamina;
@@ -192,14 +186,10 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_animatedSprite = AnimatedSpritePath != null && !AnimatedSpritePath.IsEmpty
 			? GetNodeOrNull<AnimatedSprite2D>(AnimatedSpritePath)
 			: null;
-		_weaponSprite = WeaponSpritePath != null && !WeaponSpritePath.IsEmpty
-			? GetNodeOrNull<AnimatedSprite2D>(WeaponSpritePath)
-			: null;
 		_bodyVisual = BodyVisualPath != null && !BodyVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(BodyVisualPath) : null;
 		_guardEffectVisual = HurtboxVisualPath != null && !HurtboxVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(HurtboxVisualPath) : null;
 		_fallbackBodyVisual = GetNodeOrNull<CanvasItem>("Body");
 		_fallbackFeetVisual = GetNodeOrNull<CanvasItem>("Feet");
-		EnsureVisualLayerSeparation();
 		ConfigureAnimatedSprite();
 
 		_stateMachine.Register(new PlayerIdleState(this, _stateMachine));
@@ -852,19 +842,10 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	{
 		if (_animatedSprite == null)
 		{
-			if (_weaponSprite != null)
-			{
-				_weaponSprite.FlipH = _facingDirection < 0f;
-			}
-
 			return;
 		}
 
 		_animatedSprite.FlipH = _facingDirection < 0f;
-		if (_weaponSprite != null)
-		{
-			_weaponSprite.FlipH = _animatedSprite.FlipH;
-		}
 	}
 
 	private void UpdateAttackProbeTransform()
@@ -1018,7 +999,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private void ConfigureAnimatedSprite()
 	{
 		_bodyAnimationScaleByName.Clear();
-		_weaponAnimationScaleByName.Clear();
 
 		if (_animatedSprite == null)
 		{
@@ -1048,22 +1028,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		if (_fallbackFeetVisual != null)
 		{
 			_fallbackFeetVisual.Visible = false;
-		}
-
-		if (_weaponSprite != null)
-		{
-			_weaponSpriteBasePosition = _weaponSprite.Position;
-			_weaponSpriteBaseScale = _weaponSprite.Scale;
-			var weaponFrames = BuildSpriteFrames(WeaponAnimationFramesRoot, _weaponAnimationScaleByName);
-			if (weaponFrames != null)
-			{
-				_weaponSprite.SpriteFrames = weaponFrames;
-				_weaponSprite.Visible = true;
-			}
-			else
-			{
-				_weaponSprite.Visible = false;
-			}
 		}
 
 		ApplyAnimationPresentation(ResolveAnimationName(_currentAnimationAction));
@@ -1208,29 +1172,6 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		PlayResolvedAnimation(_animationOverrideRemaining > 0d ? "parry" : _currentAnimationAction, true);
 	}
 
-	private void EnsureVisualLayerSeparation()
-	{
-		if (_animatedSprite == null)
-		{
-			return;
-		}
-
-		if (_weaponSprite != null)
-		{
-			return;
-		}
-
-		_weaponSprite = new AnimatedSprite2D
-		{
-			Name = "WeaponSprite",
-			Visible = false,
-			Position = _animatedSprite.Position,
-			Scale = _animatedSprite.Scale,
-			ZIndex = _animatedSprite.ZIndex + 1,
-		};
-		AddChild(_weaponSprite);
-	}
-
 	private Dictionary<string, float> LoadAnimationManifest(string framesRoot)
 	{
 		var scaleMap = new Dictionary<string, float>(StringComparer.Ordinal);
@@ -1275,61 +1216,16 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
 	private void ApplyAnimationPresentation(string? animationName)
 	{
-		if (animationName == null)
+		if (animationName == null || _animatedSprite == null)
 		{
 			return;
 		}
 
-		if (_animatedSprite != null)
-		{
-			var bodyScale = _bodyAnimationScaleByName.TryGetValue(animationName, out var scaleMultiplier)
-				? scaleMultiplier
-				: 1f;
-			_animatedSprite.Scale = _bodySpriteBaseScale * bodyScale;
-			_animatedSprite.Position = _bodySpriteBasePosition;
-		}
-
-		if (_weaponSprite?.SpriteFrames == null)
-		{
-			return;
-		}
-
-		var weaponAnimation = ResolveWeaponAnimationName(animationName);
-		if (weaponAnimation == null)
-		{
-			_weaponSprite.Visible = false;
-			return;
-		}
-
-		var shouldRestart = _weaponSprite.Animation != weaponAnimation || !_weaponSprite.IsPlaying();
-		if (shouldRestart)
-		{
-			_weaponSprite.Play(weaponAnimation);
-		}
-
-		var weaponScale = _weaponAnimationScaleByName.TryGetValue(weaponAnimation, out var weaponScaleMultiplier)
-			? weaponScaleMultiplier
+		var bodyScale = _bodyAnimationScaleByName.TryGetValue(animationName, out var scaleMultiplier)
+			? scaleMultiplier
 			: 1f;
-		_weaponSprite.Scale = _weaponSpriteBaseScale * weaponScale;
-		_weaponSprite.Position = _weaponSpriteBasePosition;
-		_weaponSprite.FlipH = _facingDirection < 0f;
-		_weaponSprite.Visible = true;
-	}
-
-	private string? ResolveWeaponAnimationName(string fallbackAnimation)
-	{
-		if (_weaponSprite?.SpriteFrames == null)
-		{
-			return null;
-		}
-
-		if (_weaponSprite.SpriteFrames.HasAnimation(fallbackAnimation))
-		{
-			return fallbackAnimation;
-		}
-
-		var idleFallback = $"{GetCurrentWorldAnimationPrefix()}_idle";
-		return _weaponSprite.SpriteFrames.HasAnimation(idleFallback) ? idleFallback : null;
+		_animatedSprite.Scale = _bodySpriteBaseScale * bodyScale;
+		_animatedSprite.Position = _bodySpriteBasePosition;
 	}
 
 	private static string? TryParseAnimationNameFromSource(string? source)
