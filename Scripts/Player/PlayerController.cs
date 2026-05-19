@@ -8,7 +8,9 @@ using EchoSpace.Core.Input;
 using EchoSpace.Core.Settings;
 using EchoSpace.Core.World;
 using EchoSpace.Gameplay.Combat;
+using EchoSpace.Gameplay.Equipment;
 using EchoSpace.Gameplay.Enemies;
+using EchoSpace.Gameplay.Inventory;
 using EchoSpace.Gameplay.Progression;
 using EchoSpace.Player.States;
 using Godot;
@@ -115,6 +117,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public NodePath? HurtboxVisualPath { get; set; } = new("GuardEffect");
 	[Export] public NodePath? BodyVisualPath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? AnimatedSpritePath { get; set; } = new("AnimatedSprite");
+	[Export] public NodePath? WeaponMountPath { get; set; } = new("WeaponMount");
 	[Export] public string AnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerSpriteFrames";
 
 	private readonly InputBuffer _inputBuffer = new();
@@ -141,6 +144,9 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private CanvasItem? _fallbackBodyVisual;
 	private CanvasItem? _fallbackFeetVisual;
 	private AnimatedSprite2D? _animatedSprite;
+	private Node2D? _weaponMount;
+	private Vector2 _weaponMountBasePosition;
+	private Vector2 _weaponMountBaseScale = Vector2.One;
 	private Vector2 _attackProbeBasePosition;
 	private Vector2 _bodySpriteBasePosition;
 	private Vector2 _bodySpriteBaseScale = Vector2.One;
@@ -190,6 +196,12 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_guardEffectVisual = HurtboxVisualPath != null && !HurtboxVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(HurtboxVisualPath) : null;
 		_fallbackBodyVisual = GetNodeOrNull<CanvasItem>("Body");
 		_fallbackFeetVisual = GetNodeOrNull<CanvasItem>("Feet");
+		_weaponMount = ResolveOrCreateWeaponMount();
+		if (_weaponMount != null)
+		{
+			_weaponMountBasePosition = _weaponMount.Position;
+			_weaponMountBaseScale = _weaponMount.Scale;
+		}
 		ConfigureAnimatedSprite();
 
 		_stateMachine.Register(new PlayerIdleState(this, _stateMachine));
@@ -224,6 +236,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		{
 			WorldManager.Instance.WorldChanged += OnWorldChanged;
 		}
+
+		if (EquipmentManager.Instance != null)
+		{
+			EquipmentManager.Instance.SlotChanged += OnEquipmentSlotChanged;
+		}
 	}
 
 	public override void _ExitTree()
@@ -237,6 +254,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		{
 			ProgressionManager.Instance.AttributeChanged -= OnProgressionAttributeChanged;
 			ProgressionManager.Instance.AttributesReset -= OnProgressionReset;
+		}
+
+		if (EquipmentManager.Instance != null)
+		{
+			EquipmentManager.Instance.SlotChanged -= OnEquipmentSlotChanged;
 		}
 	}
 
@@ -840,12 +862,24 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
 	private void UpdateSpriteFacing()
 	{
-		if (_animatedSprite == null)
+		if (_animatedSprite != null)
+		{
+			_animatedSprite.FlipH = _facingDirection < 0f;
+		}
+
+		UpdateWeaponMountTransform();
+	}
+
+	private void UpdateWeaponMountTransform()
+	{
+		if (_weaponMount == null)
 		{
 			return;
 		}
 
-		_animatedSprite.FlipH = _facingDirection < 0f;
+		var direction = _facingDirection < 0f ? -1f : 1f;
+		_weaponMount.Position = new Vector2(Mathf.Abs(_weaponMountBasePosition.X) * direction, _weaponMountBasePosition.Y);
+		_weaponMount.Scale = new Vector2(Mathf.Abs(_weaponMountBaseScale.X) * direction, _weaponMountBaseScale.Y);
 	}
 
 	private void UpdateAttackProbeTransform()
@@ -1170,6 +1204,51 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private void OnWorldChanged(WorldType _)
 	{
 		PlayResolvedAnimation(_animationOverrideRemaining > 0d ? "parry" : _currentAnimationAction, true);
+	}
+
+	private Node2D ResolveOrCreateWeaponMount()
+	{
+		if (WeaponMountPath != null && !WeaponMountPath.IsEmpty)
+		{
+			var fromPath = GetNodeOrNull<Node2D>(WeaponMountPath);
+			if (fromPath != null)
+			{
+				return fromPath;
+			}
+		}
+
+		var existing = GetNodeOrNull<Node2D>("WeaponMount");
+		if (existing != null)
+		{
+			return existing;
+		}
+
+		var mount = new Node2D
+		{
+			Name = "WeaponMount",
+			Position = new Vector2(10f, -28f),
+		};
+
+		var anchor = new WeaponModelAnchor
+		{
+			Name = "Anchor",
+			Position = Vector2.Zero,
+			SlotType = EquipmentSlotType.Weapon,
+		};
+
+		mount.AddChild(anchor);
+		AddChild(mount);
+		return mount;
+	}
+
+	private void OnEquipmentSlotChanged(EquipmentSlotType slotType, ItemDefinition? item)
+	{
+		if (slotType != EquipmentSlotType.Weapon || _weaponMount == null)
+		{
+			return;
+		}
+
+		_weaponMount.Visible = item?.EquippedModelScene != null;
 	}
 
 	private Dictionary<string, float> LoadAnimationManifest(string framesRoot)

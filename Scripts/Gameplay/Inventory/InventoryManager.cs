@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EchoSpace.Gameplay.Equipment;
 using EchoSpace.Gameplay.Progression;
 using EchoSpace.Player;
 using Godot;
@@ -175,6 +176,31 @@ public partial class InventoryManager : Node
         return false;
     }
 
+    public ItemDefinition? FindFirstItemById(string? itemId)
+    {
+        EnsureInitialized();
+
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return null;
+        }
+
+        foreach (var slot in _slots)
+        {
+            if (slot.Item == null)
+            {
+                continue;
+            }
+
+            if (string.Equals(slot.Item.ItemId, itemId, StringComparison.Ordinal))
+            {
+                return slot.Item;
+            }
+        }
+
+        return null;
+    }
+
     public bool TryUseSlot(int slotIndex, PlayerController? player)
     {
         EnsureInitialized();
@@ -212,6 +238,18 @@ public partial class InventoryManager : Node
         }
 
         return false;
+    }
+
+    public bool TryEquipSlot(int slotIndex)
+    {
+        EnsureInitialized();
+
+        if (!TryGetOccupiedSlot(slotIndex, out var slot) || slot.Item == null)
+        {
+            return false;
+        }
+
+        return EquipmentManager.Instance?.TryEquip(slot.Item) == true;
     }
 
     public bool TryDropSlot(int slotIndex, int quantity = 1)
@@ -347,6 +385,7 @@ public partial class InventoryManager : Node
         AddItem(CreatePrototypeItem("healing_flask", "治疗药瓶", "恢复 2 点生命和 35 点耐力的原型道具。", ItemCategory.Consumable, 9, healthRestore: 2, staminaRestore: 35f), 3);
         AddItem(CreatePrototypeItem("spirit_ore", "灵魂矿石", "后续可用于强化或交换。", ItemCategory.Material, 99), 12);
         AddItem(CreatePrototypeItem("old_key", "旧钥匙", "用于测试背包与关键道具显示。", ItemCategory.KeyItem, 1, true), 1);
+        AddItem(CreatePrototypeEquipment("training_blade", "训练短刃", "装备系统原型武器。后续通过装备系统切换武器模型与表现。", EquipmentSlotType.Weapon, "res://Scenes/Equipment/PrototypeSwordModel.tscn"), 1);
     }
 
     private static ItemDefinition CreatePrototypeItem(
@@ -372,6 +411,26 @@ public partial class InventoryManager : Node
             HealthRestore = healthRestore,
             StaminaRestore = staminaRestore,
             ProgressionPointsGranted = progressionPointsGranted,
+        };
+    }
+
+    private static ItemDefinition CreatePrototypeEquipment(
+        string itemId,
+        string displayName,
+        string description,
+        EquipmentSlotType equipmentSlot,
+        string equippedModelScenePath)
+    {
+        return new ItemDefinition
+        {
+            ItemId = itemId,
+            DisplayName = displayName,
+            Description = description,
+            Category = ItemCategory.Equipment,
+            MaxStack = 1,
+            IsUnique = true,
+            EquipmentSlot = equipmentSlot,
+            EquippedModelScene = ResourceLoader.Load<PackedScene>(equippedModelScenePath),
         };
     }
 

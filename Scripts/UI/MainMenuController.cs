@@ -1,6 +1,7 @@
 using EchoSpace.Core.Input;
 using EchoSpace.Core.Settings;
 using EchoSpace.Core.World;
+using EchoSpace.Gameplay.Equipment;
 using EchoSpace.Gameplay.Inventory;
 using EchoSpace.Gameplay.Progression;
 using Godot;
@@ -236,6 +237,7 @@ public partial class MainMenuController : Control
     {
         WorldManager.Instance?.SetWorld(WorldType.Reality);
         InventoryManager.Instance?.ResetToDefaults();
+        EquipmentManager.Instance?.ResetToDefaults();
         ProgressionManager.Instance?.ResetToDefaults();
         TalentTreeManager.Instance?.ResetToDefaults();
     }

@@ -1,4 +1,5 @@
 using Godot;
+using EchoSpace.Gameplay.Equipment;
 
 namespace EchoSpace.Gameplay.Inventory;
 
@@ -12,6 +13,9 @@ public partial class ItemDefinition : Resource
     [Export] public int MaxStack { get; set; } = 1;
     [Export] public bool IsUnique { get; set; }
     [Export] public Texture2D? Icon { get; set; }
+    [ExportGroup("Equipment")]
+    [Export] public EquipmentSlotType EquipmentSlot { get; set; } = EquipmentSlotType.None;
+    [Export] public PackedScene? EquippedModelScene { get; set; }
     [ExportGroup("Use Effect")]
     [Export] public bool IsUsable { get; set; }
     [Export] public int HealthRestore { get; set; }
@@ -21,4 +25,5 @@ public partial class ItemDefinition : Resource
     public int SafeMaxStack => Mathf.Max(1, MaxStack);
     public bool IsProtectedKeyItem => Category is ItemCategory.KeyItem or ItemCategory.Quest;
     public bool HasUseEffect => IsUsable || HealthRestore > 0 || StaminaRestore > 0f || ProgressionPointsGranted > 0;
+    public bool IsEquipment => Category == ItemCategory.Equipment && EquipmentSlot != EquipmentSlotType.None;
 }

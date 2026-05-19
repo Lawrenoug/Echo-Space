@@ -1,6 +1,6 @@
 # Echo Space
 
-`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作原型。当前阶段优先把双世界切换、白盒关卡、战斗循环、探索能力、成长系统和 UI 框架做扎实，再逐步接入正式美术和音频。
+`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作原型。当前阶段优先把双世界切换、白盒关卡、战斗闭环、成长系统、装备框架和 UI 骨架做扎实，再逐步接入正式美术、音频和内容。
 
 ## README 维护规则
 
@@ -15,7 +15,8 @@
 - 核心玩法：现实世界 / 灵魂世界实时切换
 - 关卡结构：长横向、多层白盒地图，强调探索、回收路线和连续切换
 - 战斗方向：以“血量 + 耐力 + 架势 + 处决”为原型的近战系统
-- 成长方向：基础属性加点 + 节点式天赋树双轨并行
+- 成长方向：基础属性加点 + 节点式天赋树并行
+- 装备方向：玩家当前保持单一角色帧动画，后续通过装备系统替换武器模型与表现
 - 开发方式：先做稳定可玩的玩法闭环，再逐步接入正式美术、音效和内容
 
 ## 当前默认按键
@@ -44,27 +45,34 @@
 - 玩家状态机：[Scripts/Player/States](/F:/Godot%20project/echo-space/Scripts/Player/States)
 - 双世界系统：[Scripts/Core/World](/F:/Godot%20project/echo-space/Scripts/Core/World)
 - 输入动作定义：[Scripts/Core/Input/GameInputActions.cs](/F:/Godot%20project/echo-space/Scripts/Core/Input/GameInputActions.cs)
+- 背包系统：[Scripts/Gameplay/Inventory](/F:/Godot%20project/echo-space/Scripts/Gameplay/Inventory)
+- 装备系统：[Scripts/Gameplay/Equipment](/F:/Godot%20project/echo-space/Scripts/Gameplay/Equipment)
 - 属性加点管理：[Scripts/Gameplay/Progression/ProgressionManager.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Progression/ProgressionManager.cs)
 - 天赋树管理：[Scripts/Gameplay/Progression/TalentTreeManager.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Progression/TalentTreeManager.cs)
 - 天赋树视图：[Scripts/UI/TalentTreeView.cs](/F:/Godot%20project/echo-space/Scripts/UI/TalentTreeView.cs)
 - 敌人战斗基类：[Scripts/Gameplay/Enemies/EnemyCombatant.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/EnemyCombatant.cs)
 - 白盒环境与机关脚本目录：[Scripts/Gameplay/Environment](/F:/Godot%20project/echo-space/Scripts/Gameplay/Environment)
-- 拾取与背包系统：[Scripts/Gameplay/Inventory](/F:/Godot%20project/echo-space/Scripts/Gameplay/Inventory)
 - HUD 与系统界面：[Scripts/UI/WorldOverlay.cs](/F:/Godot%20project/echo-space/Scripts/UI/WorldOverlay.cs)
+- 玩家动作重生成规范与 AI 提示词模板：[Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md)
 
 ## 当前框架说明
 
 - 启动入口是独立主菜单场景，不和游戏主关卡混在一起
 - 当前存档系统已移除，等关卡、敌人、双世界状态和 UI 结构更稳定后再决定是否重做
 - “继续游戏”入口当前暂不接回，后续和存档系统一并恢复
-- 主菜单点击开始游戏时，会重置当前原型里的世界状态、背包、属性点和天赋树状态，再进入白盒关卡
+- 主菜单点击开始游戏时，会重置当前原型里的世界状态、背包、装备、属性点和天赋树状态，再进入白盒关卡
 - 背包、属性加点、天赋树等二级界面使用统一的“面板栈”逻辑：切换时下层界面保留，关闭顶层后恢复下层
 - 玩家当前具备血量、耐力、普通攻击、防御、弹反、处决、轻按低跳 / 长按高跳和短冲刺
-- 短冲刺当前已经补上结束后的水平余速，用来验证赶路节奏、闪身穿点和后续探索能力空间
+- 短冲刺当前已经补上结束后的水平余速，用来验证走路节奏、闪身穿点和后续探索能力空间
 - 敌人当前具备血量、架势、受击、破绽、处决、所属世界判定，以及稳定掉落原型
 - 敌人运行时位置已经和双世界静态位置刷新解耦，切换世界时不应再被 `DualWorldObject` 写回出生点
 - 当前白盒关卡已经串起跳跃、战斗、拾取、加点、双世界切换、双世界机关和短冲刺验证
-- 当前已经加入节点式天赋树原型：支持节点显示、连线、解锁、退款、重置，以及后续扩展成类似流放之路的更大规模被动盘
+- 当前已经加入节点式天赋树原型：支持节点显示、连线、解锁、退点、重置，以及后续扩展成类似流放之路的大规模被动树
+- 玩家角色当前仍然保持“单一主体帧动画”方案，不拆分身体层 / 武器层帧动画
+- 玩家帧动画会读取 [Docs/Art/PlayerSpriteFrames/manifest.json](/F:/Godot%20project/echo-space/Docs/Art/PlayerSpriteFrames/manifest.json) 里的 `scale` 信息，用于统一待机、跑步、攻击等动作显示比例
+- 装备系统骨架已经接入 `Autoload`，当前具备装备槽位定义、装备状态缓存、默认原型武器装配和后续扩展入口
+- 玩家控制器已经预留武器模型挂点 `WeaponMount`，后续正式武器模型可在不改玩家主体帧动画结构的前提下挂接到这里
+- 当前默认原型装备是“训练短刃”，由背包原型内容提供，用于验证装备槽、武器模型落点和后续替换流程
 
 ## 当前白盒关卡结构
 
@@ -75,7 +83,7 @@
 3. 单世界平台段：通过现实平台和灵魂桥验证“切世界找路”。
 4. 按钮门段：踩下按钮后打开前方门，验证机关联动。
 5. 差异运动平台段：平台在现实世界静止，在灵魂世界移动，用于跨越障碍。
-6. 中段节奏转换段：在差异平台后切回标准跳跃与战斗推进，验证冲刺后的赶路节奏。
+6. 中段节奏转换段：在差异平台后切回标准跳跃与战斗推进，验证冲刺后的走路节奏。
 7. 第二批机关段：加入反向门、双状态升降台、灵魂世界可穿透平台。
 8. 连续切换谜题段：要求玩家在现实 / 灵魂之间连续切换，配合平台、按钮完成推进。
 9. 终段收尾：完成最后一段机关推进后抵达最终目标点。
@@ -98,17 +106,18 @@
 - [Scenes/Environment/DifferentialMovingPlatform.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/DifferentialMovingPlatform.tscn)
 - [Scenes/Environment/WorldStateLift.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/WorldStateLift.tscn)
 
-## 当前成长系统
+## 当前成长与装备系统
 
 - 属性加点面板：负责生命、耐力、攻击、弹反等基础战斗数值成长
 - 天赋树面板：负责以后接入技能天赋树、特殊机制节点、探索能力节点和关键石效果
-- 当前天赋树是白盒原型，已具备：
-  - 节点绘制
-  - 连线关系
-  - 可用 / 已解锁 / 已锁定状态区分
-  - 选中节点详情
-  - 解锁、退款、重置
-  - 缩放与拖动画布
+- 当前天赋树是白盒原型，已具备节点绘制、连线关系、可用 / 已解锁 / 已锁定区分、选中详情、解锁、退点、重置、缩放与拖动画布
+- 装备系统当前已具备：
+  - 装备槽位枚举：武器、副手、头部、身体、饰品
+  - 装备管理器 `EquipmentManager`
+  - `ItemDefinition` 中的装备槽位与装备模型入口
+  - 原型武器场景 [Scenes/Equipment/PrototypeSwordModel.tscn](/F:/Godot%20project/echo-space/Scenes/Equipment/PrototypeSwordModel.tscn)
+  - 玩家运行时武器挂点 `WeaponMount`
+- 这套结构的目标不是现在就做完整纸娃娃，而是先让“装备数据 -> 装备槽 -> 武器模型挂接”有清晰落点
 
 ## 当前掉落与成长闭环
 
@@ -122,16 +131,16 @@
 
 建议下一步优先从下面这些方向里选：
 
-1. 天赋树内容化：把当前占位节点替换成真正的战斗、机动、双世界机制和探索能力节点。
-2. 白盒实跑与修关：沿着现在这条路线完整跑图，检查哪些跳跃点、按钮位置、切世界时机和冲刺距离还不顺。
+1. 装备系统实装化：补装备 / 卸下入口、装备栏显示、不同武器原型数据和武器模型切换验证。
+2. 天赋树内容化：把当前占位节点替换成真正的战斗、机动、双世界机制和探索能力节点。
 3. 天赋树与数值联动：让部分天赋正式影响冲刺、弹反、处决、掉落和双世界交互。
-4. 机关细化：继续补更多可复用机关，例如双按钮组合门、世界专属落桥、可反复切换的时间差机关。
-5. 掉落内容扩展：补第一批真正有区别的消耗品、材料和成长道具，而不是只用原型数值物品。
+4. 白盒实跑与修关：沿着现在这条路线完整跑图，检查哪些跳跃点、按钮位置、切世界时机和冲刺距离还不顺。
+5. 角色动画重生成：按 [Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md) 统一重生待机、跑步、攻击、防御、弹反、受击和处决帧动画。
 6. 战斗内容扩展：增加第三种敌人或第一个小 Boss，验证现有掉落闭环和敌人基类能否继续复用。
 
 ## 人工资源填充清单
 
-以下内容默认需要你后续手工填充。
+以下内容默认需要你后续手工填充。  
 这部分是长期保留区：
 
 - 后续无论我怎样更新 `README`，都必须保留这块“人工资源填充清单”，如果有新增资源需求，在这里追加，删除已经完成的功能。
@@ -150,7 +159,13 @@
 - 玩家处决动作表现
 - 玩家短冲刺动作、残影或位移特效
 - 玩家统一角色帧动画重生成，需统一待机 / 跑步 / 跳跃 / 攻击 / 防御 / 处决的尺寸、基线和透视
-- 后续装备系统所需的独立武器模型 / 图标 / 掉落表现资源
+
+### 装备资源
+
+- 后续装备系统所需的独立武器模型资源
+- 武器图标资源
+- 武器掉落地面表现资源
+- 装备栏 / 装备面板图标与装饰资源
 
 ### 敌人资源
 
@@ -204,6 +219,7 @@
 - 玩家 HP 条与耐力条正式样式
 - 天赋树节点图标、连线样式、节点底盘和分支装饰资源
 - 天赋树面板背景、边框和分类标识资源
+- 装备栏、武器栏、装备详情面板正式样式
 
 ### 音频资源
 
@@ -217,14 +233,15 @@
 - 落地音效
 - 世界切换音效
 - 短冲刺音效
-- 天赋解锁 / 退款音效
+- 天赋解锁 / 退点音效
 - 场景环境音
 - BGM
 
-## 最近修复
+## 最近更新
 
 - 修复天赋树初始化时的递归重置问题，避免进入主场景后因 `TalentTreeManager` 反复自调用而卡死
-- 优化天赋树默认初始化流程，启动时不再额外广播一次无意义的树状态刷新
-- 天赋树面板文本改为中文，当前默认节点名称、说明、状态和操作提示已统一中文化
-- 撤回“身体层 + 武器层”帧动画拆分方案，当前角色继续维持单一人物帧动画，后续武器切换改由装备系统负责替换武器模型
-- 玩家帧动画开始读取 `Docs/Art/PlayerSpriteFrames/manifest.json` 中的缩放信息，优先用每组动画自带的 `scale` 对齐待机、跑步、攻击等动作的显示大小
+- 天赋树面板文本改为中文，默认节点名称、说明、状态和操作提示已统一中文化
+- 撤回“身体层 + 武器层”帧动画拆分方案，玩家继续保持单一主体帧动画
+- 玩家帧动画开始读取 [Docs/Art/PlayerSpriteFrames/manifest.json](/F:/Godot%20project/echo-space/Docs/Art/PlayerSpriteFrames/manifest.json) 中的 `scale` 信息，用于统一动作显示比例
+- 新增 [Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md)，整理统一角色帧动画技术规范与 AI 生成提示词模板
+- 新增装备系统骨架：`EquipmentManager`、装备槽位定义、原型武器内容和玩家 `WeaponMount` 挂点，为后续武器模型替换提供落点
