@@ -118,9 +118,10 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public NodePath? BodyVisualPath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? AnimatedSpritePath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? WeaponMountPath { get; set; } = new("WeaponMount");
+	[Export] public Vector2 WeaponMountOffset { get; set; } = new(10f, -45f);
 	[Export] public string AnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerSpriteFrames";
-	[Export] public Vector2 AnimationVisualOffset { get; set; } = new(0f, -7f);
-	[Export(PropertyHint.Range, "0.5,4.0,0.05")] public float AnimationVisualScale { get; set; } = 1.15f;
+	[Export] public Vector2 AnimationVisualOffset { get; set; } = new(0f, -38f);
+	[Export(PropertyHint.Range, "0.5,4.0,0.05")] public float AnimationVisualScale { get; set; } = 2.3f;
 
 	private readonly InputBuffer _inputBuffer = new();
 	private readonly HashSet<ulong> _damagedTargetsThisAttack = new();
@@ -201,6 +202,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_weaponMount = ResolveOrCreateWeaponMount();
 		if (_weaponMount != null)
 		{
+			_weaponMount.Position = WeaponMountOffset;
 			_weaponMountBasePosition = _weaponMount.Position;
 			_weaponMountBaseScale = _weaponMount.Scale;
 		}
@@ -1228,7 +1230,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		var mount = new Node2D
 		{
 			Name = "WeaponMount",
-			Position = new Vector2(10f, -28f),
+			Position = WeaponMountOffset,
 		};
 
 		var anchor = new WeaponModelAnchor

@@ -1,18 +1,25 @@
-[gd_scene format=3]
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://Docs/Art/Equipment/prototype_training_blade.png" id="1"]
+
+[sub_resource type="CanvasItemMaterial" id="1"]
+blend_mode = 1
 
 [node name="PrototypeSwordModel" type="Node2D"]
+z_index = 2
 
-[node name="Blade" type="Polygon2D" parent="."]
-position = Vector2(12, 0)
-polygon = PackedVector2Array(-1, -14, 2, -14, 2, 13, -1, 13)
-color = Color(0.815686, 0.85098, 0.898039, 1)
+[node name="WeaponGlow" type="Sprite2D" parent="."]
+material = SubResource("1")
+position = Vector2(0, 0)
+scale = Vector2(1.35, 1.35)
+modulate = Color(0.364706, 0.854902, 1, 0.18)
+texture = ExtResource("1")
+centered = false
+offset = Vector2(-12, -24)
 
-[node name="Guard" type="Polygon2D" parent="."]
-position = Vector2(4, 0)
-polygon = PackedVector2Array(-5, -2, 5, -2, 5, 2, -5, 2)
-color = Color(0.745098, 0.611765, 0.25098, 1)
-
-[node name="Grip" type="Polygon2D" parent="."]
-position = Vector2(-2, 4)
-polygon = PackedVector2Array(-2, -8, 2, -8, 2, 7, -2, 7)
-color = Color(0.317647, 0.219608, 0.160784, 1)
+[node name="WeaponSprite" type="Sprite2D" parent="."]
+position = Vector2(0, 0)
+scale = Vector2(1.35, 1.35)
+texture = ExtResource("1")
+centered = false
+offset = Vector2(-12, -24)
