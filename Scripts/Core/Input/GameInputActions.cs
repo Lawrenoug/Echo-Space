@@ -13,6 +13,7 @@ public static class GameInputActions
     public const string SwitchWorld = "switch_world";
     public const string ToggleInventory = "toggle_inventory";
     public const string ToggleProgression = "toggle_progression";
+    public const string ToggleTalentTree = "toggle_talent_tree";
 
     public static void EnsureDefaults()
     {
@@ -27,6 +28,7 @@ public static class GameInputActions
         EnsureAction(SwitchWorld, Key.Tab);
         EnsureAction(ToggleInventory, Key.I);
         EnsureAction(ToggleProgression, Key.P);
+        EnsureAction(ToggleTalentTree, Key.T);
     }
 
     public static void ApplyBindingPreset(bool includeKeyboardCombatAlternative)
@@ -68,6 +70,9 @@ public static class GameInputActions
 
         ResetAction(ToggleProgression);
         AddKeyAction(ToggleProgression, Key.P);
+
+        ResetAction(ToggleTalentTree);
+        AddKeyAction(ToggleTalentTree, Key.T);
     }
 
     private static void EnsureAction(string actionName, params Key[] keys)

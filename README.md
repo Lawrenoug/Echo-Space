@@ -1,6 +1,6 @@
 # Echo Space
 
-`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作原型。当前阶段优先把双世界切换、白盒关卡、战斗循环、探索能力和系统框架做扎实，再逐步接入正式美术和音频。
+`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作原型。当前阶段优先把双世界切换、白盒关卡、战斗循环、探索能力、成长系统和 UI 框架做扎实，再逐步接入正式美术和音频。
 
 ## README 维护规则
 
@@ -15,6 +15,7 @@
 - 核心玩法：现实世界 / 灵魂世界实时切换
 - 关卡结构：长横向、多层白盒地图，强调探索、回收路线和连续切换
 - 战斗方向：以“血量 + 耐力 + 架势 + 处决”为原型的近战系统
+- 成长方向：基础属性加点 + 节点式天赋树双轨并行
 - 开发方式：先做稳定可玩的玩法闭环，再逐步接入正式美术、音效和内容
 
 ## 当前默认按键
@@ -27,7 +28,8 @@
 - `Left Shift`：短冲刺
 - `Tab`：切换世界
 - `I`：打开 / 关闭背包
-- `P`：打开 / 关闭加点界面
+- `P`：打开 / 关闭属性加点面板
+- `T`：打开 / 关闭天赋树面板
 - `1-9`：在背包界面使用对应槽位物品
 - `Shift + 1-9`：在背包界面丢弃对应槽位物品
 - `U`：在背包界面使用第一个可用消耗品
@@ -42,13 +44,12 @@
 - 玩家状态机：[Scripts/Player/States](/F:/Godot%20project/echo-space/Scripts/Player/States)
 - 双世界系统：[Scripts/Core/World](/F:/Godot%20project/echo-space/Scripts/Core/World)
 - 输入动作定义：[Scripts/Core/Input/GameInputActions.cs](/F:/Godot%20project/echo-space/Scripts/Core/Input/GameInputActions.cs)
+- 属性加点管理：[Scripts/Gameplay/Progression/ProgressionManager.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Progression/ProgressionManager.cs)
+- 天赋树管理：[Scripts/Gameplay/Progression/TalentTreeManager.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Progression/TalentTreeManager.cs)
+- 天赋树视图：[Scripts/UI/TalentTreeView.cs](/F:/Godot%20project/echo-space/Scripts/UI/TalentTreeView.cs)
 - 敌人战斗基类：[Scripts/Gameplay/Enemies/EnemyCombatant.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/EnemyCombatant.cs)
-- 巡逻敌人：[Scripts/Gameplay/Enemies/EnemyController.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/EnemyController.cs)
-- 追击敌人：[Scripts/Gameplay/Enemies/ChaserEnemyController.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/ChaserEnemyController.cs)
-- 灵魂哨卫：[Scripts/Gameplay/Enemies/SoulSentinelEnemyController.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/SoulSentinelEnemyController.cs)
 - 白盒环境与机关脚本目录：[Scripts/Gameplay/Environment](/F:/Godot%20project/echo-space/Scripts/Gameplay/Environment)
 - 拾取与背包系统：[Scripts/Gameplay/Inventory](/F:/Godot%20project/echo-space/Scripts/Gameplay/Inventory)
-- 加点系统：[Scripts/Gameplay/Progression](/F:/Godot%20project/echo-space/Scripts/Gameplay/Progression)
 - HUD 与系统界面：[Scripts/UI/WorldOverlay.cs](/F:/Godot%20project/echo-space/Scripts/UI/WorldOverlay.cs)
 
 ## 当前框架说明
@@ -56,13 +57,14 @@
 - 启动入口是独立主菜单场景，不和游戏主关卡混在一起
 - 当前存档系统已移除，等关卡、敌人、双世界状态和 UI 结构更稳定后再决定是否重做
 - “继续游戏”入口当前暂不接回，后续和存档系统一并恢复
-- 主菜单点击开始游戏时，会重置当前原型里的世界状态、背包和加点数据，再进入白盒关卡
-- 背包、加点等二级界面使用统一的“面板栈”逻辑：切换时下层界面保留，关闭顶层后恢复下层
+- 主菜单点击开始游戏时，会重置当前原型里的世界状态、背包、属性点和天赋树状态，再进入白盒关卡
+- 背包、属性加点、天赋树等二级界面使用统一的“面板栈”逻辑：切换时下层界面保留，关闭顶层后恢复下层
 - 玩家当前具备血量、耐力、普通攻击、防御、弹反、处决、轻按低跳 / 长按高跳和短冲刺
 - 短冲刺当前已经补上结束后的水平余速，用来验证赶路节奏、闪身穿点和后续探索能力空间
 - 敌人当前具备血量、架势、受击、破绽、处决、所属世界判定，以及稳定掉落原型
 - 敌人运行时位置已经和双世界静态位置刷新解耦，切换世界时不应再被 `DualWorldObject` 写回出生点
 - 当前白盒关卡已经串起跳跃、战斗、拾取、加点、双世界切换、双世界机关和短冲刺验证
+- 当前已经加入节点式天赋树原型：支持节点显示、连线、解锁、退款、重置，以及后续扩展成类似流放之路的更大规模被动盘
 
 ## 当前白盒关卡结构
 
@@ -96,24 +98,36 @@
 - [Scenes/Environment/DifferentialMovingPlatform.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/DifferentialMovingPlatform.tscn)
 - [Scenes/Environment/WorldStateLift.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/WorldStateLift.tscn)
 
+## 当前成长系统
+
+- 属性加点面板：负责生命、耐力、攻击、弹反等基础战斗数值成长
+- 天赋树面板：负责以后接入技能天赋树、特殊机制节点、探索能力节点和关键石效果
+- 当前天赋树是白盒原型，已具备：
+  - 节点绘制
+  - 连线关系
+  - 可用 / 已解锁 / 已锁定状态区分
+  - 选中节点详情
+  - 解锁、退款、重置
+  - 缩放与拖动画布
+
 ## 当前掉落与成长闭环
 
 - 敌人死亡后会稳定掉出可拾取的掉落物，而不是后台直接加背包
 - 巡逻敌人会掉落基础恢复物
 - 追击敌人会掉落可转化为加点收益的 `Memory Shard`
 - 灵魂哨卫会掉落更高收益的 `Soul Cluster`
-- 掉落物拾取后进入背包，玩家可以再通过背包使用它们，把战斗、拾取、背包、加点真正串成闭环
+- 掉落物拾取后进入背包，玩家可以再通过背包使用它们，把战斗、拾取、背包、属性加点串成闭环
 
 ## 当前最适合继续推进的方向
 
 建议下一步优先从下面这些方向里选：
 
-1. 白盒实跑与修关：沿着现在这条路线完整跑图，检查哪些跳跃点、按钮位置、切世界时机和冲刺距离还不顺。
-2. 机关细化：继续补更多可复用机关，例如双按钮组合门、世界专属落桥、可反复切换的时间差机关。
-3. 探索能力扩展：在短冲刺基础上，决定下一种正式探索能力，验证 Metroidvania 式回收路线。
-4. 掉落内容扩展：补第一批真正有区别的消耗品、材料和成长道具，而不是只用原型数值物品。
-5. 战斗内容扩展：增加第三种敌人或第一个小 Boss，验证现有掉落闭环和敌人基类能否继续复用。
-6. 白盒关卡压缩：把当前长路线整理成更像 3-5 分钟教学关的节奏，形成更清晰的起承转合。
+1. 天赋树内容化：把当前占位节点替换成真正的战斗、机动、双世界机制和探索能力节点。
+2. 白盒实跑与修关：沿着现在这条路线完整跑图，检查哪些跳跃点、按钮位置、切世界时机和冲刺距离还不顺。
+3. 天赋树与数值联动：让部分天赋正式影响冲刺、弹反、处决、掉落和双世界交互。
+4. 机关细化：继续补更多可复用机关，例如双按钮组合门、世界专属落桥、可反复切换的时间差机关。
+5. 掉落内容扩展：补第一批真正有区别的消耗品、材料和成长道具，而不是只用原型数值物品。
+6. 战斗内容扩展：增加第三种敌人或第一个小 Boss，验证现有掉落闭环和敌人基类能否继续复用。
 
 ## 人工资源填充清单
 
@@ -186,6 +200,8 @@
 - 提示框资源
 - 敌人 HP 条与架势条正式样式
 - 玩家 HP 条与耐力条正式样式
+- 天赋树节点图标、连线样式、节点底盘和分支装饰资源
+- 天赋树面板背景、边框和分类标识资源
 
 ### 音频资源
 
@@ -199,5 +215,6 @@
 - 落地音效
 - 世界切换音效
 - 短冲刺音效
+- 天赋解锁 / 退款音效
 - 场景环境音
 - BGM

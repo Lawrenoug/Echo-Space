@@ -237,6 +237,7 @@ public partial class MainMenuController : Control
         WorldManager.Instance?.SetWorld(WorldType.Reality);
         InventoryManager.Instance?.ResetToDefaults();
         ProgressionManager.Instance?.ResetToDefaults();
+        TalentTreeManager.Instance?.ResetToDefaults();
     }
 
     private void SetSettingsVisible(bool visible)

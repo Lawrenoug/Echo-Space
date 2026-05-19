@@ -22,6 +22,9 @@ public partial class WorldOverlay : CanvasLayer
     [Export] public NodePath? InventoryTextPath { get; set; }
     [Export] public NodePath? ProgressionPanelPath { get; set; }
     [Export] public NodePath? ProgressionTextPath { get; set; }
+    [Export] public NodePath? TalentPanelPath { get; set; }
+    [Export] public NodePath? TalentTreeViewPath { get; set; }
+    [Export] public NodePath? TalentDetailTextPath { get; set; }
 
     private Label? _label;
     private Label? _healthLabel;
@@ -32,17 +35,23 @@ public partial class WorldOverlay : CanvasLayer
     private RichTextLabel? _inventoryText;
     private Control? _progressionPanel;
     private RichTextLabel? _progressionText;
+    private Control? _talentPanel;
+    private TalentTreeView? _talentTreeView;
+    private RichTextLabel? _talentDetailText;
     private CanvasModulate? _tint;
     private PlayerController? _player;
     private InventoryManager? _inventoryManager;
     private ProgressionManager? _progressionManager;
+    private TalentTreeManager? _talentTreeManager;
     private readonly List<Control> _systemPanelStack = new();
     private bool _isSubscribed;
+    private bool _isTalentViewBound;
     private int _lastDisplayedHealth = int.MinValue;
     private int _lastDisplayedMaxHealth = int.MinValue;
     private int _lastDisplayedStamina = int.MinValue;
     private int _lastDisplayedMaxStamina = int.MinValue;
     private string _lastInventoryMessage = string.Empty;
+    private string _selectedTalentNodeId = string.Empty;
 
     public override void _Ready()
     {
@@ -69,6 +78,15 @@ public partial class WorldOverlay : CanvasLayer
             _progressionManager.AttributesReset += RefreshProgressionPanel;
         }
 
+        _talentTreeManager = TalentTreeManager.Instance;
+        if (_talentTreeManager != null)
+        {
+            _talentTreeManager.TreeChanged += RefreshTalentPanel;
+            _selectedTalentNodeId = _talentTreeManager.StartNodeId;
+        }
+
+        BindTalentTreeView();
+
         if (!TrySubscribeToPlayer())
         {
             GD.PrintErr("Player not found! Check PlayerPath.");
@@ -76,6 +94,7 @@ public partial class WorldOverlay : CanvasLayer
 
         RefreshInventoryPanel();
         RefreshProgressionPanel();
+        RefreshTalentPanel();
         CloseAllSystemPanels();
     }
 
@@ -117,6 +136,18 @@ public partial class WorldOverlay : CanvasLayer
             _progressionManager.UnspentPointsChanged -= OnProgressionChanged;
             _progressionManager.AttributeChanged -= OnAttributeChanged;
             _progressionManager.AttributesReset -= RefreshProgressionPanel;
+        }
+
+        if (_talentTreeManager != null)
+        {
+            _talentTreeManager.TreeChanged -= RefreshTalentPanel;
+        }
+
+        if (_isTalentViewBound && _talentTreeView != null)
+        {
+            _talentTreeView.NodeSelected -= OnTalentNodeSelected;
+            _talentTreeView.NodeUnlockRequested -= OnTalentUnlockRequested;
+            _talentTreeView.NodeRefundRequested -= OnTalentRefundRequested;
         }
     }
 
@@ -184,6 +215,10 @@ public partial class WorldOverlay : CanvasLayer
         _inventoryText ??= ResolveNode<RichTextLabel>(InventoryTextPath, "InventoryPanel/Body");
         _progressionPanel ??= ResolveNode<Control>(ProgressionPanelPath, "ProgressionPanel");
         _progressionText ??= ResolveNode<RichTextLabel>(ProgressionTextPath, "ProgressionPanel/Body");
+        EnsureTalentPanelExists();
+        _talentPanel ??= ResolveNode<Control>(TalentPanelPath, "TalentPanel");
+        _talentTreeView ??= ResolveNode<TalentTreeView>(TalentTreeViewPath, "TalentPanel/TreeView");
+        _talentDetailText ??= ResolveNode<RichTextLabel>(TalentDetailTextPath, "TalentPanel/Details");
     }
 
     private bool TrySubscribeToPlayer()
@@ -317,6 +352,14 @@ public partial class WorldOverlay : CanvasLayer
             return;
         }
 
+        if (@event.IsActionPressed(GameInputActions.ToggleTalentTree))
+        {
+            ToggleSystemPanel(_talentPanel);
+            RefreshTalentPanel();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
         if (@event is not InputEventKey keyEvent || !keyEvent.Pressed || keyEvent.Echo)
         {
             return;
@@ -332,6 +375,38 @@ public partial class WorldOverlay : CanvasLayer
         if (IsTopSystemPanel(_inventoryPanel) && _inventoryManager != null)
         {
             HandleInventoryInput(keyEvent);
+            return;
+        }
+
+        if (IsTopSystemPanel(_talentPanel) && _talentTreeManager != null)
+        {
+            if (keyEvent.Keycode == Key.Enter || keyEvent.Keycode == Key.Space)
+            {
+                if (_talentTreeView?.ActivateSelectedNode() == true)
+                {
+                    GetViewport().SetInputAsHandled();
+                }
+
+                return;
+            }
+
+            if (keyEvent.Keycode == Key.Backspace || keyEvent.Keycode == Key.Delete)
+            {
+                if (_talentTreeView?.RefundSelectedNode() == true)
+                {
+                    GetViewport().SetInputAsHandled();
+                }
+
+                return;
+            }
+
+            if (keyEvent.Keycode == Key.R)
+            {
+                _talentTreeManager.ResetUnlockedTalents();
+                RefreshTalentPanel();
+                GetViewport().SetInputAsHandled();
+            }
+
             return;
         }
 
@@ -522,6 +597,67 @@ public partial class WorldOverlay : CanvasLayer
         _progressionText.Text = builder.ToString();
     }
 
+
+    private void RefreshTalentPanel()
+    {
+        if (_talentDetailText == null)
+        {
+            return;
+        }
+
+        _talentTreeManager ??= TalentTreeManager.Instance;
+        BindTalentTreeView();
+
+        if (_talentTreeManager == null)
+        {
+            _talentDetailText.Text = "Talent tree manager not loaded.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_selectedTalentNodeId)
+            || _talentTreeManager.GetNodeDefinition(_selectedTalentNodeId) == null)
+        {
+            _selectedTalentNodeId = _talentTreeManager.StartNodeId;
+        }
+
+        _talentTreeView?.SetSelectedNode(_selectedTalentNodeId, false);
+
+        var selectedDefinition = _talentTreeManager.GetNodeDefinition(_selectedTalentNodeId)
+            ?? _talentTreeManager.GetNodeDefinition(_talentTreeManager.StartNodeId);
+        if (selectedDefinition == null)
+        {
+            _talentDetailText.Text = "Talent tree has no nodes.";
+            return;
+        }
+
+        var selectedState = _talentTreeManager.GetNodeState(selectedDefinition.Id);
+        var builder = new StringBuilder();
+        builder.AppendLine("Talent Tree  [T]");
+        builder.Append("Points: ").Append(_talentTreeManager.UnspentTalentPoints);
+        builder.Append("    Unlocked: ").Append(_talentTreeManager.GetUnlockedNodeCount());
+        builder.AppendLine();
+        builder.AppendLine();
+        builder.AppendLine("Controls");
+        builder.AppendLine("Left click: select node");
+        builder.AppendLine("Left click selected available node / Enter: unlock");
+        builder.AppendLine("Right click unlocked node / Backspace: refund");
+        builder.AppendLine("Mouse wheel: zoom    Middle drag: pan");
+        builder.AppendLine("R: reset unlocked talents");
+        builder.AppendLine();
+        builder.Append("Selected: ").AppendLine(selectedDefinition.DisplayName);
+        builder.Append("Type: ").Append(selectedDefinition.NodeType);
+        builder.Append("    Cost: ").Append(selectedDefinition.Cost);
+        builder.Append("    State: ").AppendLine(BuildTalentNodeStatus(selectedDefinition, selectedState));
+        builder.AppendLine();
+        builder.AppendLine(selectedDefinition.Description);
+        builder.AppendLine();
+        builder.AppendLine("This is a framework tree. Replace placeholder nodes later with real combat, mobility, and world-mechanic talents.");
+        builder.AppendLine();
+        builder.Append("[Esc] Close");
+
+        _talentDetailText.Text = builder.ToString();
+    }
+
     private void AppendAttributeLine(StringBuilder builder, Key key, PlayerAttributeType attributeType, string displayName)
     {
         if (_progressionManager == null || !_progressionManager.Attributes.TryGetValue(attributeType, out var attributeState))
@@ -549,6 +685,43 @@ public partial class WorldOverlay : CanvasLayer
     private void OnAttributeChanged(PlayerAttributeType _, int __)
     {
         RefreshProgressionPanel();
+    }
+
+
+    private void OnTalentNodeSelected(string nodeId)
+    {
+        _selectedTalentNodeId = nodeId;
+        RefreshTalentPanel();
+    }
+
+    private void OnTalentUnlockRequested(string nodeId)
+    {
+        _talentTreeManager ??= TalentTreeManager.Instance;
+        if (_talentTreeManager == null)
+        {
+            return;
+        }
+
+        if (_talentTreeManager.TryUnlockNode(nodeId))
+        {
+            _selectedTalentNodeId = nodeId;
+            RefreshTalentPanel();
+        }
+    }
+
+    private void OnTalentRefundRequested(string nodeId)
+    {
+        _talentTreeManager ??= TalentTreeManager.Instance;
+        if (_talentTreeManager == null)
+        {
+            return;
+        }
+
+        if (_talentTreeManager.TryRefundNode(nodeId))
+        {
+            _selectedTalentNodeId = nodeId;
+            RefreshTalentPanel();
+        }
     }
 
     private void ToggleSystemPanel(Control? panel)
@@ -595,6 +768,7 @@ public partial class WorldOverlay : CanvasLayer
     {
         ApplyPanelLayer(_inventoryPanel);
         ApplyPanelLayer(_progressionPanel);
+        ApplyPanelLayer(_talentPanel);
     }
 
     private void ApplyPanelLayer(Control? panel)
@@ -627,6 +801,96 @@ public partial class WorldOverlay : CanvasLayer
         return panel != null
             && _systemPanelStack.Count > 0
             && ReferenceEquals(_systemPanelStack[^1], panel);
+    }
+
+
+    private void EnsureTalentPanelExists()
+    {
+        if (GetNodeOrNull<Control>("TalentPanel") != null)
+        {
+            return;
+        }
+
+        var panel = new Panel
+        {
+            Name = "TalentPanel",
+            Visible = false,
+            AnchorLeft = 0.5f,
+            AnchorTop = 0.5f,
+            AnchorRight = 0.5f,
+            AnchorBottom = 0.5f,
+            OffsetLeft = -480f,
+            OffsetTop = -300f,
+            OffsetRight = 480f,
+            OffsetBottom = 300f,
+            GrowHorizontal = Control.GrowDirection.Both,
+            GrowVertical = Control.GrowDirection.Both,
+        };
+        AddChild(panel);
+
+        var treeView = new TalentTreeView
+        {
+            Name = "TreeView",
+            OffsetLeft = 16f,
+            OffsetTop = 16f,
+            OffsetRight = 632f,
+            OffsetBottom = 584f,
+        };
+        panel.AddChild(treeView);
+
+        var divider = new ColorRect
+        {
+            Name = "Divider",
+            OffsetLeft = 646f,
+            OffsetTop = 16f,
+            OffsetRight = 648f,
+            OffsetBottom = 584f,
+            Color = new Color(0.31f, 0.34f, 0.40f, 0.88f),
+        };
+        panel.AddChild(divider);
+
+        var details = new RichTextLabel
+        {
+            Name = "Details",
+            OffsetLeft = 664f,
+            OffsetTop = 16f,
+            OffsetRight = 944f,
+            OffsetBottom = 584f,
+            ScrollActive = false,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        panel.AddChild(details);
+    }
+
+    private void BindTalentTreeView()
+    {
+        if (_isTalentViewBound || _talentTreeView == null)
+        {
+            return;
+        }
+
+        _talentTreeView.NodeSelected += OnTalentNodeSelected;
+        _talentTreeView.NodeUnlockRequested += OnTalentUnlockRequested;
+        _talentTreeView.NodeRefundRequested += OnTalentRefundRequested;
+        _isTalentViewBound = true;
+    }
+
+    private string BuildTalentNodeStatus(TalentNodeDefinition definition, TalentNodeState? state)
+    {
+        _talentTreeManager ??= TalentTreeManager.Instance;
+        if (_talentTreeManager == null)
+        {
+            return "Unavailable";
+        }
+
+        if (state?.IsUnlocked == true)
+        {
+            return definition.IsStart ? "Start" : "Unlocked";
+        }
+
+        return _talentTreeManager.CanUnlockNode(definition.Id)
+            ? "Available"
+            : "Locked";
     }
 
     private static int GetNumberKeyIndex(Key key)
