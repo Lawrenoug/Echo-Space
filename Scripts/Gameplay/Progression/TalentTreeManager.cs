@@ -206,8 +206,8 @@ public partial class TalentTreeManager : Node
 
         AddNode(new TalentNodeDefinition(
             "origin",
-            "Origin Core",
-            "The starting hub of the talent tree. Future classes and paths can branch from here.",
+            "原初核心",
+            "天赋树的起始节点。后续职业分支、战斗流派和探索能力都可以从这里继续展开。",
             new Vector2(0f, 0f),
             TalentNodeType.Start,
             0,
@@ -219,8 +219,8 @@ public partial class TalentTreeManager : Node
 
         AddNode(new TalentNodeDefinition(
             "vitality_1",
-            "Hardened Blood",
-            "Placeholder life branch node. Use this lane later for defensive sustain talents.",
+            "坚韧血脉",
+            "生命分支占位节点。后续可替换为最大生命、减伤、恢复效率等防御向天赋。",
             new Vector2(-180f, -60f),
             TalentNodeType.Minor,
             1,
@@ -230,8 +230,8 @@ public partial class TalentTreeManager : Node
 
         AddNode(new TalentNodeDefinition(
             "vitality_2",
-            "Stone Heart",
-            "Major life node placeholder. Good slot for max health, recovery, or mitigation talents.",
+            "磐石之心",
+            "生命分支核心节点。适合放置高价值的生存强化、恢复机制或受击收益类天赋。",
             new Vector2(-340f, -130f),
             TalentNodeType.Major,
             1,
@@ -240,8 +240,8 @@ public partial class TalentTreeManager : Node
 
         AddNode(new TalentNodeDefinition(
             "strength_1",
-            "Edge Pressure",
-            "Placeholder offense branch node. Use this lane for attack and posture pressure upgrades.",
+            "锋刃压迫",
+            "攻击分支占位节点。后续可用于普通攻击、架势伤害和处决节奏强化。",
             new Vector2(180f, -60f),
             TalentNodeType.Minor,
             1,
@@ -251,8 +251,8 @@ public partial class TalentTreeManager : Node
 
         AddNode(new TalentNodeDefinition(
             "strength_2",
-            "Execution Tempo",
-            "Major offense node placeholder. Good fit for execution, combo, or damage conversion talents.",
+            "处决节奏",
+            "攻击分支核心节点。适合放置处决收益、连段增幅或伤害转化类天赋。",
             new Vector2(340f, -130f),
             TalentNodeType.Major,
             1,
@@ -261,8 +261,8 @@ public partial class TalentTreeManager : Node
 
         AddNode(new TalentNodeDefinition(
             "deflection_1",
-            "Guard Rhythm",
-            "Placeholder guard branch node. Reserve this path for parry timing, guard stamina, and posture control.",
+            "格挡律动",
+            "防御分支占位节点。后续可替换为弹反窗口、格挡耗耐和架势控制相关天赋。",
             new Vector2(-80f, 170f),
             TalentNodeType.Minor,
             1,
@@ -272,8 +272,8 @@ public partial class TalentTreeManager : Node
 
         AddNode(new TalentNodeDefinition(
             "deflection_2",
-            "Mirror Counter",
-            "Major guard node placeholder. Good slot for high-impact deflect or counterattack talents.",
+            "镜返反击",
+            "防御分支核心节点。适合放置高收益弹反、反击追击或破绽惩罚类天赋。",
             new Vector2(-160f, 320f),
             TalentNodeType.Major,
             1,
@@ -282,8 +282,8 @@ public partial class TalentTreeManager : Node
 
         AddNode(new TalentNodeDefinition(
             "mobility_1",
-            "Stride Burst",
-            "Placeholder mobility branch node. Reserve this path for dash, aerial control, or route-break talents.",
+            "步伐爆发",
+            "机动分支占位节点。后续可接入冲刺、空中控制和回收路线所需的探索能力。",
             new Vector2(90f, 170f),
             TalentNodeType.Minor,
             1,
@@ -293,8 +293,8 @@ public partial class TalentTreeManager : Node
 
         AddNode(new TalentNodeDefinition(
             "mobility_2",
-            "Void Sprint",
-            "Keystone mobility placeholder. Good slot for a future exploration-defining movement talent.",
+            "虚界疾驰",
+            "机动分支关键石节点。适合放置改变探索路线的大型位移或双世界机动能力。",
             new Vector2(210f, 320f),
             TalentNodeType.Keystone,
             1,

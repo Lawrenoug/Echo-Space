@@ -597,7 +597,6 @@ public partial class WorldOverlay : CanvasLayer
         _progressionText.Text = builder.ToString();
     }
 
-
     private void RefreshTalentPanel()
     {
         if (_talentDetailText == null)
@@ -610,7 +609,7 @@ public partial class WorldOverlay : CanvasLayer
 
         if (_talentTreeManager == null)
         {
-            _talentDetailText.Text = "Talent tree manager not loaded.";
+            _talentDetailText.Text = "天赋树管理器未加载。";
             return;
         }
 
@@ -626,34 +625,34 @@ public partial class WorldOverlay : CanvasLayer
             ?? _talentTreeManager.GetNodeDefinition(_talentTreeManager.StartNodeId);
         if (selectedDefinition == null)
         {
-            _talentDetailText.Text = "Talent tree has no nodes.";
+            _talentDetailText.Text = "当前天赋树没有可用节点。";
             return;
         }
 
         var selectedState = _talentTreeManager.GetNodeState(selectedDefinition.Id);
         var builder = new StringBuilder();
-        builder.AppendLine("Talent Tree  [T]");
-        builder.Append("Points: ").Append(_talentTreeManager.UnspentTalentPoints);
-        builder.Append("    Unlocked: ").Append(_talentTreeManager.GetUnlockedNodeCount());
+        builder.AppendLine("天赋树  [T]");
+        builder.Append("剩余点数: ").Append(_talentTreeManager.UnspentTalentPoints);
+        builder.Append("    已解锁节点: ").Append(_talentTreeManager.GetUnlockedNodeCount());
         builder.AppendLine();
         builder.AppendLine();
-        builder.AppendLine("Controls");
-        builder.AppendLine("Left click: select node");
-        builder.AppendLine("Left click selected available node / Enter: unlock");
-        builder.AppendLine("Right click unlocked node / Backspace: refund");
-        builder.AppendLine("Mouse wheel: zoom    Middle drag: pan");
-        builder.AppendLine("R: reset unlocked talents");
+        builder.AppendLine("操作说明");
+        builder.AppendLine("左键：选中节点");
+        builder.AppendLine("左键点击已选中的可用节点 / 回车：解锁");
+        builder.AppendLine("右键点击已解锁节点 / Backspace：退款");
+        builder.AppendLine("滚轮：缩放    中键拖拽：平移");
+        builder.AppendLine("R：重置本次已解锁天赋");
         builder.AppendLine();
-        builder.Append("Selected: ").AppendLine(selectedDefinition.DisplayName);
-        builder.Append("Type: ").Append(selectedDefinition.NodeType);
-        builder.Append("    Cost: ").Append(selectedDefinition.Cost);
-        builder.Append("    State: ").AppendLine(BuildTalentNodeStatus(selectedDefinition, selectedState));
+        builder.Append("当前选中: ").AppendLine(selectedDefinition.DisplayName);
+        builder.Append("类型: ").Append(GetTalentNodeTypeDisplayName(selectedDefinition.NodeType));
+        builder.Append("    消耗: ").Append(selectedDefinition.Cost);
+        builder.Append("    状态: ").AppendLine(BuildTalentNodeStatus(selectedDefinition, selectedState));
         builder.AppendLine();
         builder.AppendLine(selectedDefinition.Description);
         builder.AppendLine();
-        builder.AppendLine("This is a framework tree. Replace placeholder nodes later with real combat, mobility, and world-mechanic talents.");
+        builder.AppendLine("当前是可扩展的白盒天赋树骨架，后续可以继续替换成真正的战斗、探索、双世界和机动类天赋。");
         builder.AppendLine();
-        builder.Append("[Esc] Close");
+        builder.Append("[Esc] 关闭");
 
         _talentDetailText.Text = builder.ToString();
     }
@@ -686,7 +685,6 @@ public partial class WorldOverlay : CanvasLayer
     {
         RefreshProgressionPanel();
     }
-
 
     private void OnTalentNodeSelected(string nodeId)
     {
@@ -803,7 +801,6 @@ public partial class WorldOverlay : CanvasLayer
             && ReferenceEquals(_systemPanelStack[^1], panel);
     }
 
-
     private void EnsureTalentPanelExists()
     {
         if (GetNodeOrNull<Control>("TalentPanel") != null)
@@ -880,17 +877,29 @@ public partial class WorldOverlay : CanvasLayer
         _talentTreeManager ??= TalentTreeManager.Instance;
         if (_talentTreeManager == null)
         {
-            return "Unavailable";
+            return "不可用";
         }
 
         if (state?.IsUnlocked == true)
         {
-            return definition.IsStart ? "Start" : "Unlocked";
+            return definition.IsStart ? "起始节点" : "已解锁";
         }
 
         return _talentTreeManager.CanUnlockNode(definition.Id)
-            ? "Available"
-            : "Locked";
+            ? "可解锁"
+            : "未连通";
+    }
+
+    private static string GetTalentNodeTypeDisplayName(TalentNodeType nodeType)
+    {
+        return nodeType switch
+        {
+            TalentNodeType.Start => "起始",
+            TalentNodeType.Minor => "小节点",
+            TalentNodeType.Major => "大节点",
+            TalentNodeType.Keystone => "关键石",
+            _ => "未知",
+        };
     }
 
     private static int GetNumberKeyIndex(Key key)

@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using EchoSpace.Core.Fsm;
 using EchoSpace.Core.Input;
 using EchoSpace.Core.Settings;
@@ -30,13 +33,22 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		public bool Loop { get; }
 	}
 
+	private sealed class PlayerAnimationManifestEntry
+	{
+		[JsonPropertyName("source")]
+		public string Source { get; set; } = string.Empty;
+
+		[JsonPropertyName("scale")]
+		public float Scale { get; set; } = 1f;
+	}
+
 	private static readonly PlayerAnimationDefinition[] AnimationDefinitions =
 	[
 		new("idle", 6, 6f, true),
 		new("run", 8, 12f, true),
 		new("jumpstart", 3, 10f, false),
 		new("fall", 3, 8f, false),
-		new("attack", 6, 12f, false),
+		new("attack", 8, 8f, false),
 		new("hurt", 3, 10f, false),
 		new("dead", 6, 8f, false),
 		new("execute", 6, 12f, false),
@@ -54,7 +66,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public float AirAcceleration { get; set; } = 1250f;
 	[Export] public float AirDeceleration { get; set; } = 1100f;
 	[Export] public float JumpSpeed { get; set; } = 380f;
-	[Export] public float AttackDuration { get; set; } = 0.18f;
+	[Export] public float AttackDuration { get; set; } = 0.9f;
 	[Export] public int MaxAirJumps { get; set; }
 
 	[ExportGroup("Feel Tuning")]
@@ -104,9 +116,13 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public NodePath? BodyVisualPath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? AnimatedSpritePath { get; set; } = new("AnimatedSprite");
 	[Export] public string AnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerSpriteFrames";
+	[Export] public NodePath? WeaponSpritePath { get; set; } = new("WeaponSprite");
+	[Export] public string WeaponAnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerWeaponFrames";
 
 	private readonly InputBuffer _inputBuffer = new();
 	private readonly HashSet<ulong> _damagedTargetsThisAttack = new();
+	private readonly Dictionary<string, float> _bodyAnimationScaleByName = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, float> _weaponAnimationScaleByName = new(StringComparer.Ordinal);
 
 	private StateMachine<PlayerController>? _stateMachine;
 	private double _lastGroundedAt = double.NegativeInfinity;
@@ -128,7 +144,12 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private CanvasItem? _fallbackBodyVisual;
 	private CanvasItem? _fallbackFeetVisual;
 	private AnimatedSprite2D? _animatedSprite;
+	private AnimatedSprite2D? _weaponSprite;
 	private Vector2 _attackProbeBasePosition;
+	private Vector2 _bodySpriteBasePosition;
+	private Vector2 _bodySpriteBaseScale = Vector2.One;
+	private Vector2 _weaponSpriteBasePosition;
+	private Vector2 _weaponSpriteBaseScale = Vector2.One;
 	private int _baseMaxHealth;
 	private int _baseAttackDamage;
 	private float _baseMaxStamina;
@@ -171,10 +192,14 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		_animatedSprite = AnimatedSpritePath != null && !AnimatedSpritePath.IsEmpty
 			? GetNodeOrNull<AnimatedSprite2D>(AnimatedSpritePath)
 			: null;
+		_weaponSprite = WeaponSpritePath != null && !WeaponSpritePath.IsEmpty
+			? GetNodeOrNull<AnimatedSprite2D>(WeaponSpritePath)
+			: null;
 		_bodyVisual = BodyVisualPath != null && !BodyVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(BodyVisualPath) : null;
 		_guardEffectVisual = HurtboxVisualPath != null && !HurtboxVisualPath.IsEmpty ? GetNodeOrNull<CanvasItem>(HurtboxVisualPath) : null;
 		_fallbackBodyVisual = GetNodeOrNull<CanvasItem>("Body");
 		_fallbackFeetVisual = GetNodeOrNull<CanvasItem>("Feet");
+		EnsureVisualLayerSeparation();
 		ConfigureAnimatedSprite();
 
 		_stateMachine.Register(new PlayerIdleState(this, _stateMachine));
@@ -587,6 +612,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		PlayResolvedAnimation("parry", true);
 	}
 
+	public double GetAnimationDurationForAction(string action)
+	{
+		return GetAnimationDuration(action);
+	}
+
 	public void PlayTransientAnimation(string action)
 	{
 		_animationOverrideRemaining = GetAnimationDuration(action);
@@ -822,10 +852,19 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	{
 		if (_animatedSprite == null)
 		{
+			if (_weaponSprite != null)
+			{
+				_weaponSprite.FlipH = _facingDirection < 0f;
+			}
+
 			return;
 		}
 
 		_animatedSprite.FlipH = _facingDirection < 0f;
+		if (_weaponSprite != null)
+		{
+			_weaponSprite.FlipH = _animatedSprite.FlipH;
+		}
 	}
 
 	private void UpdateAttackProbeTransform()
@@ -978,13 +1017,19 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
 	private void ConfigureAnimatedSprite()
 	{
+		_bodyAnimationScaleByName.Clear();
+		_weaponAnimationScaleByName.Clear();
+
 		if (_animatedSprite == null)
 		{
 			_bodyVisual = _fallbackBodyVisual;
 			return;
 		}
 
-		var spriteFrames = BuildSpriteFrames();
+		_bodySpriteBasePosition = _animatedSprite.Position;
+		_bodySpriteBaseScale = _animatedSprite.Scale;
+
+		var spriteFrames = BuildSpriteFrames(AnimationFramesRoot, _bodyAnimationScaleByName);
 		if (spriteFrames == null)
 		{
 			_bodyVisual = _fallbackBodyVisual;
@@ -1004,12 +1049,34 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		{
 			_fallbackFeetVisual.Visible = false;
 		}
+
+		if (_weaponSprite != null)
+		{
+			_weaponSpriteBasePosition = _weaponSprite.Position;
+			_weaponSpriteBaseScale = _weaponSprite.Scale;
+			var weaponFrames = BuildSpriteFrames(WeaponAnimationFramesRoot, _weaponAnimationScaleByName);
+			if (weaponFrames != null)
+			{
+				_weaponSprite.SpriteFrames = weaponFrames;
+				_weaponSprite.Visible = true;
+			}
+			else
+			{
+				_weaponSprite.Visible = false;
+			}
+		}
+
+		ApplyAnimationPresentation(ResolveAnimationName(_currentAnimationAction));
 	}
 
-	private SpriteFrames? BuildSpriteFrames()
+	private SpriteFrames? BuildSpriteFrames(string framesRoot, Dictionary<string, float> scaleByAnimation)
 	{
 		var spriteFrames = new SpriteFrames();
 		var loadedAnyAnimation = false;
+		foreach (var pair in LoadAnimationManifest(framesRoot))
+		{
+			scaleByAnimation[pair.Key] = pair.Value;
+		}
 
 		foreach (var worldName in new[] { "reality", "soul" })
 		{
@@ -1017,7 +1084,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			{
 				var animationName = $"{worldName}_{definition.ActionName}";
 				var framePrefix = $"player_{worldName}_{definition.ActionName}";
-				var frameDirectory = $"{AnimationFramesRoot}/{framePrefix}_frames_v1";
+				var frameDirectory = $"{framesRoot}/{framePrefix}_frames_v1";
 				var loadedFrameCount = 0;
 
 				for (var frameIndex = 0; frameIndex < definition.FrameCount; frameIndex++)
@@ -1063,10 +1130,12 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		var shouldRestart = restart || _animatedSprite.Animation != animationName || !_animatedSprite.IsPlaying();
 		if (!shouldRestart)
 		{
+			ApplyAnimationPresentation(animationName);
 			return;
 		}
 
 		_animatedSprite.Play(animationName);
+		ApplyAnimationPresentation(animationName);
 	}
 
 	private string? ResolveAnimationName(string action)
@@ -1137,6 +1206,149 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private void OnWorldChanged(WorldType _)
 	{
 		PlayResolvedAnimation(_animationOverrideRemaining > 0d ? "parry" : _currentAnimationAction, true);
+	}
+
+	private void EnsureVisualLayerSeparation()
+	{
+		if (_animatedSprite == null)
+		{
+			return;
+		}
+
+		if (_weaponSprite != null)
+		{
+			return;
+		}
+
+		_weaponSprite = new AnimatedSprite2D
+		{
+			Name = "WeaponSprite",
+			Visible = false,
+			Position = _animatedSprite.Position,
+			Scale = _animatedSprite.Scale,
+			ZIndex = _animatedSprite.ZIndex + 1,
+		};
+		AddChild(_weaponSprite);
+	}
+
+	private Dictionary<string, float> LoadAnimationManifest(string framesRoot)
+	{
+		var scaleMap = new Dictionary<string, float>(StringComparer.Ordinal);
+		if (string.IsNullOrWhiteSpace(framesRoot))
+		{
+			return scaleMap;
+		}
+
+		var manifestPath = ProjectSettings.GlobalizePath($"{framesRoot.TrimEnd('/')}/manifest.json");
+		if (!File.Exists(manifestPath))
+		{
+			return scaleMap;
+		}
+
+		try
+		{
+			var manifestJson = File.ReadAllText(manifestPath);
+			var entries = JsonSerializer.Deserialize<List<PlayerAnimationManifestEntry>>(manifestJson);
+			if (entries == null)
+			{
+				return scaleMap;
+			}
+
+			foreach (var entry in entries)
+			{
+				var animationName = TryParseAnimationNameFromSource(entry.Source);
+				if (animationName == null)
+				{
+					continue;
+				}
+
+				scaleMap[animationName] = Mathf.Max(0.01f, entry.Scale);
+			}
+		}
+		catch (Exception exception)
+		{
+			GD.PrintErr($"Failed to load animation manifest '{framesRoot}': {exception.Message}");
+		}
+
+		return scaleMap;
+	}
+
+	private void ApplyAnimationPresentation(string? animationName)
+	{
+		if (animationName == null)
+		{
+			return;
+		}
+
+		if (_animatedSprite != null)
+		{
+			var bodyScale = _bodyAnimationScaleByName.TryGetValue(animationName, out var scaleMultiplier)
+				? scaleMultiplier
+				: 1f;
+			_animatedSprite.Scale = _bodySpriteBaseScale * bodyScale;
+			_animatedSprite.Position = _bodySpriteBasePosition;
+		}
+
+		if (_weaponSprite?.SpriteFrames == null)
+		{
+			return;
+		}
+
+		var weaponAnimation = ResolveWeaponAnimationName(animationName);
+		if (weaponAnimation == null)
+		{
+			_weaponSprite.Visible = false;
+			return;
+		}
+
+		var shouldRestart = _weaponSprite.Animation != weaponAnimation || !_weaponSprite.IsPlaying();
+		if (shouldRestart)
+		{
+			_weaponSprite.Play(weaponAnimation);
+		}
+
+		var weaponScale = _weaponAnimationScaleByName.TryGetValue(weaponAnimation, out var weaponScaleMultiplier)
+			? weaponScaleMultiplier
+			: 1f;
+		_weaponSprite.Scale = _weaponSpriteBaseScale * weaponScale;
+		_weaponSprite.Position = _weaponSpriteBasePosition;
+		_weaponSprite.FlipH = _facingDirection < 0f;
+		_weaponSprite.Visible = true;
+	}
+
+	private string? ResolveWeaponAnimationName(string fallbackAnimation)
+	{
+		if (_weaponSprite?.SpriteFrames == null)
+		{
+			return null;
+		}
+
+		if (_weaponSprite.SpriteFrames.HasAnimation(fallbackAnimation))
+		{
+			return fallbackAnimation;
+		}
+
+		var idleFallback = $"{GetCurrentWorldAnimationPrefix()}_idle";
+		return _weaponSprite.SpriteFrames.HasAnimation(idleFallback) ? idleFallback : null;
+	}
+
+	private static string? TryParseAnimationNameFromSource(string? source)
+	{
+		if (string.IsNullOrWhiteSpace(source))
+		{
+			return null;
+		}
+
+		var fileName = Path.GetFileNameWithoutExtension(source);
+		const string prefix = "player_";
+		const string suffix = "_sheet_v1";
+		if (!fileName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+			|| !fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+		{
+			return null;
+		}
+
+		return fileName.Substring(prefix.Length, fileName.Length - prefix.Length - suffix.Length);
 	}
 
 	private static double GetGameTime()
