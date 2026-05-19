@@ -119,6 +119,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public NodePath? AnimatedSpritePath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? WeaponMountPath { get; set; } = new("WeaponMount");
 	[Export] public string AnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerSpriteFrames";
+	[Export] public Vector2 AnimationVisualOffset { get; set; } = new(0f, -7f);
+	[Export(PropertyHint.Range, "0.5,4.0,0.05")] public float AnimationVisualScale { get; set; } = 1.15f;
 
 	private readonly InputBuffer _inputBuffer = new();
 	private readonly HashSet<ulong> _damagedTargetsThisAttack = new();
@@ -1040,8 +1042,8 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			return;
 		}
 
-		_bodySpriteBasePosition = _animatedSprite.Position;
-		_bodySpriteBaseScale = _animatedSprite.Scale;
+		_bodySpriteBasePosition = AnimationVisualOffset;
+		_bodySpriteBaseScale = Vector2.One * Mathf.Max(0.01f, AnimationVisualScale);
 
 		var spriteFrames = BuildSpriteFrames(AnimationFramesRoot, _bodyAnimationScaleByName);
 		if (spriteFrames == null)
