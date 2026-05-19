@@ -1,0 +1,18 @@
+{
+  "source": "player_soul_run_sheet_v1.png",
+  "frame_count": 8,
+  "canvas_width": 48,
+  "canvas_height": 64,
+  "baseline": 56,
+  "scale": 1.0,
+  "frames": [
+    "player_soul_run_00.png",
+    "player_soul_run_01.png",
+    "player_soul_run_02.png",
+    "player_soul_run_03.png",
+    "player_soul_run_04.png",
+    "player_soul_run_05.png",
+    "player_soul_run_06.png",
+    "player_soul_run_07.png"
+  ]
+}

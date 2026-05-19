@@ -1,0 +1,16 @@
+{
+  "source": "player_soul_idle_sheet_v1.png",
+  "frame_count": 6,
+  "canvas_width": 48,
+  "canvas_height": 64,
+  "baseline": 56,
+  "scale": 1.0,
+  "frames": [
+    "player_soul_idle_00.png",
+    "player_soul_idle_01.png",
+    "player_soul_idle_02.png",
+    "player_soul_idle_03.png",
+    "player_soul_idle_04.png",
+    "player_soul_idle_05.png"
+  ]
+}

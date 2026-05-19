@@ -1,0 +1,14 @@
+{
+  "source": "player_soul_parry_sheet_v1.png",
+  "frame_count": 4,
+  "canvas_width": 48,
+  "canvas_height": 64,
+  "baseline": 56,
+  "scale": 1.0,
+  "frames": [
+    "player_soul_parry_00.png",
+    "player_soul_parry_01.png",
+    "player_soul_parry_02.png",
+    "player_soul_parry_03.png"
+  ]
+}

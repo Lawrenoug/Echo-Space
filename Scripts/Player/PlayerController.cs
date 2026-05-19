@@ -54,7 +54,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		new("hurt", 3, 10f, false),
 		new("dead", 6, 8f, false),
 		new("execute", 6, 12f, false),
-		new("guard", 1, 8f, false),
+		new("guard", 3, 8f, false),
 		new("parry", 4, 15f, false)
 	];
 

@@ -1,6 +1,6 @@
 # Echo Space
 
-`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作原型。当前阶段优先把双世界切换、白盒关卡、战斗闭环、成长系统、装备框架和 UI 骨架做扎实，再逐步接入正式美术、音频和内容。
+`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作原型。当前阶段优先把双世界切换、白盒关卡、战斗闭环、成长系统、装备框架和玩家表现层做扎实，再逐步接入正式美术、音频和内容。
 
 ## README 维护规则
 
@@ -16,8 +16,8 @@
 - 关卡结构：长横向、多层白盒地图，强调探索、回收路线和连续切换
 - 战斗方向：以“血量 + 耐力 + 架势 + 处决”为原型的近战系统
 - 成长方向：基础属性加点 + 节点式天赋树并行
-- 装备方向：玩家当前保持单一角色帧动画，后续通过装备系统替换武器模型与表现
-- 开发方式：先做稳定可玩的玩法闭环，再逐步接入正式美术、音效和内容
+- 装备方向：玩家主体动画独立存在，后续通过装备系统替换武器模型与表现
+- 美术方向：先用统一规格的占位动画跑通工程，再按生产规范替换为正式角色资源
 
 ## 当前默认按键
 
@@ -44,7 +44,6 @@
 - 玩家控制器：[Scripts/Player/PlayerController.cs](/F:/Godot%20project/echo-space/Scripts/Player/PlayerController.cs)
 - 玩家状态机：[Scripts/Player/States](/F:/Godot%20project/echo-space/Scripts/Player/States)
 - 双世界系统：[Scripts/Core/World](/F:/Godot%20project/echo-space/Scripts/Core/World)
-- 输入动作定义：[Scripts/Core/Input/GameInputActions.cs](/F:/Godot%20project/echo-space/Scripts/Core/Input/GameInputActions.cs)
 - 背包系统：[Scripts/Gameplay/Inventory](/F:/Godot%20project/echo-space/Scripts/Gameplay/Inventory)
 - 装备系统：[Scripts/Gameplay/Equipment](/F:/Godot%20project/echo-space/Scripts/Gameplay/Equipment)
 - 属性加点管理：[Scripts/Gameplay/Progression/ProgressionManager.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Progression/ProgressionManager.cs)
@@ -53,7 +52,10 @@
 - 敌人战斗基类：[Scripts/Gameplay/Enemies/EnemyCombatant.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Enemies/EnemyCombatant.cs)
 - 白盒环境与机关脚本目录：[Scripts/Gameplay/Environment](/F:/Godot%20project/echo-space/Scripts/Gameplay/Environment)
 - HUD 与系统界面：[Scripts/UI/WorldOverlay.cs](/F:/Godot%20project/echo-space/Scripts/UI/WorldOverlay.cs)
-- 玩家动作重生成规范与 AI 提示词模板：[Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md)
+- 玩家动作制作规范与 AI 提示词模板：[Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md)
+- 玩家占位动画生成脚本：[Docs/Art/generate_player_placeholder_frames.py](/F:/Godot%20project/echo-space/Docs/Art/generate_player_placeholder_frames.py)
+- 当前运行中的玩家动作条带：[Docs/Art/PlayerSprite](/F:/Godot%20project/echo-space/Docs/Art/PlayerSprite)
+- 当前运行中的玩家逐帧目录：[Docs/Art/PlayerSpriteFrames](/F:/Godot%20project/echo-space/Docs/Art/PlayerSpriteFrames)
 
 ## 当前框架说明
 
@@ -68,11 +70,29 @@
 - 敌人运行时位置已经和双世界静态位置刷新解耦，切换世界时不应再被 `DualWorldObject` 写回出生点
 - 当前白盒关卡已经串起跳跃、战斗、拾取、加点、双世界切换、双世界机关和短冲刺验证
 - 当前已经加入节点式天赋树原型：支持节点显示、连线、解锁、退点、重置，以及后续扩展成类似流放之路的大规模被动树
-- 玩家角色当前仍然保持“单一主体帧动画”方案，不拆分身体层 / 武器层帧动画
-- 玩家帧动画会读取 [Docs/Art/PlayerSpriteFrames/manifest.json](/F:/Godot%20project/echo-space/Docs/Art/PlayerSpriteFrames/manifest.json) 里的 `scale` 信息，用于统一待机、跑步、攻击等动作显示比例
-- 装备系统骨架已经接入 `Autoload`，当前具备装备槽位定义、装备状态缓存、默认原型武器装配和后续扩展入口
-- 玩家控制器已经预留武器模型挂点 `WeaponMount`，后续正式武器模型可在不改玩家主体帧动画结构的前提下挂接到这里
-- 当前默认原型装备是“训练短刃”，由背包原型内容提供，用于验证装备槽、武器模型落点和后续替换流程
+- 当前装备系统骨架已经接入 `Autoload`，具备装备槽位、默认原型武器、装备事件和玩家武器挂点 `WeaponMount`
+- 玩家主体动画当前保持“单一人物主体”方案，不拆身体帧动画和武器帧动画
+- 原来的玩家动画帧已经从主加载路径移除，当前 live 目录是新生成的统一占位帧；旧资源已归档到本地 `Docs/Art/Archive`，不再参与运行时加载
+- 当前玩家占位动画为 `48x64` 统一画布、`baseline = 56`、`scale = 1.0` 的逐帧资源，分为 `reality` 和 `soul` 两套动作
+- 新占位动画是“角色主体优先”的过渡方案，后续正式武器表现仍然应该落在装备系统的武器模型替换上
+
+## 当前玩家动画状态
+
+- 当前玩家动作目录包含：
+  - `idle`
+  - `run`
+  - `jumpstart`
+  - `fall`
+  - `attack`
+  - `hurt`
+  - `dead`
+  - `execute`
+  - `guard`
+  - `parry`
+- 每个动作都已经生成 `reality / soul` 两个世界版本
+- 当前动作资源通过 [Scripts/Player/PlayerController.cs](/F:/Godot%20project/echo-space/Scripts/Player/PlayerController.cs) 直接读取 [Docs/Art/PlayerSpriteFrames](/F:/Godot%20project/echo-space/Docs/Art/PlayerSpriteFrames)
+- `guard` 读取帧数已经对齐为 3 帧，和新占位资源保持一致
+- 如果后面要重跑这一套占位图，可以直接执行 [Docs/Art/generate_player_placeholder_frames.py](/F:/Godot%20project/echo-space/Docs/Art/generate_player_placeholder_frames.py)
 
 ## 当前白盒关卡结构
 
@@ -132,10 +152,10 @@
 建议下一步优先从下面这些方向里选：
 
 1. 装备系统实装化：补装备 / 卸下入口、装备栏显示、不同武器原型数据和武器模型切换验证。
-2. 天赋树内容化：把当前占位节点替换成真正的战斗、机动、双世界机制和探索能力节点。
-3. 天赋树与数值联动：让部分天赋正式影响冲刺、弹反、处决、掉落和双世界交互。
+2. 武器挂点联动：让 `WeaponMount` 后续能根据攻击、防御、弹反等动作做更细的偏移与旋转跟随。
+3. 天赋树内容化：把当前占位节点替换成真正的战斗、机动、双世界机制和探索能力节点。
 4. 白盒实跑与修关：沿着现在这条路线完整跑图，检查哪些跳跃点、按钮位置、切世界时机和冲刺距离还不顺。
-5. 角色动画重生成：按 [Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md) 统一重生待机、跑步、攻击、防御、弹反、受击和处决帧动画。
+5. 正式角色动画替换：按 [Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md) 替换当前占位动画，保留相同命名和目录结构。
 6. 战斗内容扩展：增加第三种敌人或第一个小 Boss，验证现有掉落闭环和敌人基类能否继续复用。
 
 ## 人工资源填充清单
@@ -147,18 +167,18 @@
 
 ### 角色资源
 
-- 玩家待机动画
-- 玩家跑步动画
-- 玩家跳跃动画
-- 玩家下落动画
-- 玩家攻击动画
-- 玩家防御动作
-- 玩家弹反动作或特效表现
-- 玩家受伤动画
-- 玩家死亡动画
-- 玩家处决动作表现
-- 玩家短冲刺动作、残影或位移特效
-- 玩家统一角色帧动画重生成，需统一待机 / 跑步 / 跳跃 / 攻击 / 防御 / 处决的尺寸、基线和透视
+- 玩家正式待机动画
+- 玩家正式跑步动画
+- 玩家正式跳跃动画
+- 玩家正式下落动画
+- 玩家正式攻击动画
+- 玩家正式防御动作
+- 玩家正式弹反动作或特效表现
+- 玩家正式受伤动画
+- 玩家正式死亡动画
+- 玩家正式处决动作表现
+- 玩家正式短冲刺动作、残影或位移特效
+- 玩家统一角色帧动画正式重生成，需统一待机 / 跑步 / 跳跃 / 攻击 / 防御 / 处决的尺寸、基线和透视
 
 ### 装备资源
 
@@ -239,9 +259,8 @@
 
 ## 最近更新
 
-- 修复天赋树初始化时的递归重置问题，避免进入主场景后因 `TalentTreeManager` 反复自调用而卡死
-- 天赋树面板文本改为中文，默认节点名称、说明、状态和操作提示已统一中文化
-- 撤回“身体层 + 武器层”帧动画拆分方案，玩家继续保持单一主体帧动画
-- 玩家帧动画开始读取 [Docs/Art/PlayerSpriteFrames/manifest.json](/F:/Godot%20project/echo-space/Docs/Art/PlayerSpriteFrames/manifest.json) 中的 `scale` 信息，用于统一动作显示比例
-- 新增 [Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md)，整理统一角色帧动画技术规范与 AI 生成提示词模板
-- 新增装备系统骨架：`EquipmentManager`、装备槽位定义、原型武器内容和玩家 `WeaponMount` 挂点，为后续武器模型替换提供落点
+- 旧的玩家动画帧已经从 `Docs/Art/PlayerSprite` 和 `Docs/Art/PlayerSpriteFrames` 的 live 目录中移除，并以本地归档的方式保留备份
+- 新增 [Docs/Art/generate_player_placeholder_frames.py](/F:/Godot%20project/echo-space/Docs/Art/generate_player_placeholder_frames.py)，可一键重建整套玩家占位动画资源
+- 当前 live 玩家动画已替换为统一规格的新占位动作条带与逐帧目录，分为 `reality / soul` 两个世界版本
+- 玩家主体动画继续保持单一人物方案，不做身体帧和武器帧拆分
+- `guard` 动作读取帧数已对齐为 3 帧，和新的占位资源结构保持一致
