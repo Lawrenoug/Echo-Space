@@ -1,3 +1,4 @@
+using System;
 using EchoSpace.Core.Fsm;
 using EchoSpace.Gameplay.Enemies;
 using Godot;
@@ -26,12 +27,16 @@ public sealed class PlayerAttackState : PlayerState
 
         if (_isExecutionAttack && _executionTarget != null)
         {
-            _remainingDuration = Context.ExecutionAttackDuration;
+            _remainingDuration = Math.Max(
+                Context.ExecutionAttackDuration,
+                Context.GetAnimationDurationForAction("execute"));
+            Context.PlayStateAnimation("execute", true);
             Context.BeginExecutionAttack(_executionTarget);
             return;
         }
 
         _remainingDuration = Context.AttackDuration;
+        Context.PlayStateAnimation("attack", true);
         Context.BeginAttack();
     }
 

@@ -60,6 +60,8 @@
 ## 当前框架说明
 
 - 启动入口是独立主菜单场景，不和游戏主关卡混在一起
+- 主菜单运行时会接入 [Docs/Art/Menu.png](/F:/Godot%20project/echo-space/Docs/Art/Menu.png) 作为背景，并使用 `button.png / button hover.png / button pressed.png` 作为按钮三态素材
+- 设置菜单当前已经接入真实可调整项：分辨率、全屏、垂直同步、主音量、音乐音量、音效音量、键盘战斗备选、输入缓冲、土狼时间和弹反窗口
 - 当前存档系统已移除，等关卡、敌人、双世界状态和 UI 结构更稳定后再决定是否重做
 - “继续游戏”入口当前暂不接回，后续和存档系统一并恢复
 - 主菜单点击开始游戏时，会重置当前原型里的世界状态、背包、装备、属性点和天赋树状态，再进入白盒关卡
@@ -73,8 +75,8 @@
 - 当前装备系统骨架已经接入 `Autoload`，具备装备槽位、默认原型武器、装备事件和玩家武器挂点 `WeaponMount`
 - `WeaponMount` 现在会根据 `idle / run / jumpstart / fall / attack / guard / parry / execute / hurt / dead` 自动切换偏移和旋转；攻击与弹反不再跟随整段帧动画慢速插值，而是在动作触发时启动独立的短时武器挥动
 - 玩家主体动画当前保持“单一人物主体”方案，不拆身体帧动画和武器帧动画
-- 原来的玩家动画帧已经从主加载路径移除，当前 live 目录是新生成的统一占位帧；旧资源已归档到本地 `Docs/Art/Archive`，不再参与运行时加载
-- 当前玩家占位动画为 `48x64` 统一画布、`baseline = 56`、`scale = 1.0` 的逐帧资源，分为 `reality` 和 `soul` 两套动作
+- 当前玩家主体动画已切回旧黑披风角色模型的无武器版本；角色帧不再烘焙武器，武器表现统一交给装备系统和 `WeaponMount`
+- 当前玩家占位动画为 `622x584` 统一画布、`baseline = 584`、`scale = 1.0` 的逐帧资源，分为 `reality` 和 `soul` 两套动作
 - 玩家显示大小和落点当前统一由 [Scripts/Player/PlayerController.cs](/F:/Godot%20project/echo-space/Scripts/Player/PlayerController.cs) 里的 `AnimationVisualScale`、`AnimationVisualOffset` 和 `WeaponMountOffset` 控制，不再依赖场景里旧的 `AnimatedSprite2D` 缩放值
 - 新占位动画是“角色主体优先”的过渡方案，后续正式武器表现仍然应该落在装备系统的武器模型替换上
 
@@ -95,8 +97,8 @@
 - 当前动作资源通过 [Scripts/Player/PlayerController.cs](/F:/Godot%20project/echo-space/Scripts/Player/PlayerController.cs) 直接读取 [Docs/Art/PlayerSpriteFrames](/F:/Godot%20project/echo-space/Docs/Art/PlayerSpriteFrames)
 - 当前并不是绕开 Godot 动画系统，而是运行时动态构建 `AnimatedSprite2D + SpriteFrames`；这样保留 Godot 原生播放能力，同时让批量替换帧资源不必手工逐个点编辑器
 - `guard` 读取帧数已经对齐为 3 帧，和新占位资源保持一致
-- 当前默认人物显示比例已再次上调，默认值为 `AnimationVisualScale = 2.3`、`AnimationVisualOffset = (0, -38)`，用于更贴近当前地图体量
-- 如果后面要重跑这一套占位图，可以直接执行 [Docs/Art/generate_player_placeholder_frames.py](/F:/Godot%20project/echo-space/Docs/Art/generate_player_placeholder_frames.py)
+- 当前默认人物显示比例切回大画布角色素材的适配值，默认值为 `AnimationVisualScale = 0.38`、`AnimationVisualOffset = (0, -105)`、`WeaponMountOffset = (2, -72)`
+- 当前 live 角色帧来自旧黑披风模型的主体占位版，并通过批处理移除了烘焙武器；后续正式角色动画仍需要重新生成无武器主体帧
 
 ## 当前白盒关卡结构
 
@@ -264,13 +266,6 @@
 
 ## 最近更新
 
-- 旧的玩家动画帧已经从 `Docs/Art/PlayerSprite` 和 `Docs/Art/PlayerSpriteFrames` 的 live 目录中移除，并以本地归档的方式保留备份
-- 新增 [Docs/Art/generate_player_placeholder_frames.py](/F:/Godot%20project/echo-space/Docs/Art/generate_player_placeholder_frames.py)，可一键重建整套玩家占位动画资源
-- 当前 live 玩家动画已替换为统一规格的新占位动作条带与逐帧目录，分为 `reality / soul` 两个世界版本
-- 玩家主体动画继续保持单一人物方案，不做身体帧和武器帧拆分
-- `guard` 动作读取帧数已对齐为 3 帧，和新的占位资源结构保持一致
-- 玩家占位动画显示比例已上调，当前默认由 `AnimationVisualScale = 1.15` 与 `AnimationVisualOffset = (0, -7)` 控制，便于后续继续按地图体量微调
-- 玩家占位动画显示比例再次上调到更接近当前关卡体量的尺寸，并同步把 `WeaponMount` 的默认挂点调整为 `(10, -45)`
-- 原型武器占位已经从简化多边形替换成独立像素贴图版本，并接回现有装备模型场景
-- 玩家武器挂点已经正式接入动作联动，`attack` 和 `parry` 现在由攻击 / 弹反成功的触发时刻启动短时挥动曲线，避免武器动作被整段角色帧动画拖慢
-- 原型武器挥动角度已收窄，以适配当前“刀身本身朝右上”的占位刀图；后续正式武器模型仍需要按同一挂点方向制作
+- 普通攻击状态不再等待完整角色攻击帧动画播放结束，而是按 `AttackDuration = 0.28s` 释放移动，避免武器挥完后角色仍被锁住
+- 主菜单已接入现有菜单背景与按钮三态素材，设置界面已从循环预设按钮升级为可直接调整并保存的控件系统
+- 玩家 live 帧资源已切回旧黑披风角色模型的无武器主体占位版，武器图片不再烘焙在角色帧里

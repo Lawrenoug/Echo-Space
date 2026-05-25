@@ -1,9 +1,9 @@
 {
   "source": "player_reality_fall_sheet_v1.png",
   "frame_count": 3,
-  "canvas_width": 48,
-  "canvas_height": 64,
-  "baseline": 56,
+  "canvas_width": 622,
+  "canvas_height": 584,
+  "baseline": 584,
   "scale": 1.0,
   "frames": [
     "player_reality_fall_00.png",

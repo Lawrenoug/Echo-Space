@@ -68,7 +68,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public float AirAcceleration { get; set; } = 1250f;
 	[Export] public float AirDeceleration { get; set; } = 1100f;
 	[Export] public float JumpSpeed { get; set; } = 380f;
-	[Export] public float AttackDuration { get; set; } = 0.9f;
+	[Export] public float AttackDuration { get; set; } = 0.28f;
 	[Export] public int MaxAirJumps { get; set; }
 
 	[ExportGroup("Feel Tuning")]
@@ -118,10 +118,10 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public NodePath? BodyVisualPath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? AnimatedSpritePath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? WeaponMountPath { get; set; } = new("WeaponMount");
-	[Export] public Vector2 WeaponMountOffset { get; set; } = new(10f, -45f);
+	[Export] public Vector2 WeaponMountOffset { get; set; } = new(2f, -72f);
 	[Export] public string AnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerSpriteFrames";
-	[Export] public Vector2 AnimationVisualOffset { get; set; } = new(0f, -38f);
-	[Export(PropertyHint.Range, "0.5,4.0,0.05")] public float AnimationVisualScale { get; set; } = 2.3f;
+	[Export] public Vector2 AnimationVisualOffset { get; set; } = new(0f, -105f);
+	[Export(PropertyHint.Range, "0.1,4.0,0.01")] public float AnimationVisualScale { get; set; } = 0.38f;
 
 	[ExportGroup("Weapon Motion")]
 	[Export] public Vector2 WeaponIdleOffset { get; set; } = new(0f, 0f);

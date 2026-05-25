@@ -28,41 +28,51 @@ public enum GameplaySettingsPreset
 public partial class GameSettingsManager : Node
 {
 	private const string SettingsPath = "user://settings.cfg";
-	private static readonly float[] MasterVolumeLevels = [1f, 0.8f, 0.6f, 0.4f, 0.2f, 0f];
+	private static readonly Vector2I[] ResolutionOptions =
+	[
+		new(1280, 720),
+		new(1600, 900),
+		new(1920, 1080),
+		new(2560, 1440),
+	];
 
 	public static GameSettingsManager? Instance { get; private set; }
 
-	public DisplaySettingsPreset DisplayPreset { get; private set; } = DisplaySettingsPreset.WindowedVSync;
-	public int MasterVolumeIndex { get; private set; }
-	public InputSettingsPreset InputPreset { get; private set; } = InputSettingsPreset.MouseCombat;
-	public GameplaySettingsPreset GameplayPreset { get; private set; } = GameplaySettingsPreset.Standard;
+	public int ResolutionIndex { get; private set; } = 2;
+	public bool Fullscreen { get; private set; }
+	public bool VSync { get; private set; } = true;
+	public float MasterVolume { get; private set; } = 0.8f;
+	public float MusicVolume { get; private set; } = 0.8f;
+	public float SfxVolume { get; private set; } = 0.8f;
+	public bool EnableKeyboardCombatAlternative { get; private set; }
+	public float InputBufferTime { get; private set; } = 0.12f;
+	public float CoyoteTime { get; private set; } = 0.10f;
+	public float GuardDeflectWindow { get; private set; } = 0.18f;
 
-	public float MasterVolume => MasterVolumeLevels[MasterVolumeIndex];
-	public string DisplayLabel => DisplayPreset switch
+	public DisplaySettingsPreset DisplayPreset => (Fullscreen, VSync) switch
 	{
-		DisplaySettingsPreset.WindowedVSync => "窗口模式 / 垂直同步开启",
-		DisplaySettingsPreset.WindowedUnlocked => "窗口模式 / 垂直同步关闭",
-		DisplaySettingsPreset.FullscreenVSync => "全屏模式 / 垂直同步开启",
-		DisplaySettingsPreset.FullscreenUnlocked => "全屏模式 / 垂直同步关闭",
-		_ => "未知显示预设",
+		(false, true) => DisplaySettingsPreset.WindowedVSync,
+		(false, false) => DisplaySettingsPreset.WindowedUnlocked,
+		(true, true) => DisplaySettingsPreset.FullscreenVSync,
+		(true, false) => DisplaySettingsPreset.FullscreenUnlocked,
 	};
 
-	public string AudioLabel => $"主音量 {Mathf.RoundToInt(MasterVolume * 100f)}%";
+	public int MasterVolumeIndex => Mathf.RoundToInt((1f - MasterVolume) * 5f);
+	public InputSettingsPreset InputPreset => EnableKeyboardCombatAlternative
+		? InputSettingsPreset.MouseAndKeyboardCombat
+		: InputSettingsPreset.MouseCombat;
+	public GameplaySettingsPreset GameplayPreset => GuardDeflectWindow >= 0.27f
+		? GameplaySettingsPreset.Assisted
+		: GuardDeflectWindow >= 0.21f
+			? GameplaySettingsPreset.Forgiving
+			: GameplaySettingsPreset.Standard;
 
-	public string InputLabel => InputPreset switch
-	{
-		InputSettingsPreset.MouseCombat => "默认：左键攻击，右键防反",
-		InputSettingsPreset.MouseAndKeyboardCombat => "扩展：鼠标战斗 + J 攻击 / K 防反",
-		_ => "未知按键预设",
-	};
-
-	public string GameplayLabel => GameplayPreset switch
-	{
-		GameplaySettingsPreset.Standard => "标准手感：默认输入缓冲、土狼时间、弹反窗口",
-		GameplaySettingsPreset.Forgiving => "宽松手感：略微增加输入缓冲、土狼时间、弹反窗口",
-		GameplaySettingsPreset.Assisted => "辅助手感：明显增加输入缓冲、土狼时间、弹反窗口",
-		_ => "未知玩法预设",
-	};
+	public string DisplayLabel => $"{GetResolutionLabel(ResolutionIndex)} / {(Fullscreen ? "全屏" : "窗口")} / {(VSync ? "垂直同步开启" : "垂直同步关闭")}";
+	public string AudioLabel => $"主音量 {ToPercent(MasterVolume)}%，音乐 {ToPercent(MusicVolume)}%，音效 {ToPercent(SfxVolume)}%";
+	public string InputLabel => EnableKeyboardCombatAlternative
+		? "鼠标战斗 + J 攻击 / K 防反"
+		: "鼠标左键攻击 / 右键防反";
+	public string GameplayLabel => $"输入缓冲 {InputBufferTime:0.00}s，土狼时间 {CoyoteTime:0.00}s，弹反窗口 {GuardDeflectWindow:0.00}s";
 
 	public override void _Ready()
 	{
@@ -79,31 +89,107 @@ public partial class GameSettingsManager : Node
 		}
 	}
 
+	public int GetResolutionCount()
+	{
+		return ResolutionOptions.Length;
+	}
+
+	public string GetResolutionLabel(int index)
+	{
+		var resolution = ResolutionOptions[ClampIndex(index, ResolutionOptions.Length)];
+		return $"{resolution.X} x {resolution.Y}";
+	}
+
+	public void SetResolutionIndex(int value)
+	{
+		ResolutionIndex = ClampIndex(value, ResolutionOptions.Length);
+		ApplyDisplaySettings();
+		Save();
+	}
+
+	public void SetFullscreen(bool value)
+	{
+		Fullscreen = value;
+		ApplyDisplaySettings();
+		Save();
+	}
+
+	public void SetVSync(bool value)
+	{
+		VSync = value;
+		ApplyDisplaySettings();
+		Save();
+	}
+
+	public void SetMasterVolume(float value)
+	{
+		MasterVolume = Mathf.Clamp(value, 0f, 1f);
+		ApplyAudioSettings();
+		Save();
+	}
+
+	public void SetMusicVolume(float value)
+	{
+		MusicVolume = Mathf.Clamp(value, 0f, 1f);
+		ApplyAudioSettings();
+		Save();
+	}
+
+	public void SetSfxVolume(float value)
+	{
+		SfxVolume = Mathf.Clamp(value, 0f, 1f);
+		ApplyAudioSettings();
+		Save();
+	}
+
+	public void SetKeyboardCombatAlternative(bool value)
+	{
+		EnableKeyboardCombatAlternative = value;
+		ApplyInputSettings();
+		Save();
+	}
+
+	public void SetGameplayFeel(float inputBufferTime, float coyoteTime, float guardDeflectWindow)
+	{
+		InputBufferTime = Mathf.Clamp(inputBufferTime, 0.05f, 0.25f);
+		CoyoteTime = Mathf.Clamp(coyoteTime, 0.03f, 0.2f);
+		GuardDeflectWindow = Mathf.Clamp(guardDeflectWindow, 0.08f, 0.32f);
+		Save();
+	}
+
 	public void CycleDisplayPreset()
 	{
-		DisplayPreset = (DisplaySettingsPreset)NextIndex((int)DisplayPreset, 4);
+		var nextPreset = (DisplaySettingsPreset)NextIndex((int)DisplayPreset, 4);
+		Fullscreen = nextPreset is DisplaySettingsPreset.FullscreenVSync or DisplaySettingsPreset.FullscreenUnlocked;
+		VSync = nextPreset is DisplaySettingsPreset.WindowedVSync or DisplaySettingsPreset.FullscreenVSync;
 		ApplyDisplaySettings();
 		Save();
 	}
 
 	public void CycleAudioPreset()
 	{
-		MasterVolumeIndex = NextIndex(MasterVolumeIndex, MasterVolumeLevels.Length);
-		ApplyAudioSettings();
-		Save();
+		SetMasterVolume(MasterVolume <= 0.01f ? 1f : Mathf.Max(0f, MasterVolume - 0.2f));
 	}
 
 	public void CycleInputPreset()
 	{
-		InputPreset = (InputSettingsPreset)NextIndex((int)InputPreset, 2);
-		ApplyInputSettings();
-		Save();
+		SetKeyboardCombatAlternative(!EnableKeyboardCombatAlternative);
 	}
 
 	public void CycleGameplayPreset()
 	{
-		GameplayPreset = (GameplaySettingsPreset)NextIndex((int)GameplayPreset, 3);
-		Save();
+		switch (GameplayPreset)
+		{
+			case GameplaySettingsPreset.Standard:
+				SetGameplayFeel(0.15f, 0.12f, 0.22f);
+				break;
+			case GameplaySettingsPreset.Forgiving:
+				SetGameplayFeel(0.18f, 0.15f, 0.28f);
+				break;
+			default:
+				SetGameplayFeel(0.12f, 0.10f, 0.18f);
+				break;
+		}
 	}
 
 	public void ApplyAll()
@@ -115,24 +201,9 @@ public partial class GameSettingsManager : Node
 
 	public void ApplyGameplaySettings(PlayerController player)
 	{
-		switch (GameplayPreset)
-		{
-			case GameplaySettingsPreset.Forgiving:
-				player.InputBufferTime = 0.15f;
-				player.CoyoteTime = 0.12f;
-				player.GuardDeflectWindow = 0.22f;
-				break;
-			case GameplaySettingsPreset.Assisted:
-				player.InputBufferTime = 0.18f;
-				player.CoyoteTime = 0.15f;
-				player.GuardDeflectWindow = 0.28f;
-				break;
-			default:
-				player.InputBufferTime = 0.12f;
-				player.CoyoteTime = 0.10f;
-				player.GuardDeflectWindow = 0.18f;
-				break;
-		}
+		player.InputBufferTime = InputBufferTime;
+		player.CoyoteTime = CoyoteTime;
+		player.GuardDeflectWindow = GuardDeflectWindow;
 	}
 
 	public string BuildSummary()
@@ -142,35 +213,31 @@ public partial class GameSettingsManager : Node
 			$"显示：{DisplayLabel}\n" +
 			$"音频：{AudioLabel}\n" +
 			$"按键：{InputLabel}\n" +
-			$"玩法：{GameplayLabel}\n\n" +
-			"点击左侧分类按钮会循环切换对应预设，并立即应用到当前项目。";
+			$"玩法：{GameplayLabel}";
 	}
 
 	private void ApplyDisplaySettings()
 	{
-		var fullscreen = DisplayPreset is DisplaySettingsPreset.FullscreenVSync or DisplaySettingsPreset.FullscreenUnlocked;
-		var vsync = DisplayPreset is DisplaySettingsPreset.WindowedVSync or DisplaySettingsPreset.FullscreenVSync;
+		DisplayServer.WindowSetMode(Fullscreen ? DisplayServer.WindowMode.Fullscreen : DisplayServer.WindowMode.Windowed);
+		DisplayServer.WindowSetVsyncMode(VSync ? DisplayServer.VSyncMode.Enabled : DisplayServer.VSyncMode.Disabled);
 
-		DisplayServer.WindowSetMode(fullscreen ? DisplayServer.WindowMode.Fullscreen : DisplayServer.WindowMode.Windowed);
-		DisplayServer.WindowSetVsyncMode(vsync ? DisplayServer.VSyncMode.Enabled : DisplayServer.VSyncMode.Disabled);
-
-		if (!fullscreen)
+		if (!Fullscreen)
 		{
-			DisplayServer.WindowSetSize(new Vector2I(1920, 1080));
+			DisplayServer.WindowSetSize(ResolutionOptions[ResolutionIndex]);
 		}
 	}
 
 	private void ApplyAudioSettings()
 	{
 		ApplyBusVolume("Master", MasterVolume);
-		ApplyBusVolume("Music", MasterVolume);
-		ApplyBusVolume("BGM", MasterVolume);
-		ApplyBusVolume("SFX", MasterVolume);
+		ApplyBusVolume("Music", MusicVolume * MasterVolume);
+		ApplyBusVolume("BGM", MusicVolume * MasterVolume);
+		ApplyBusVolume("SFX", SfxVolume * MasterVolume);
 	}
 
 	private static void ApplyInputSettings()
 	{
-		GameInputActions.ApplyBindingPreset(Instance?.InputPreset == InputSettingsPreset.MouseAndKeyboardCombat);
+		GameInputActions.ApplyBindingPreset(Instance?.EnableKeyboardCombatAlternative == true);
 	}
 
 	private static void ApplyBusVolume(string busName, float linearVolume)
@@ -194,19 +261,31 @@ public partial class GameSettingsManager : Node
 			return;
 		}
 
-		DisplayPreset = (DisplaySettingsPreset)ClampIndex(config.GetValue("display", "preset", (int)DisplayPreset).AsInt32(), 4);
-		MasterVolumeIndex = ClampIndex(config.GetValue("audio", "master_volume_index", MasterVolumeIndex).AsInt32(), MasterVolumeLevels.Length);
-		InputPreset = (InputSettingsPreset)ClampIndex(config.GetValue("input", "preset", (int)InputPreset).AsInt32(), 2);
-		GameplayPreset = (GameplaySettingsPreset)ClampIndex(config.GetValue("gameplay", "preset", (int)GameplayPreset).AsInt32(), 3);
+		ResolutionIndex = ClampIndex(config.GetValue("display", "resolution_index", ResolutionIndex).AsInt32(), ResolutionOptions.Length);
+		Fullscreen = config.GetValue("display", "fullscreen", Fullscreen).AsBool();
+		VSync = config.GetValue("display", "vsync", VSync).AsBool();
+		MasterVolume = Clamp01(config.GetValue("audio", "master_volume", MasterVolume).AsSingle());
+		MusicVolume = Clamp01(config.GetValue("audio", "music_volume", MusicVolume).AsSingle());
+		SfxVolume = Clamp01(config.GetValue("audio", "sfx_volume", SfxVolume).AsSingle());
+		EnableKeyboardCombatAlternative = config.GetValue("input", "keyboard_combat_alternative", EnableKeyboardCombatAlternative).AsBool();
+		InputBufferTime = Mathf.Clamp(config.GetValue("gameplay", "input_buffer_time", InputBufferTime).AsSingle(), 0.05f, 0.25f);
+		CoyoteTime = Mathf.Clamp(config.GetValue("gameplay", "coyote_time", CoyoteTime).AsSingle(), 0.03f, 0.2f);
+		GuardDeflectWindow = Mathf.Clamp(config.GetValue("gameplay", "guard_deflect_window", GuardDeflectWindow).AsSingle(), 0.08f, 0.32f);
 	}
 
 	private void Save()
 	{
 		var config = new ConfigFile();
-		config.SetValue("display", "preset", (int)DisplayPreset);
-		config.SetValue("audio", "master_volume_index", MasterVolumeIndex);
-		config.SetValue("input", "preset", (int)InputPreset);
-		config.SetValue("gameplay", "preset", (int)GameplayPreset);
+		config.SetValue("display", "resolution_index", ResolutionIndex);
+		config.SetValue("display", "fullscreen", Fullscreen);
+		config.SetValue("display", "vsync", VSync);
+		config.SetValue("audio", "master_volume", MasterVolume);
+		config.SetValue("audio", "music_volume", MusicVolume);
+		config.SetValue("audio", "sfx_volume", SfxVolume);
+		config.SetValue("input", "keyboard_combat_alternative", EnableKeyboardCombatAlternative);
+		config.SetValue("gameplay", "input_buffer_time", InputBufferTime);
+		config.SetValue("gameplay", "coyote_time", CoyoteTime);
+		config.SetValue("gameplay", "guard_deflect_window", GuardDeflectWindow);
 
 		var result = config.Save(SettingsPath);
 		if (result != Error.Ok)
@@ -223,5 +302,15 @@ public partial class GameSettingsManager : Node
 	private static int ClampIndex(int value, int count)
 	{
 		return count <= 0 ? 0 : Mathf.Clamp(value, 0, count - 1);
+	}
+
+	private static float Clamp01(float value)
+	{
+		return Mathf.Clamp(value, 0f, 1f);
+	}
+
+	private static int ToPercent(float value)
+	{
+		return Mathf.RoundToInt(Mathf.Clamp(value, 0f, 1f) * 100f);
 	}
 }
