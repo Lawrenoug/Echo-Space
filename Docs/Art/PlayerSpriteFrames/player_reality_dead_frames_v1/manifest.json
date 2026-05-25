@@ -1,10 +1,11 @@
 {
   "source": "player_reality_dead_sheet_v1.png",
   "frame_count": 6,
-  "canvas_width": 622,
-  "canvas_height": 584,
-  "baseline": 584,
+  "canvas_width": 128,
+  "canvas_height": 160,
+  "baseline": 146,
   "scale": 1.0,
+  "style": "GDD prototype body-only: reality warm ruined armor, soul cold translucent glow, no baked weapon",
   "frames": [
     "player_reality_dead_00.png",
     "player_reality_dead_01.png",

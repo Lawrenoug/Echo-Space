@@ -118,10 +118,10 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	[Export] public NodePath? BodyVisualPath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? AnimatedSpritePath { get; set; } = new("AnimatedSprite");
 	[Export] public NodePath? WeaponMountPath { get; set; } = new("WeaponMount");
-	[Export] public Vector2 WeaponMountOffset { get; set; } = new(2f, -72f);
+	[Export] public Vector2 WeaponMountOffset { get; set; } = new(18f, -82f);
 	[Export] public string AnimationFramesRoot { get; set; } = "res://Docs/Art/PlayerSpriteFrames";
-	[Export] public Vector2 AnimationVisualOffset { get; set; } = new(0f, -105f);
-	[Export(PropertyHint.Range, "0.1,4.0,0.01")] public float AnimationVisualScale { get; set; } = 0.38f;
+	[Export] public Vector2 AnimationVisualOffset { get; set; } = new(0f, -78f);
+	[Export(PropertyHint.Range, "0.1,4.0,0.01")] public float AnimationVisualScale { get; set; } = 1.25f;
 
 	[ExportGroup("Weapon Motion")]
 	[Export] public Vector2 WeaponIdleOffset { get; set; } = new(0f, 0f);

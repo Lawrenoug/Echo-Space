@@ -17,9 +17,9 @@ public partial class MainMenuController : Control
 
     [Export(PropertyHint.File, "*.tscn")] public string GameScenePath { get; set; } = "res://Scenes/Main.tscn";
     [Export(PropertyHint.File, "*.png")] public string MenuBackgroundPath { get; set; } = "res://Docs/Art/Menu.png";
-    [Export(PropertyHint.File, "*.png")] public string ButtonNormalTexturePath { get; set; } = "res://Docs/Art/button.png";
-    [Export(PropertyHint.File, "*.png")] public string ButtonHoverTexturePath { get; set; } = "res://Docs/Art/button hover.png";
-    [Export(PropertyHint.File, "*.png")] public string ButtonPressedTexturePath { get; set; } = "res://Docs/Art/button pressed.png";
+    [Export(PropertyHint.File, "*.png")] public string ButtonNormalTexturePath { get; set; } = "res://Docs/Art/UI/menu_button_normal.png";
+    [Export(PropertyHint.File, "*.png")] public string ButtonHoverTexturePath { get; set; } = "res://Docs/Art/UI/menu_button_hover.png";
+    [Export(PropertyHint.File, "*.png")] public string ButtonPressedTexturePath { get; set; } = "res://Docs/Art/UI/menu_button_pressed.png";
     [Export] public NodePath? StatusLabelPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/Status");
     [Export] public NodePath? NewGameButtonPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/NewGameButton");
     [Export] public NodePath? SettingsButtonPath { get; set; } = new("Overlay/Center/Frame/Margin/Content/ActionColumn/SettingsButton");
@@ -66,6 +66,7 @@ public partial class MainMenuController : Control
         GameSettingsManager.Instance?.ApplyAll();
         ResolveBindings();
         ApplyMenuArt();
+        ApplyPanelStyling();
         BuildSettingsPanel();
         BindButtons();
         RefreshSettingsControls();
@@ -133,6 +134,40 @@ public partial class MainMenuController : Control
         }
     }
 
+    private void ApplyPanelStyling()
+    {
+        if (GetNodeOrNull<Panel>("Overlay/Center/Frame") is { } frame)
+        {
+            frame.AddThemeStyleboxOverride("panel", CreatePanelStyle(
+                new Color(0.02f, 0.07f, 0.11f, 0.58f),
+                new Color(0.96f, 0.62f, 0.26f, 0.88f),
+                2,
+                20));
+        }
+
+        if (GetNodeOrNull<Panel>("Overlay/SettingsCard") is { } settingsCard)
+        {
+            settingsCard.AddThemeStyleboxOverride("panel", CreatePanelStyle(
+                new Color(0.02f, 0.06f, 0.10f, 0.78f),
+                new Color(0.44f, 0.78f, 0.95f, 0.75f),
+                2,
+                18));
+        }
+    }
+
+    private static StyleBoxFlat CreatePanelStyle(Color background, Color border, int borderWidth, int cornerRadius)
+    {
+        var style = new StyleBoxFlat
+        {
+            BgColor = background,
+            BorderColor = border,
+        };
+        style.SetBorderWidthAll(borderWidth);
+        style.SetCornerRadiusAll(cornerRadius);
+        style.SetContentMarginAll(18f);
+        return style;
+    }
+
     private void ApplyButtonArt(Button? button)
     {
         if (button == null)
@@ -162,6 +197,7 @@ public partial class MainMenuController : Control
         button.AddThemeColorOverride("font_color", new Color(0.96f, 0.91f, 0.82f));
         button.AddThemeColorOverride("font_hover_color", Colors.White);
         button.AddThemeColorOverride("font_pressed_color", new Color(0.68f, 0.91f, 1f));
+        button.CustomMinimumSize = new Vector2(Mathf.Max(button.CustomMinimumSize.X, 360f), 58f);
     }
 
     private StyleBoxTexture? CreateButtonStyle(string texturePath)
@@ -175,13 +211,13 @@ public partial class MainMenuController : Control
         var style = new StyleBoxTexture();
         style.Set("texture", texture);
         style.Set("texture_margin_left", 24);
-        style.Set("texture_margin_top", 18);
+        style.Set("texture_margin_top", 14);
         style.Set("texture_margin_right", 24);
-        style.Set("texture_margin_bottom", 18);
+        style.Set("texture_margin_bottom", 14);
         style.Set("content_margin_left", 24);
-        style.Set("content_margin_top", 8);
+        style.Set("content_margin_top", 6);
         style.Set("content_margin_right", 24);
-        style.Set("content_margin_bottom", 8);
+        style.Set("content_margin_bottom", 6);
         return style;
     }
 

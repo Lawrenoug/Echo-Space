@@ -60,7 +60,8 @@
 ## 当前框架说明
 
 - 启动入口是独立主菜单场景，不和游戏主关卡混在一起
-- 主菜单运行时会接入 [Docs/Art/Menu.png](/F:/Godot%20project/echo-space/Docs/Art/Menu.png) 作为背景，并使用 `button.png / button hover.png / button pressed.png` 作为按钮三态素材
+- 主菜单运行时会接入 [Docs/Art/Menu.png](/F:/Godot%20project/echo-space/Docs/Art/Menu.png) 作为背景，中央信息框改为半透明面板，避免遮住背景图
+- 主菜单按钮使用从原始按钮图裁切适配后的 [Docs/Art/UI](/F:/Godot%20project/echo-space/Docs/Art/UI) 资源，当前统一为 `420x86` 三态按钮，避免原始 `1024x1024` 棋盘底被拉伸进界面
 - 设置菜单当前已经接入真实可调整项：分辨率、全屏、垂直同步、主音量、音乐音量、音效音量、键盘战斗备选、输入缓冲、土狼时间和弹反窗口
 - 当前存档系统已移除，等关卡、敌人、双世界状态和 UI 结构更稳定后再决定是否重做
 - “继续游戏”入口当前暂不接回，后续和存档系统一并恢复
@@ -75,8 +76,8 @@
 - 当前装备系统骨架已经接入 `Autoload`，具备装备槽位、默认原型武器、装备事件和玩家武器挂点 `WeaponMount`
 - `WeaponMount` 现在会根据 `idle / run / jumpstart / fall / attack / guard / parry / execute / hurt / dead` 自动切换偏移和旋转；攻击与弹反不再跟随整段帧动画慢速插值，而是在动作触发时启动独立的短时武器挥动
 - 玩家主体动画当前保持“单一人物主体”方案，不拆身体帧动画和武器帧动画
-- 当前玩家主体动画已切回旧黑披风角色模型的无武器版本；角色帧不再烘焙武器，武器表现统一交给装备系统和 `WeaponMount`
-- 当前玩家占位动画为 `622x584` 统一画布、`baseline = 584`、`scale = 1.0` 的逐帧资源，分为 `reality` 和 `soul` 两套动作
+- 当前玩家主体动画已重新生成成符合策划案方向的无武器占位版本：现实世界偏厚重黑披风、暖色锈金边；灵魂世界偏冷色半透明、青蓝发光边
+- 当前玩家占位动画为 `128x160` 统一画布、`baseline = 146`、`scale = 1.0` 的逐帧资源，分为 `reality` 和 `soul` 两套动作
 - 玩家显示大小和落点当前统一由 [Scripts/Player/PlayerController.cs](/F:/Godot%20project/echo-space/Scripts/Player/PlayerController.cs) 里的 `AnimationVisualScale`、`AnimationVisualOffset` 和 `WeaponMountOffset` 控制，不再依赖场景里旧的 `AnimatedSprite2D` 缩放值
 - 新占位动画是“角色主体优先”的过渡方案，后续正式武器表现仍然应该落在装备系统的武器模型替换上
 
@@ -97,8 +98,8 @@
 - 当前动作资源通过 [Scripts/Player/PlayerController.cs](/F:/Godot%20project/echo-space/Scripts/Player/PlayerController.cs) 直接读取 [Docs/Art/PlayerSpriteFrames](/F:/Godot%20project/echo-space/Docs/Art/PlayerSpriteFrames)
 - 当前并不是绕开 Godot 动画系统，而是运行时动态构建 `AnimatedSprite2D + SpriteFrames`；这样保留 Godot 原生播放能力，同时让批量替换帧资源不必手工逐个点编辑器
 - `guard` 读取帧数已经对齐为 3 帧，和新占位资源保持一致
-- 当前默认人物显示比例切回大画布角色素材的适配值，默认值为 `AnimationVisualScale = 0.38`、`AnimationVisualOffset = (0, -105)`、`WeaponMountOffset = (2, -72)`
-- 当前 live 角色帧来自旧黑披风模型的主体占位版，并通过批处理移除了烘焙武器；后续正式角色动画仍需要重新生成无武器主体帧
+- 当前默认人物显示比例切回新无武器主体帧的适配值，默认值为 `AnimationVisualScale = 1.25`、`AnimationVisualOffset = (0, -78)`、`WeaponMountOffset = (18, -82)`
+- 当前 live 角色帧是按策划案美术方向重生成的工程占位帧，不包含武器图片；后续正式角色动画仍需要按同名目录和同帧数替换为更精细版本
 
 ## 当前白盒关卡结构
 
@@ -162,7 +163,7 @@
 2. 武器动作细调：继续按不同武器类型细调 `WeaponMount` 的偏移、旋转、触发时长和打击点，让短剑、长刀、双手武器后续能走不同手感。
 3. 天赋树内容化：把当前占位节点替换成真正的战斗、机动、双世界机制和探索能力节点。
 4. 白盒实跑与修关：沿着现在这条路线完整跑图，检查哪些跳跃点、按钮位置、切世界时机和冲刺距离还不顺。
-5. 正式角色动画替换：按 [Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md) 替换当前占位动画，保留相同命名和目录结构。
+5. 正式角色动画替换：按 [Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md) 替换当前 `128x160` 无武器占位动画，保留相同命名和目录结构。
 6. 战斗内容扩展：增加第三种敌人或第一个小 Boss，验证现有掉落闭环和敌人基类能否继续复用。
 
 ## 人工资源填充清单
@@ -236,9 +237,7 @@
 
 ### UI 资源
 
-- 主菜单背景资源
 - 主菜单标题 Logo
-- 主菜单按钮默认 / 悬停状态素材
 - 设置菜单图标与分栏装饰资源
 - 菜单按钮资源
 - 提示框资源
@@ -266,6 +265,6 @@
 
 ## 最近更新
 
-- 普通攻击状态不再等待完整角色攻击帧动画播放结束，而是按 `AttackDuration = 0.28s` 释放移动，避免武器挥完后角色仍被锁住
-- 主菜单已接入现有菜单背景与按钮三态素材，设置界面已从循环预设按钮升级为可直接调整并保存的控件系统
-- 玩家 live 帧资源已切回旧黑披风角色模型的无武器主体占位版，武器图片不再烘焙在角色帧里
+- 主菜单中央信息框改为半透明面板，按钮三态素材已裁切成统一尺寸并移除原始棋盘底，背景图现在可以正常透出
+- 玩家 live 帧资源已按策划案方向重新生成 `reality / soul` 两套无武器主体动作，武器图片不再烘焙在角色帧里
+- 玩家显示比例和武器挂点已同步到新 `128x160` 动作帧，装备系统后续可以继续通过 `WeaponMount` 替换武器模型
