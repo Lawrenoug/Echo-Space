@@ -125,32 +125,38 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
 	[ExportGroup("Weapon Motion")]
 	[Export] public Vector2 WeaponIdleOffset { get; set; } = new(0f, 0f);
-	[Export] public float WeaponIdleRotationDegrees { get; set; } = -14f;
-	[Export] public Vector2 WeaponRunOffset { get; set; } = new(4f, -2f);
-	[Export] public float WeaponRunRotationDegrees { get; set; } = 8f;
+	[Export] public float WeaponIdleRotationDegrees { get; set; } = 0f;
+	[Export] public Vector2 WeaponRunOffset { get; set; } = new(3f, -1f);
+	[Export] public float WeaponRunRotationDegrees { get; set; } = 2f;
 	[Export] public float WeaponRunBobAmplitude { get; set; } = 3f;
 	[Export] public float WeaponRunBobSpeed { get; set; } = 10f;
-	[Export] public float WeaponRunRotationSwingDegrees { get; set; } = 8f;
+	[Export] public float WeaponRunRotationSwingDegrees { get; set; } = 3f;
 	[Export] public Vector2 WeaponJumpOffset { get; set; } = new(3f, -8f);
-	[Export] public float WeaponJumpRotationDegrees { get; set; } = 18f;
+	[Export] public float WeaponJumpRotationDegrees { get; set; } = 8f;
 	[Export] public Vector2 WeaponFallOffset { get; set; } = new(2f, 6f);
-	[Export] public float WeaponFallRotationDegrees { get; set; } = 28f;
-	[Export] public Vector2 WeaponAttackStartOffset { get; set; } = new(-4f, 6f);
-	[Export] public Vector2 WeaponAttackEndOffset { get; set; } = new(30f, -12f);
-	[Export] public float WeaponAttackStartRotationDegrees { get; set; } = -42f;
-	[Export] public float WeaponAttackEndRotationDegrees { get; set; } = 78f;
+	[Export] public float WeaponFallRotationDegrees { get; set; } = 12f;
+	[Export] public Vector2 WeaponAttackStartOffset { get; set; } = new(-2f, 5f);
+	[Export] public Vector2 WeaponAttackImpactOffset { get; set; } = new(28f, -8f);
+	[Export] public Vector2 WeaponAttackRecoveryOffset { get; set; } = new(12f, -3f);
+	[Export] public float WeaponAttackStartRotationDegrees { get; set; } = -18f;
+	[Export] public float WeaponAttackImpactRotationDegrees { get; set; } = 24f;
+	[Export] public float WeaponAttackRecoveryRotationDegrees { get; set; } = 4f;
+	[Export] public float WeaponAttackSwingDuration { get; set; } = 0.16f;
 	[Export] public Vector2 WeaponGuardOffset { get; set; } = new(2f, -6f);
-	[Export] public float WeaponGuardRotationDegrees { get; set; } = -62f;
+	[Export] public float WeaponGuardRotationDegrees { get; set; } = -34f;
 	[Export] public Vector2 WeaponParryStartOffset { get; set; } = new(0f, -4f);
-	[Export] public Vector2 WeaponParryEndOffset { get; set; } = new(18f, -18f);
-	[Export] public float WeaponParryStartRotationDegrees { get; set; } = -48f;
-	[Export] public float WeaponParryEndRotationDegrees { get; set; } = 40f;
+	[Export] public Vector2 WeaponParryImpactOffset { get; set; } = new(18f, -14f);
+	[Export] public Vector2 WeaponParryRecoveryOffset { get; set; } = new(5f, -8f);
+	[Export] public float WeaponParryStartRotationDegrees { get; set; } = -24f;
+	[Export] public float WeaponParryImpactRotationDegrees { get; set; } = 20f;
+	[Export] public float WeaponParryRecoveryRotationDegrees { get; set; } = -10f;
+	[Export] public float WeaponParrySwingDuration { get; set; } = 0.11f;
 	[Export] public Vector2 WeaponExecuteOffset { get; set; } = new(18f, -10f);
-	[Export] public float WeaponExecuteRotationDegrees { get; set; } = 64f;
+	[Export] public float WeaponExecuteRotationDegrees { get; set; } = 28f;
 	[Export] public Vector2 WeaponHurtOffset { get; set; } = new(-8f, 4f);
-	[Export] public float WeaponHurtRotationDegrees { get; set; } = -26f;
+	[Export] public float WeaponHurtRotationDegrees { get; set; } = -14f;
 	[Export] public Vector2 WeaponDeadOffset { get; set; } = new(-12f, 18f);
-	[Export] public float WeaponDeadRotationDegrees { get; set; } = 92f;
+	[Export] public float WeaponDeadRotationDegrees { get; set; } = 36f;
 
 	private readonly InputBuffer _inputBuffer = new();
 	private readonly HashSet<ulong> _damagedTargetsThisAttack = new();
@@ -198,6 +204,9 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	private string _currentAnimationAction = "idle";
 	private double _animationOverrideRemaining;
 	private double _deathAnimationRemaining;
+	private string _activeWeaponMotion = string.Empty;
+	private double _weaponMotionStartedAt = double.NegativeInfinity;
+	private double _weaponMotionDuration;
 
 	public int CurrentHealth => _currentHealth;
 	public float CurrentStamina => _currentStamina;
@@ -515,6 +524,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	{
 		FaceTowards(target.GlobalPosition.X);
 		ConsumeStamina(ExecutionStaminaCost);
+		TriggerWeaponMotion("execute", ExecutionAttackDuration);
 	}
 
 	public void EndExecutionAttack()
@@ -565,6 +575,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		ConsumeStamina(AttackStaminaCost);
 		_isAttackActive = true;
 		_damagedTargetsThisAttack.Clear();
+		TriggerWeaponMotion("attack", WeaponAttackSwingDuration);
 
 		if (_attackProbeCollisionShape != null)
 		{
@@ -655,6 +666,7 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 	{
 		_animationOverrideRemaining = GetAnimationDuration("parry");
 		PlayResolvedAnimation("parry", true);
+		TriggerWeaponMotion("parry", WeaponParrySwingDuration);
 	}
 
 	public double GetAnimationDurationForAction(string action)
@@ -1369,7 +1381,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 
 	private (Vector2 offset, float rotationDegrees) ResolveWeaponPose(string action)
 	{
-		var animationProgress = GetCurrentAnimationProgress();
+		if (TryResolveActiveWeaponMotion(out var activePose))
+		{
+			return activePose;
+		}
+
 		switch (action)
 		{
 			case "run":
@@ -1384,21 +1400,11 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 			case "fall":
 				return (WeaponFallOffset, WeaponFallRotationDegrees);
 			case "attack":
-				return ResolveAnimatedWeaponPose(
-					WeaponAttackStartOffset,
-					WeaponAttackEndOffset,
-					WeaponAttackStartRotationDegrees,
-					WeaponAttackEndRotationDegrees,
-					Mathf.SmoothStep(0f, 1f, animationProgress));
+				return (WeaponAttackRecoveryOffset, WeaponAttackRecoveryRotationDegrees);
 			case "guard":
 				return (WeaponGuardOffset, WeaponGuardRotationDegrees);
 			case "parry":
-				return ResolveAnimatedWeaponPose(
-					WeaponParryStartOffset,
-					WeaponParryEndOffset,
-					WeaponParryStartRotationDegrees,
-					WeaponParryEndRotationDegrees,
-					Mathf.SmoothStep(0f, 1f, animationProgress));
+				return (WeaponParryRecoveryOffset, WeaponParryRecoveryRotationDegrees);
 			case "execute":
 				return (WeaponExecuteOffset, WeaponExecuteRotationDegrees);
 			case "hurt":
@@ -1410,39 +1416,77 @@ public partial class PlayerController : CharacterBody2D, IDamageable
 		}
 	}
 
-	private (Vector2 offset, float rotationDegrees) ResolveAnimatedWeaponPose(
-		Vector2 startOffset,
-		Vector2 endOffset,
-		float startRotationDegrees,
-		float endRotationDegrees,
-		float progress)
+	private bool TryResolveActiveWeaponMotion(out (Vector2 offset, float rotationDegrees) pose)
 	{
-		return (startOffset.Lerp(endOffset, progress), Mathf.Lerp(startRotationDegrees, endRotationDegrees, progress));
+		pose = default;
+		if (string.IsNullOrEmpty(_activeWeaponMotion) || _weaponMotionDuration <= 0d)
+		{
+			return false;
+		}
+
+		var elapsed = GetGameTime() - _weaponMotionStartedAt;
+		if (elapsed < 0d || elapsed > _weaponMotionDuration)
+		{
+			_activeWeaponMotion = string.Empty;
+			return false;
+		}
+
+		var progress = Mathf.Clamp((float)(elapsed / _weaponMotionDuration), 0f, 1f);
+		pose = _activeWeaponMotion switch
+		{
+			"attack" => ResolveKeyframedWeaponPose(
+				WeaponAttackStartOffset,
+				WeaponAttackImpactOffset,
+				WeaponAttackRecoveryOffset,
+				WeaponAttackStartRotationDegrees,
+				WeaponAttackImpactRotationDegrees,
+				WeaponAttackRecoveryRotationDegrees,
+				progress),
+			"parry" => ResolveKeyframedWeaponPose(
+				WeaponParryStartOffset,
+				WeaponParryImpactOffset,
+				WeaponParryRecoveryOffset,
+				WeaponParryStartRotationDegrees,
+				WeaponParryImpactRotationDegrees,
+				WeaponParryRecoveryRotationDegrees,
+				progress),
+			"execute" => (WeaponExecuteOffset, WeaponExecuteRotationDegrees),
+			_ => default
+		};
+
+		return !pose.Equals(default((Vector2 offset, float rotationDegrees)));
 	}
 
-	private float GetCurrentAnimationProgress()
+	private (Vector2 offset, float rotationDegrees) ResolveKeyframedWeaponPose(
+		Vector2 startOffset,
+		Vector2 impactOffset,
+		Vector2 recoveryOffset,
+		float startRotationDegrees,
+		float impactRotationDegrees,
+		float recoveryRotationDegrees,
+		float progress)
 	{
-		if (_animatedSprite?.SpriteFrames == null)
+		const float impactTime = 0.38f;
+		if (progress <= impactTime)
 		{
-			return 0f;
+			var attackProgress = Mathf.SmoothStep(0f, 1f, progress / impactTime);
+			return (
+				startOffset.Lerp(impactOffset, attackProgress),
+				Mathf.Lerp(startRotationDegrees, impactRotationDegrees, attackProgress));
 		}
 
-		var animationName = ResolveAnimationName(GetDisplayedAnimationAction());
-		if (animationName == null)
-		{
-			return 0f;
-		}
+		var recoveryProgress = Mathf.SmoothStep(0f, 1f, (progress - impactTime) / (1f - impactTime));
+		return (
+			impactOffset.Lerp(recoveryOffset, recoveryProgress),
+			Mathf.Lerp(impactRotationDegrees, recoveryRotationDegrees, recoveryProgress));
+	}
 
-		var frameCount = _animatedSprite.SpriteFrames.GetFrameCount(animationName);
-		if (frameCount <= 1)
-		{
-			return 0f;
-		}
-
-		var frameProgress = Mathf.Clamp(_animatedSprite.FrameProgress, 0f, 1f);
-		var currentFrame = Mathf.Clamp(_animatedSprite.Frame, 0, frameCount - 1);
-		var totalProgress = currentFrame + frameProgress;
-		return Mathf.Clamp(totalProgress / (frameCount - 1f), 0f, 1f);
+	private void TriggerWeaponMotion(string action, double duration)
+	{
+		_activeWeaponMotion = action;
+		_weaponMotionStartedAt = GetGameTime();
+		_weaponMotionDuration = Math.Max(0.01d, duration);
+		UpdateWeaponMountTransform();
 	}
 
 	private static double GetGameTime()
