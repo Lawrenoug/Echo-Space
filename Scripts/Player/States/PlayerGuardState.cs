@@ -13,6 +13,7 @@ public sealed class PlayerGuardState : PlayerState
 
     public override void Enter()
     {
+        Context.PlayStateAnimation("guard", true);
         Context.BeginGuard();
     }
 

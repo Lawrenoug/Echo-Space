@@ -26,6 +26,10 @@ position = Vector2(0, 10)
 polygon = PackedVector2Array(-8, 0, 8, 0, 6, 4, -6, 4)
 color = Color(0.972549, 0.721569, 0.317647, 1)
 
+[node name="AnimatedSprite" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -41)
+scale = Vector2(0.2, 0.2)
+
 [node name="GuardEffect" type="Polygon2D" parent="."]
 visible = false
 polygon = PackedVector2Array(-14, -20, 14, -20, 14, 20, -14, 20)

@@ -1,0 +1,16 @@
+{
+  "source": "player_reality_idle_sheet_v1.png",
+  "frame_count": 6,
+  "canvas_width": 622,
+  "canvas_height": 584,
+  "baseline": 584,
+  "scale": 1.0,
+  "frames": [
+    "player_reality_idle_00.png",
+    "player_reality_idle_01.png",
+    "player_reality_idle_02.png",
+    "player_reality_idle_03.png",
+    "player_reality_idle_04.png",
+    "player_reality_idle_05.png"
+  ]
+}

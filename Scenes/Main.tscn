@@ -19,7 +19,7 @@
 size = Vector2(7800, 64)
 
 [sub_resource type="RectangleShape2D" id="7"]
-size = Vector2(56, 260)
+size = Vector2(56, 172)
 
 [sub_resource type="RectangleShape2D" id="8"]
 size = Vector2(96, 282)
@@ -42,11 +42,11 @@ size = Vector2(176, 360)
 [sub_resource type="RectangleShape2D" id="10"]
 size = Vector2(128, 256)
 
-[sub_resource type="CircleShape2D" id="6"]
-radius = 18.0
-
 [sub_resource type="RectangleShape2D" id="11"]
 size = Vector2(260, 24)
+
+[sub_resource type="CircleShape2D" id="6"]
+radius = 18.0
 
 [node name="Main" type="Node2D" unique_id=195052086]
 script = ExtResource("1")
@@ -78,10 +78,13 @@ shape = SubResource("1")
 position = Vector2(760, 450)
 
 [node name="Visual" type="Polygon2D" parent="IntroCliff" unique_id=19917741]
+position = Vector2(0, 43.499992)
+scale = Vector2(1, 0.66538465)
 color = Color(0.258824, 0.278431, 0.294118, 1)
 polygon = PackedVector2Array(-28, -130, 28, -130, 28, 130, -28, 130)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="IntroCliff" unique_id=677927239]
+position = Vector2(0, 44)
 shape = SubResource("7")
 
 [node name="WorldShiftBarrier" type="StaticBody2D" parent="." unique_id=1577848088]
@@ -292,103 +295,49 @@ shape = SubResource("10")
 
 [node name="RealityLockButton" parent="." unique_id=1590029336 instance=ExtResource("12")]
 position = Vector2(3190, 398)
-target_paths = Array[NodePath]([NodePath("../RealityLockGate")])
-activates_in_soul = false
-exists_in_soul = false
-plate_width = 72.0
 
 [node name="RealityLockGate" parent="." unique_id=533989450 instance=ExtResource("11")]
 position = Vector2(3660, 440)
-gate_width = 76.0
-gate_height = 280.0
-open_offset_y = -188.0
-starts_open_in_reality = false
-starts_open_in_soul = false
 
 [node name="SoulRunnerPlatform" parent="." unique_id=623020654 instance=ExtResource("13")]
 position = Vector2(4560, 388)
-platform_width = 220.0
-reality_move_speed = 0.0
-soul_end_offset = Vector2(430, 0)
-soul_move_speed = 118.0
 
 [node name="SoulFinalLift" parent="." unique_id=1307749885 instance=ExtResource("10")]
 position = Vector2(5530, 344)
-platform_width = 180.0
-platform_color = Color(0.466667, 0.760784, 1, 1)
-exists_in_reality = false
-exists_in_soul = true
 
 [node name="RealityEndBridge" parent="." unique_id=1648467202 instance=ExtResource("10")]
 position = Vector2(6040, 286)
-platform_width = 220.0
-platform_color = Color(0.905882, 0.576471, 0.235294, 1)
-exists_in_reality = true
-exists_in_soul = false
 
-[node name="ReverseGateButton" parent="." instance=ExtResource("12")]
+[node name="ReverseGateButton" parent="." unique_id=647954987 instance=ExtResource("12")]
 position = Vector2(6280, 266)
-target_paths = Array[NodePath]([NodePath("../ReverseStepGate")])
-activates_in_soul = false
-exists_in_soul = false
-plate_width = 70.0
 
-[node name="ReverseStepGate" parent="." instance=ExtResource("11")]
+[node name="ReverseStepGate" parent="." unique_id=175749829 instance=ExtResource("11")]
 position = Vector2(6480, 304)
-gate_width = 72.0
-gate_height = 168.0
-open_offset_y = -116.0
-starts_open_in_reality = true
-open_when_deactivated = true
-exists_in_soul = false
 
-[node name="SwitchUpperPlatform" type="StaticBody2D" parent="."]
+[node name="SwitchUpperPlatform" type="StaticBody2D" parent="." unique_id=925601518]
 position = Vector2(6740, 188)
 
-[node name="Visual" type="Polygon2D" parent="SwitchUpperPlatform"]
+[node name="Visual" type="Polygon2D" parent="SwitchUpperPlatform" unique_id=373709094]
 color = Color(0.454902, 0.494118, 0.529412, 1)
 polygon = PackedVector2Array(-130, -12, 130, -12, 130, 12, -130, 12)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SwitchUpperPlatform"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SwitchUpperPlatform" unique_id=352798609]
 shape = SubResource("11")
 
-[node name="SoulPassPlatformA" parent="." instance=ExtResource("10")]
+[node name="SoulPassPlatformA" parent="." unique_id=1751693494 instance=ExtResource("10")]
 position = Vector2(6880, 276)
-platform_width = 150.0
-platform_color = Color(0.466667, 0.760784, 1, 1)
-exists_in_reality = false
-exists_in_soul = true
-one_way_collision = true
 
-[node name="SoulPassPlatformB" parent="." instance=ExtResource("10")]
+[node name="SoulPassPlatformB" parent="." unique_id=111046018 instance=ExtResource("10")]
 position = Vector2(7090, 216)
-platform_width = 150.0
-platform_color = Color(0.466667, 0.760784, 1, 1)
-exists_in_reality = false
-exists_in_soul = true
-one_way_collision = true
 
-[node name="StateLiftButton" parent="." instance=ExtResource("12")]
+[node name="StateLiftButton" parent="." unique_id=1592146251 instance=ExtResource("12")]
 position = Vector2(6820, 166)
-target_paths = Array[NodePath]([NodePath("../WorldStateLift")])
-plate_width = 64.0
 
-[node name="WorldStateLift" parent="." instance=ExtResource("14")]
+[node name="WorldStateLift" parent="." unique_id=1953854073 instance=ExtResource("14")]
 position = Vector2(7050, 360)
-platform_width = 176.0
-starts_active_in_reality = false
-starts_active_in_soul = false
-reality_inactive_offset = Vector2(0, 40)
-reality_active_offset = Vector2(0, -48)
-soul_inactive_offset = Vector2(0, 36)
-soul_active_offset = Vector2(0, -150)
 
-[node name="RealityFinalBridge" parent="." instance=ExtResource("10")]
+[node name="RealityFinalBridge" parent="." unique_id=1899287359 instance=ExtResource("10")]
 position = Vector2(7560, 162)
-platform_width = 420.0
-platform_color = Color(0.905882, 0.576471, 0.235294, 1)
-exists_in_reality = true
-exists_in_soul = false
 
 [node name="GoalMarker" type="Node2D" parent="." unique_id=1814829800]
 position = Vector2(7760, 118)
