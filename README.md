@@ -1,6 +1,6 @@
 # Echo Space
 
-`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作原型。当前阶段优先把双世界切换、白盒关卡、战斗闭环、成长系统、装备框架和玩家表现层做扎实，再逐步接入正式美术、音频和内容。
+`Echo Space` 是一个使用 `Godot 4.6.2 + C#` 开发的 2D 横版动作原型。当前阶段优先把双世界切换、白盒关卡、战斗闭环、成长系统和玩家表现层做扎实，再逐步接入正式美术、音频和内容。
 
 ## README 维护规则
 
@@ -16,7 +16,7 @@
 - 关卡结构：长横向、多层白盒地图，强调探索、回收路线和连续切换
 - 战斗方向：以“血量 + 耐力 + 架势 + 处决”为原型的近战系统
 - 成长方向：基础属性加点 + 节点式天赋树并行
-- 装备方向：玩家主体动画独立存在，后续通过装备系统替换武器模型与表现
+- 装备方向：暂未正式实现，当前只保留玩家无武器主体动画和武器挂点占位，后续再做装备栏、装备切换和武器模型替换
 - 美术方向：先用统一规格的占位动画跑通工程，再按生产规范替换为正式角色资源
 
 ## 当前默认按键
@@ -45,7 +45,7 @@
 - 玩家状态机：[Scripts/Player/States](/F:/Godot%20project/echo-space/Scripts/Player/States)
 - 双世界系统：[Scripts/Core/World](/F:/Godot%20project/echo-space/Scripts/Core/World)
 - 背包系统：[Scripts/Gameplay/Inventory](/F:/Godot%20project/echo-space/Scripts/Gameplay/Inventory)
-- 装备系统：[Scripts/Gameplay/Equipment](/F:/Godot%20project/echo-space/Scripts/Gameplay/Equipment)
+- 装备预留脚本：[Scripts/Gameplay/Equipment](/F:/Godot%20project/echo-space/Scripts/Gameplay/Equipment)
 - 属性加点管理：[Scripts/Gameplay/Progression/ProgressionManager.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Progression/ProgressionManager.cs)
 - 天赋树管理：[Scripts/Gameplay/Progression/TalentTreeManager.cs](/F:/Godot%20project/echo-space/Scripts/Gameplay/Progression/TalentTreeManager.cs)
 - 天赋树视图：[Scripts/UI/TalentTreeView.cs](/F:/Godot%20project/echo-space/Scripts/UI/TalentTreeView.cs)
@@ -65,7 +65,7 @@
 - 设置菜单当前已经接入真实可调整项：分辨率、全屏、垂直同步、主音量、音乐音量、音效音量、键盘战斗备选、输入缓冲、土狼时间和弹反窗口
 - 当前存档系统已移除，等关卡、敌人、双世界状态和 UI 结构更稳定后再决定是否重做
 - “继续游戏”入口当前暂不接回，后续和存档系统一并恢复
-- 主菜单点击开始游戏时，会重置当前原型里的世界状态、背包、装备、属性点和天赋树状态，再进入白盒关卡
+- 主菜单点击开始游戏时，会重置当前原型里的世界状态、背包、属性点和天赋树状态，再进入白盒关卡
 - 背包、属性加点、天赋树等二级界面使用统一的“面板栈”逻辑：切换时下层界面保留，关闭顶层后恢复下层
 - 玩家当前具备血量、耐力、普通攻击、防御、弹反、处决、轻按低跳 / 长按高跳和短冲刺
 - 短冲刺当前已经补上结束后的水平余速，用来验证走路节奏、闪身穿点和后续探索能力空间
@@ -73,13 +73,13 @@
 - 敌人运行时位置已经和双世界静态位置刷新解耦，切换世界时不应再被 `DualWorldObject` 写回出生点
 - 当前白盒关卡已经串起跳跃、战斗、拾取、加点、双世界切换、双世界机关和短冲刺验证
 - 当前已经加入节点式天赋树原型：支持节点显示、连线、解锁、退点、重置，以及后续扩展成类似流放之路的大规模被动树
-- 当前装备系统骨架已经接入 `Autoload`，具备装备槽位、默认原型武器、装备事件和玩家武器挂点 `WeaponMount`
-- `WeaponMount` 现在会根据 `idle / run / jumpstart / fall / attack / guard / parry / execute / hurt / dead` 自动切换偏移和旋转；攻击与弹反不再跟随整段帧动画慢速插值，而是在动作触发时启动独立的短时武器挥动
+- 当前没有正式装备系统，没有装备栏、卸装入口或多武器切换闭环
+- `WeaponMount` 只是玩家表现层里的武器挂点占位，用于验证“人物主体动画不烘焙武器”的方向；它现在会根据 `idle / run / jumpstart / fall / attack / guard / parry / execute / hurt / dead` 自动切换偏移和旋转
 - 玩家主体动画当前保持“单一人物主体”方案，不拆身体帧动画和武器帧动画
 - 当前玩家主体动画已重新生成成符合策划案方向的无武器占位版本：现实世界偏厚重黑披风、暖色锈金边；灵魂世界偏冷色半透明、青蓝发光边
 - 当前玩家占位动画为 `128x160` 统一画布、`baseline = 146`、`scale = 1.0` 的逐帧资源，分为 `reality` 和 `soul` 两套动作
 - 玩家显示大小和落点当前统一由 [Scripts/Player/PlayerController.cs](/F:/Godot%20project/echo-space/Scripts/Player/PlayerController.cs) 里的 `AnimationVisualScale`、`AnimationVisualOffset` 和 `WeaponMountOffset` 控制，不再依赖场景里旧的 `AnimatedSprite2D` 缩放值
-- 新占位动画是“角色主体优先”的过渡方案，后续正式武器表现仍然应该落在装备系统的武器模型替换上
+- 新占位动画是“角色主体优先”的过渡方案，后续正式武器表现需要等装备系统真正开工后再接入
 
 ## 当前玩家动画状态
 
@@ -133,19 +133,12 @@
 - [Scenes/Environment/DifferentialMovingPlatform.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/DifferentialMovingPlatform.tscn)
 - [Scenes/Environment/WorldStateLift.tscn](/F:/Godot%20project/echo-space/Scenes/Environment/WorldStateLift.tscn)
 
-## 当前成长与装备系统
+## 当前成长系统
 
 - 属性加点面板：负责生命、耐力、攻击、弹反等基础战斗数值成长
 - 天赋树面板：负责以后接入技能天赋树、特殊机制节点、探索能力节点和关键石效果
 - 当前天赋树是白盒原型，已具备节点绘制、连线关系、可用 / 已解锁 / 已锁定区分、选中详情、解锁、退点、重置、缩放与拖动画布
-- 装备系统当前已具备：
-  - 装备槽位枚举：武器、副手、头部、身体、饰品
-  - 装备管理器 `EquipmentManager`
-  - `ItemDefinition` 中的装备槽位与装备模型入口
-  - 原型武器场景 [Scenes/Equipment/PrototypeSwordModel.tscn](/F:/Godot%20project/echo-space/Scenes/Equipment/PrototypeSwordModel.tscn)
-  - 原型武器贴图 [Docs/Art/Equipment/prototype_training_blade.png](/F:/Godot%20project/echo-space/Docs/Art/Equipment/prototype_training_blade.png)
-  - 玩家运行时武器挂点 `WeaponMount`
-- 这套结构的目标不是现在就做完整纸娃娃，而是先让“装备数据 -> 装备槽 -> 武器模型挂接”有清晰落点
+- 装备系统暂未进入正式实现阶段，现有 `Equipment` 目录和原型武器资源只作为后续开发预留，不作为当前已完成功能
 
 ## 当前掉落与成长闭环
 
@@ -159,12 +152,11 @@
 
 建议下一步优先从下面这些方向里选：
 
-1. 装备系统实装化：补装备 / 卸下入口、装备栏显示、不同武器原型数据和武器模型切换验证。
-2. 武器动作细调：继续按不同武器类型细调 `WeaponMount` 的偏移、旋转、触发时长和打击点，让短剑、长刀、双手武器后续能走不同手感。
-3. 天赋树内容化：把当前占位节点替换成真正的战斗、机动、双世界机制和探索能力节点。
-4. 白盒实跑与修关：沿着现在这条路线完整跑图，检查哪些跳跃点、按钮位置、切世界时机和冲刺距离还不顺。
-5. 正式角色动画替换：按 [Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md) 替换当前 `128x160` 无武器占位动画，保留相同命名和目录结构。
-6. 战斗内容扩展：增加第三种敌人或第一个小 Boss，验证现有掉落闭环和敌人基类能否继续复用。
+1. 白盒实跑与修关：沿着现在这条路线完整跑图，检查哪些跳跃点、按钮位置、切世界时机和冲刺距离还不顺。
+2. 天赋树内容化：把当前占位节点替换成真正的战斗、机动、双世界机制和探索能力节点。
+3. 正式角色动画替换：按 [Docs/Art/PlayerAnimationProductionGuide.md](/F:/Godot%20project/echo-space/Docs/Art/PlayerAnimationProductionGuide.md) 替换当前 `128x160` 无武器占位动画，保留相同命名和目录结构。
+4. 战斗内容扩展：增加第三种敌人或第一个小 Boss，验证现有掉落闭环和敌人基类能否继续复用。
+5. 装备系统实装化：后续再补装备栏、装备 / 卸下入口、多武器原型数据和武器模型切换验证。
 
 ## 人工资源填充清单
 
@@ -267,4 +259,4 @@
 
 - 主菜单中央信息框改为半透明面板，按钮三态素材已裁切成统一尺寸并移除原始棋盘底，背景图现在可以正常透出
 - 玩家 live 帧资源已按策划案方向重新生成 `reality / soul` 两套无武器主体动作，武器图片不再烘焙在角色帧里
-- 玩家显示比例和武器挂点已同步到新 `128x160` 动作帧，装备系统后续可以继续通过 `WeaponMount` 替换武器模型
+- 玩家显示比例和武器挂点已同步到新 `128x160` 动作帧；装备系统尚未正式完成，`WeaponMount` 目前只是后续接入武器表现的占位挂点
